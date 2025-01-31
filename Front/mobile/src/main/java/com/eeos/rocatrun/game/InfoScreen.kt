@@ -4,5 +4,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun InfoScreen(){
-    // 구현예정
+    // 구현예정할거임..
 }
