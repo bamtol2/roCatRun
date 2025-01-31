@@ -1,0 +1,213 @@
+package com.eeos.rocatrun.home
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.eeos.rocatrun.R
+
+@Composable
+fun HomeScreen() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 배경 이미지
+        Image(
+            painter = painterResource(id = R.drawable.home_bg_image),
+            contentDescription = "Background",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // 버튼
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .offset(x = 0.dp, y = 47.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            // 왼쪽 상단 버튼 (랭킹)
+            Button(
+                modifier = Modifier
+                    .align(Alignment.TopStart),
+                onClick = { /* 랭킹 모달 띄우기 */ },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                shape = RoundedCornerShape(0.dp),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.home_icon_ranking),
+                    contentDescription = "Ranking Icon",
+                    modifier = Modifier.size(70.dp)
+                )
+            }
+
+            // 오른쪽 상단 세로 버튼들 (프로필, 통계, 옷장)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd),  // Column 크기를 버튼 크기에 맞추기
+            ) {
+                Button(
+                    onClick = { /* 프로필 모달 띄우기 */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_profile),
+                        contentDescription = "Profile Icon",
+                        modifier = Modifier.size(70.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { /* 통계 화면으로 전환 */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_stats),
+                        contentDescription = "Statistics Icon",
+                        modifier = Modifier.size(70.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { /* 옷장 화면으로 전환 */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_closet),
+                        contentDescription = "Closet Icon",
+                        modifier = Modifier.size(70.dp)
+                    )
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .offset(x = 0.dp, y = 290.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // 캐릭터 이미지
+            Image(
+                painter = painterResource(id = R.drawable.all_img_whitecat),
+                contentDescription = "Cat Character",
+                modifier = Modifier.size(250.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 레벨 표시
+            Text(text = "Lv. 1", fontSize = 25.sp, fontWeight = FontWeight.Bold, color = Color.Yellow)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 레벨 게이지
+            Box(
+                modifier = Modifier
+                    .width(200.dp)
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.White)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f) // 현재 40% 진행
+                        .height(8.dp)
+                        .background(Color.Green)
+                )
+            }
+            Spacer(modifier = Modifier.height(55.dp))
+
+            // START 버튼
+            Button(
+                onClick = { /* 게임 선택 화면으로 전환 */ },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                shape = RoundedCornerShape(0.dp),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .width(216.dp)
+                    .height(72.dp)
+            ) {
+                Box() {
+                    // 배경 이미지
+                    Image(
+                        painter = painterResource(id = R.drawable.home_btn_start),
+                        contentDescription = "Start Button",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize() // 이미지가 Box 크기를 다 채우도록 설정
+                    )
+
+                    // 텍스트 (이미지 위에 텍스트 배치)
+//                    Text(
+//                        text = "START",
+//                        style = TextStyle(
+//                            fontSize = 42.86.sp,
+//                            lineHeight = 16.sp,
+//                            fontFamily = FontFamily(Font(R.font.neodgm)),
+//                            fontWeight = FontWeight(400),
+//                            color = Color(0xFFFFFFFF),
+//                            textAlign = TextAlign.Center,
+//                            letterSpacing = 6.sp,
+//                        ),
+//                        modifier = Modifier
+//                            .align(Alignment.Center) // 텍스트를 Box 중앙에 배치
+//                    )
+
+                    //Filled Text
+                    Text(
+                        text = "START",
+                        color = Color(0xFFFFFFFF),
+                        fontSize = 42.86.sp,
+                        fontFamily = FontFamily(Font(R.font.neodgm)),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    )
+                    //Text with stroke border
+                    Text(
+                        text = "START",
+                        color = Color(0xff36DBEB),
+                        style = TextStyle.Default.copy(
+                            fontSize = 42.86.sp,
+                            drawStyle = Stroke(
+                                miter = 10f,
+                                width = 5f,
+                                join = StrokeJoin.Round
+                            )
+                        ),
+                        fontFamily = FontFamily(Font(R.font.neodgm)),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    )
+
+
+
+                }
+            }
+        }
+
+    }
+}
