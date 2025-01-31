@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.game
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -103,6 +104,7 @@ fun TopNavigation() {
 // 메인 버튼 3개
 @Composable
 fun MainButtons() {
+    val context = LocalContext.current
     var selectedButton by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -145,7 +147,11 @@ fun MainButtons() {
             buttonText = "랜덤 찾기",
             iconImage = R.drawable.game_icon_random,
             // 클릭하면 랜덤 찾는중 화면 이동
-            onClick = { }
+            onClick = {
+                // 랜덤 매칭중 페이지로 이동
+                val intent = Intent(context, Matching::class.java)
+                context.startActivity(intent)
+            }
         )
     }
 }
@@ -396,9 +402,10 @@ fun CodeGenerationSection(
     }
 }
 
-// 초대코드 생성 extend 창
+// 초대코드 입력 extend 창
 @Composable
 fun InviteCodeContent(onBack: () -> Unit) {
+    val context = LocalContext.current
     var inviteCode by remember { mutableStateOf("") }
     val maxLength = 8
 
@@ -500,7 +507,11 @@ fun InviteCodeContent(onBack: () -> Unit) {
                             shape = RoundedCornerShape(10.dp)
                         )
                         // 입장 클릭하면 대기중 화면 띄우기
-                        .clickable { }
+                        .clickable {
+                            // Loading으로 이동. 근데 여기서 코드 있는건지 없는건지 확인해서 예외처리 작업 필요함
+                            val intent = Intent(context, Loading::class.java)
+                            context.startActivity(intent)
+                        }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(

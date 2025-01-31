@@ -16,6 +16,12 @@
             android:name=".game.GameRoom"
             android:exported="true" />
         <activity
+            android:name=".game.Matching"
+            android:exported="true" />
+        <activity
+            android:name=".game.Loading"
+            android:exported="true" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
