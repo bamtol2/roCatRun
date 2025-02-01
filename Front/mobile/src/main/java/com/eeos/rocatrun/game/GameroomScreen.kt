@@ -48,6 +48,9 @@ import com.eeos.rocatrun.R
 
 @Composable
 fun GameroomScreen() {
+    var showInfoDialog by remember {
+        mutableStateOf(false)
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         Image(
@@ -64,17 +67,31 @@ fun GameroomScreen() {
                 .padding(horizontal = 25.dp)
         ) {
             // Top Navigation Icons
-            TopNavigation()
+            TopNavigation(
+                onInfoClick = {
+                    showInfoDialog = true
+                }
+            )
 
             // Main Buttons
             MainButtons()
+        }
+
+        if (showInfoDialog) {
+            InfoScreen(
+                onDismissRequest = {
+                    showInfoDialog = false
+                }
+            )
         }
     }
 }
 
 // 상단 홈, 정보 아이콘 버튼
 @Composable
-fun TopNavigation() {
+fun TopNavigation(
+    onInfoClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -91,7 +108,7 @@ fun TopNavigation() {
             )
         }
 
-        IconButton(onClick = { /* 보스 정보 모달 띄우기 */ }) {
+        IconButton(onClick = onInfoClick ) {
             Image(
                 painter = painterResource(id = R.drawable.game_icon_inform),
                 contentDescription = "Information",
