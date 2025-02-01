@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">roCatRun</string>
+    <string name = "kakao_app_key">ee4a19a75c1dad14d8d226e4285b1cba</string>
+    <string name="scheme_kakao_app_key">kakaoee4a19a75c1dad14d8d226e4285b1cba</string>
 </resources>

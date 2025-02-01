@@ -40,6 +40,21 @@ android {
 }
 
 dependencies {
+    // 카카오 SDK
+    implementation(libs.kakao.sdk)
+
+    // google 로그인 관련
+    implementation(libs.google.services)
+    implementation(libs.firebase.auth)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.play.services.auth)
+
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.wearable)
