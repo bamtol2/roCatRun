@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.login
 
 import android.util.Log
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,9 +26,25 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.login.LoginButton
-import com.kakao.sdk.auth.model.OAuthToken
-import com.kakao.sdk.user.UserApiClient
 import androidx.compose.ui.platform.LocalContext
+import com.eeos.rocatrun.login.social.KakaoLoginHandler
+// 프로필 이미지 갤러리에서 불러오기
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.ui.draw.clip
+import coil3.ImageLoader
+import androidx.compose.material3.TextFieldDefaults
+import coil3.compose.rememberAsyncImagePainter
+import coil3.gif.AnimatedImageDecoder
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+
+
+
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier) {
@@ -71,16 +89,14 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds
             )
-
-            Image(
-                painter = painterResource(R.drawable.all_img_whitecat),
-                contentDescription = "Cat on Earth",
+            GifImage(
                 modifier = Modifier
                     .width(136.dp)
                     .height(136.dp)
                     .offset(y = -(160).dp, x = 10.dp),
-                contentScale = ContentScale.Fit
+                gifResId = R.drawable.login_gif_whitecat
             )
+
         }
 
         // 로그인 버튼들
@@ -94,7 +110,17 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 backgroundColor = Color(0x4AFFEB3C),
                 iconResId = R.drawable.login_icon_kakao,
                 onClick = {
-                    performKakaoLogin(context)
+                    KakaoLoginHandler.performLogin(
+                        context = context,
+                        onSuccess = {accessToken ->
+                            showDialog = true
+                        },
+                        onError = { error ->
+                            Log.e("LoginScreen", "카카오 로그인 오류", error)
+                        }
+                        )
+
+
                 }
             )
             LoginButton(
@@ -138,10 +164,21 @@ fun UserInfoDialog(
     borderImageResId: Int,
     okButtonImageResId: Int
 ) {
+    // 사용자 닉네임
+    var nickname by remember { mutableStateOf("") }
+    // 프로필 이미지 URI
+    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
+    // 이미지 선택 런처 생성
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        // 사용자가 선택한 이미지 URI 저장
+        profileImageUri = uri
+    }
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .fillMaxWidth(1f)
                 .background(Color.Transparent)
         ) {
             // 테두리 이미지
@@ -149,8 +186,8 @@ fun UserInfoDialog(
                 painter = painterResource(id = borderImageResId),
                 contentDescription = "Dialog Border",
                 modifier = Modifier
-                    .width(600.dp)
-                    .height(500.dp),
+                    .width(700.dp)
+                    .height(600.dp),
                 contentScale = ContentScale.FillBounds
             )
 
@@ -165,7 +202,7 @@ fun UserInfoDialog(
                 Text(
                     text = "유저 정보 입력",
                     style = TextStyle(
-                        fontSize = 26.sp,
+                        fontSize = 35.sp,
                         color = Color.White,
                         fontFamily = FontFamily(Font(R.font.neodgm)),
                         textAlign = TextAlign.Center
@@ -177,30 +214,59 @@ fun UserInfoDialog(
 
                 // 프로필 이미지
                 Image(
-                    painter = painterResource(id = profileImageResId),
+                    painter = if (profileImageUri != null)
+                        rememberAsyncImagePainter(model = profileImageUri)
+                    else
+                        painterResource(id = profileImageResId),
                     contentDescription = "Profile Image",
                     modifier = Modifier
-                        .offset(y = 60.dp)
-                        .size(100.dp),
+                        .offset(y = 70.dp)
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, Color.White, CircleShape)
+                        .clickable {
+                            imagePickerLauncher.launch("image/*")
+                        },
+
                     contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.height(40.dp))
+                Text(
+                    text = "닉네임",
+                    style = TextStyle(
+                        fontSize = 24.sp,
+                        color = Color.White,
+                        fontFamily = FontFamily(Font(R.font.neodgm)),
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier
+                        .offset(y = 80.dp)
+
+                )
+                Spacer(modifier = Modifier.height(50.dp))
                 // 닉네임 입력 및 중복 확인 버튼
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(y = 15.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .background(Color(0xFF1E1E1E))
-                            .padding(12.dp)
+
+
                     ) {
-                        Text(
-                            text = "ssafy",  // 임시 텍스트
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontFamily = FontFamily(Font(R.font.neodgm))
+                        TextField(
+                            value = nickname,
+                            onValueChange = {newNickname -> nickname = newNickname},
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                fontSize = 16.sp,
+                                fontFamily = FontFamily(Font(R.font.neodgm))
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth(),
+
                         )
                     }
 
@@ -210,12 +276,13 @@ fun UserInfoDialog(
                     Box(
                         modifier = Modifier
                             .background(Color(0xFF00FFCC), shape = RoundedCornerShape(8.dp))
-                            .padding(vertical = 10.dp, horizontal = 16.dp)
+                            .padding(vertical = 10.dp, horizontal = 2.dp)
                             .clickable { /* 중복 확인 로직 작성해야함*/ },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "중복 확인",
+//                            modifier = Modifier.offset(y=15.dp),
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 color = Color.Black,
@@ -233,36 +300,45 @@ fun UserInfoDialog(
                     painter = painterResource(id = okButtonImageResId),
                     contentDescription = "OK Button",
                     modifier = Modifier
-                        .width(130.dp)
+                        .width(150.dp)
                         .height(70.dp)
                         .offset(y = 40.dp)
-                        .clickable(onClick = onConfirm) // ok 누르면 메인 페이지로 이동하도록 해야함
+                        .clickable(onClick = onConfirm) // Intent 사용해서 회원 가입 완료 시 메인 페이지로 이동하도록 수정(메인 페이지 완료시)
                 )
             }
         }
     }
 }
 
-// 카카오 로그인 처리 함수
-private fun performKakaoLogin(context : android.content.Context) {
-    if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
-        UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
-            handleKakaoLoginResult(token, error)
-        }
-    } else {
-        UserApiClient.instance.loginWithKakaoAccount(context) { token, error ->
-            handleKakaoLoginResult(token, error)
-        }
+@Composable
+fun GifImage(modifier: Modifier = Modifier, gifResId: Int) {
+    val context = LocalContext.current
+
+    // Coil3의 GIF 디코더를 적용한 ImageLoader 생성
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                    add(AnimatedImageDecoder.Factory(enforceMinimumFrameDelay = true))
+
+            }
+            .build()
     }
+
+    // GIF 이미지를 위한 ImageRequest 구성
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(context)
+            .data(gifResId)
+            .crossfade(true)
+            .build(),
+        imageLoader = imageLoader
+    )
+
+    // 이미지 디스플레이
+    Image(
+        painter = painter,
+        contentDescription = "GIF Image",
+        modifier = modifier,
+        contentScale = ContentScale.Crop
+    )
 }
 
-// 카카오 로그인 결과 처리 함수
-private fun handleKakaoLoginResult(token: OAuthToken?, error: Throwable?) {
-    if (error != null) {
-        Log.e("LoginScreen", "카카오 로그인 실패", error) // 로그 표시
-    } else if (token != null) {
-        Log.i("LoginScreen", "카카오 로그인 성공, 토큰: ${token.accessToken}") // 토큰 받아오는지 로그 표시
-
-//       백엔드 전송 로직 구현 예정
-    }
-}

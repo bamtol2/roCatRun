@@ -53,7 +53,9 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
 
-
+    // 이미지 선택 coil
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-gif:3.0.4")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
