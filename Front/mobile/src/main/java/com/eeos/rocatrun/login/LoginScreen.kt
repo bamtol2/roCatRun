@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.login.LoginButton
 import com.kakao.sdk.auth.model.OAuthToken
@@ -67,14 +66,14 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 .height(370.dp)
         ) {
             Image(
-                painter = rememberAsyncImagePainter(R.drawable.login_bg_earth),
+                painter = painterResource(R.drawable.login_bg_earth),
                 contentDescription = "Earth",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds
             )
 
             Image(
-                painter = rememberAsyncImagePainter(R.drawable.all_img_whitecat),
+                painter = painterResource(R.drawable.all_img_whitecat),
                 contentDescription = "Cat on Earth",
                 modifier = Modifier
                     .width(136.dp)
@@ -95,7 +94,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 backgroundColor = Color(0x4AFFEB3C),
                 iconResId = R.drawable.login_icon_kakao,
                 onClick = {
-                    showDialog = true
+                    performKakaoLogin(context)
                 }
             )
             LoginButton(
@@ -244,3 +243,26 @@ fun UserInfoDialog(
     }
 }
 
+// 카카오 로그인 처리 함수
+private fun performKakaoLogin(context : android.content.Context) {
+    if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
+        UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
+            handleKakaoLoginResult(token, error)
+        }
+    } else {
+        UserApiClient.instance.loginWithKakaoAccount(context) { token, error ->
+            handleKakaoLoginResult(token, error)
+        }
+    }
+}
+
+// 카카오 로그인 결과 처리 함수
+private fun handleKakaoLoginResult(token: OAuthToken?, error: Throwable?) {
+    if (error != null) {
+        Log.e("LoginScreen", "카카오 로그인 실패", error) // 로그 표시
+    } else if (token != null) {
+        Log.i("LoginScreen", "카카오 로그인 성공, 토큰: ${token.accessToken}") // 토큰 받아오는지 로그 표시
+
+//       백엔드 전송 로직 구현 예정
+    }
+}
