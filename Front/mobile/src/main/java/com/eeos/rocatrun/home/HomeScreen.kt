@@ -1,39 +1,33 @@
 package com.eeos.rocatrun.home
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.ranking.RankingDialog
+import com.eeos.rocatrun.ui.theme.MyFontFamily
+
 
 @Composable
 fun HomeScreen() {
     // 랭킹 모달 변수
     var showRanking by remember { mutableStateOf(false) }
+
+    // 프로필 모달 변수
+    var showProfile by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 배경 이미지
@@ -74,7 +68,7 @@ fun HomeScreen() {
                     .align(Alignment.TopEnd),
             ) {
                 Button(
-                    onClick = { /* 프로필 모달 띄우기 */ },
+                    onClick = { showProfile = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     shape = RoundedCornerShape(0.dp),
                     contentPadding = PaddingValues(0.dp)
@@ -115,7 +109,8 @@ fun HomeScreen() {
         }
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .offset(x = 0.dp, y = 290.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -128,7 +123,12 @@ fun HomeScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             // 레벨 표시
-            Text(text = "Lv. 1", fontSize = 25.sp, fontWeight = FontWeight.Bold, color = Color.Yellow)
+            Text(
+                text = "Lv. 1",
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Yellow
+            )
             Spacer(modifier = Modifier.height(8.dp))
 
             // 레벨 게이지
@@ -172,7 +172,7 @@ fun HomeScreen() {
                         text = "START",
                         color = Color(0xFFFFFFFF),
                         fontSize = 42.86.sp,
-                        fontFamily = FontFamily(Font(R.font.neodgm)),
+                        fontFamily = MyFontFamily,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -189,7 +189,7 @@ fun HomeScreen() {
                                 join = StrokeJoin.Round
                             )
                         ),
-                        fontFamily = FontFamily(Font(R.font.neodgm)),
+                        fontFamily = MyFontFamily,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -203,6 +203,11 @@ fun HomeScreen() {
         // 랭킹 모달 표시
         if (showRanking) {
             RankingDialog(onDismiss = { showRanking = false })
+        }
+
+        // 프로필 모달 표시
+        if (showProfile) {
+            ProfileDialog(onDismiss = { showProfile = false })
         }
 
     }
