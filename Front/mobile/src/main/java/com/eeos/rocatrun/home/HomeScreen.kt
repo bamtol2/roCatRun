@@ -8,6 +8,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,9 +28,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.ranking.RankingDialog
 
 @Composable
 fun HomeScreen() {
+    // 랭킹 모달 변수
+    var showRanking by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // 배경 이미지
         Image(
@@ -48,7 +56,7 @@ fun HomeScreen() {
             Button(
                 modifier = Modifier
                     .align(Alignment.TopStart),
-                onClick = { /* 랭킹 모달 띄우기 */ },
+                onClick = { showRanking = true },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 shape = RoundedCornerShape(0.dp),
                 contentPadding = PaddingValues(0.dp)
@@ -63,7 +71,7 @@ fun HomeScreen() {
             // 오른쪽 상단 세로 버튼들 (프로필, 통계, 옷장)
             Column(
                 modifier = Modifier
-                    .align(Alignment.TopEnd),  // Column 크기를 버튼 크기에 맞추기
+                    .align(Alignment.TopEnd),
             ) {
                 Button(
                     onClick = { /* 프로필 모달 띄우기 */ },
@@ -156,24 +164,8 @@ fun HomeScreen() {
                         painter = painterResource(id = R.drawable.home_btn_start),
                         contentDescription = "Start Button",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize() // 이미지가 Box 크기를 다 채우도록 설정
+                        modifier = Modifier.fillMaxSize()
                     )
-
-                    // 텍스트 (이미지 위에 텍스트 배치)
-//                    Text(
-//                        text = "START",
-//                        style = TextStyle(
-//                            fontSize = 42.86.sp,
-//                            lineHeight = 16.sp,
-//                            fontFamily = FontFamily(Font(R.font.neodgm)),
-//                            fontWeight = FontWeight(400),
-//                            color = Color(0xFFFFFFFF),
-//                            textAlign = TextAlign.Center,
-//                            letterSpacing = 6.sp,
-//                        ),
-//                        modifier = Modifier
-//                            .align(Alignment.Center) // 텍스트를 Box 중앙에 배치
-//                    )
 
                     //Filled Text
                     Text(
@@ -203,10 +195,14 @@ fun HomeScreen() {
                             .align(Alignment.Center)
                     )
 
-
-
                 }
             }
+        }
+
+
+        // 랭킹 모달 표시
+        if (showRanking) {
+            RankingDialog(onDismiss = { showRanking = false })
         }
 
     }
