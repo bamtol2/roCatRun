@@ -64,4 +64,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     wearApp(project(":wear"))
+
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
 }
