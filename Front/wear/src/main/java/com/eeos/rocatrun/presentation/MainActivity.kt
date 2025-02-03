@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
 
                 messageClient.sendMessage(nodeId, path, messageData).apply {
                     addOnSuccessListener {
+                        Log.d("Wear APP", "메시지 전송 성공")
                         Toast.makeText(this@MainActivity, "모바일 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
                     }
                     addOnFailureListener {
