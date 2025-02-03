@@ -49,7 +49,11 @@ import java.util.*
 @Composable
 fun WeekStatsScreen() {
     var isDialogVisible by remember { mutableStateOf(false) } // 다이얼로그의 표시 여부 상태
-    var selectedDate by remember { mutableStateOf("2025년 1월 4주") } // 선택된 날짜를 저장하는 상태
+    var selectedDate by remember { mutableStateOf("2024년 7월 3주") } // 선택된 날짜를 저장하는 상태
+
+    val (year, month, week) = selectedDate.split(Regex("년|월|주")).let {
+        Triple(it[0].trim().toInt(), it[1].trim().toInt(), it[2].trim().toInt())
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -93,8 +97,11 @@ fun WeekStatsScreen() {
             // DatePickerDialog 보여주기
             if (isDialogVisible) {
                 DatePickerDialog(
-                    onDateSelected = { week, month, year ->
-                        selectedDate = "${year}년 ${month}월 ${week}주" // 날짜 선택 후 상태 업데이트
+                    initialYear = year,
+                    initialMonth = month,
+                    initialWeek = week,
+                    onDateSelected = { selectedYear, selectedMonth, selectedWeek ->
+                        selectedDate = "${selectedYear}년 ${selectedMonth}월 ${selectedWeek}주" // 날짜 선택 후 상태 업데이트
                         isDialogVisible = false
                     },
                     onDismiss = {
@@ -275,16 +282,19 @@ fun BarGraph() {
 // 날짜 선택 모달
 @Composable
 fun DatePickerDialog(
-    onDateSelected: (day: Int, month: Int, year: Int) -> Unit,
+    initialYear: Int,
+    initialMonth: Int,
+    initialWeek: Int,
+    onDateSelected: (year: Int, month: Int, day: Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val weeks = (1..4).toList()
-    val months = (1..12).toList()
     val years = (1900..Calendar.getInstance().get(Calendar.YEAR)).toList()
+    val months = (1..12).toList()
+    val weeks = (1..4).toList()
 
-    var selectedWeek by remember { mutableStateOf(2) }
-    var selectedMonth by remember { mutableStateOf(2) }
-    var selectedYear by remember { mutableStateOf(2023) }
+    var selectedYear by remember { mutableStateOf(initialYear) }
+    var selectedMonth by remember { mutableStateOf(initialMonth) }
+    var selectedWeek by remember { mutableStateOf(initialWeek) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -327,9 +337,9 @@ fun DatePickerDialog(
                     }
                     TextButton(onClick = {
                         onDateSelected(
-                            selectedWeek,
+                            selectedYear,
                             selectedMonth,
-                            selectedYear
+                            selectedWeek
                         )
                     }) {
                         Text(
