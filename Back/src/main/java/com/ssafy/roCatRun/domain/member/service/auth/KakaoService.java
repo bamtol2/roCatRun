@@ -187,10 +187,9 @@ public class KakaoService {
     }
 
     private LoginResponse processKakaoLogin(HashMap<String, Object> userInfo, KakaoTokenInfo kakaoTokenInfo) {
-        Long socialId = Long.valueOf(userInfo.get("id").toString());
+        String socialId = String.valueOf(userInfo.get("id"));  // Long -> String으로 변환
         String nickname = userInfo.get("nickname").toString();
 
-        // 기존 회원인지 확인
         Member member = memberRepository.findBySocialIdAndLoginType(socialId, "KAKAO")
                 .orElseGet(() -> {
                     Member newMember = Member.createMember(null, nickname, "KAKAO", socialId);

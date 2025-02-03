@@ -14,7 +14,7 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long socialId;
+    private String socialId;
 
     @Column(nullable = true)
     private String email;
@@ -25,7 +25,7 @@ public class Member {
     @Column(nullable = false)
     private String loginType;
 
-    public static Member createMember(String email, String nickname, String loginType, Long socialId) {
+    public static Member createMember(String email, String nickname, String loginType, String socialId) {
         Member member = new Member();
         member.setEmail(email);
         member.setNickname(nickname);
