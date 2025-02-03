@@ -75,17 +75,17 @@ fun MonStatsScreen() {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
+                StrokedText(
                     text = selectedDate,
-                    fontSize = 25.sp,
-                    color = Color.White
+                    color = Color.White,
+                    strokeColor = Color.Black,
+                    fontSize = 25,
                 )
-                Icon(
+                Image(
                     painter = painterResource(id = R.drawable.stats_icon_dropdown),
                     contentDescription = null,
-                    tint = Color.White,
                     modifier = Modifier
-                        .size(16.dp)
+                        .size(30.dp)
                         .clickable {
                             isDialogVisible = true
                         }
@@ -123,11 +123,11 @@ fun MonStatsScreen() {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "20.6 KM",
-                    fontSize = 50.sp,
-                    color = Color(0xFFFFFFFF),
-                    fontWeight = FontWeight.Bold,
+                StrokedText(
+                    text = "50.6 KM",
+                    color = Color.White,
+                    strokeColor = Color(0xFF34B4C0),
+                    fontSize = 50,
                 )
             }
 

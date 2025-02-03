@@ -145,18 +145,21 @@ fun DayStatCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
+                    StrokedText(
                         text = date,
                         color = Color.White,
-                        fontSize = 20.sp
+                        strokeColor = Color.Black,
+                        fontSize = 25,
                     )
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
+                        StrokedText(
                             text = "${players.size}인",
                             color = Color.White,
-                            fontSize = 24.sp
+                            strokeColor = Color.Black,
+                            fontSize = 25,
                         )
 
                         val imageRes = if (players.size == 1) {
@@ -186,21 +189,22 @@ fun DayStatCard(
                         modifier = Modifier.size(35.dp)
                     )
 
-                    Text(
+                    StrokedText(
                         text = status,
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.Bold,
                         color = if (isSuccess) Color(0xFF36DBEB) else Color(0xFFA3A1A5),
+                        strokeColor = Color.Black,
+                        fontSize = 34,
                         modifier = Modifier.offset(x = 15.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 플레이어 정보
-                Text(
+                StrokedText(
                     text = "플레이어",
                     color = Color.White,
-                    fontSize = 20.sp
+                    strokeColor = Color.Black,
+                    fontSize = 20,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 

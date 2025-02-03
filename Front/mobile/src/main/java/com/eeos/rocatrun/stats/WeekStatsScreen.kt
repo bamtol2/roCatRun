@@ -74,17 +74,17 @@ fun WeekStatsScreen() {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
+                StrokedText(
                     text = selectedDate,
-                    fontSize = 25.sp,
-                    color = Color.White
+                    color = Color.White,
+                    strokeColor = Color.Black,
+                    fontSize = 25,
                 )
-                Icon(
+                Image(
                     painter = painterResource(id = R.drawable.stats_icon_dropdown),
                     contentDescription = null,
-                    tint = Color.White,
                     modifier = Modifier
-                        .size(16.dp)
+                        .size(30.dp)
                         .clickable {
                             isDialogVisible = true
                         }
@@ -123,11 +123,11 @@ fun WeekStatsScreen() {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
+                StrokedText(
                     text = "20.6 KM",
-                    fontSize = 50.sp,
-                    color = Color(0xFFFFFFFF),
-                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    strokeColor = Color(0xFF34B4C0),
+                    fontSize = 50,
                 )
             }
 
@@ -163,11 +163,11 @@ fun WeekStatsScreen() {
 @Composable
 fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
+        StrokedText(
             text = value,
-            fontSize = 35.sp,
             color = Color.White,
-            fontWeight = FontWeight.Bold
+            strokeColor = Color(0xFF34B4C0),
+            fontSize = 35,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
