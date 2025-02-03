@@ -32,12 +32,12 @@ import com.google.android.gms.wearable.Wearable
 import android.content.Context
 import android.widget.Toast
 
-class MainActivity : ComponentActivity() {
+class ResultActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            SplashScreen()
+            SplashScreen2()
         }
     }
 
@@ -54,10 +54,10 @@ class MainActivity : ComponentActivity() {
 
                 messageClient.sendMessage(nodeId, path, messageData).apply {
                     addOnSuccessListener {
-                        Toast.makeText(this@MainActivity, "모바일 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@ResultActivity, "모바일 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
                     }
                     addOnFailureListener {
-                        Toast.makeText(this@MainActivity, "모바일 앱 전송 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@ResultActivity, "모바일 앱 전송 실패: ${it.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 @Composable
-fun SplashScreen() {
+fun SplashScreen2() {
     val context = LocalContext.current
     val mainActivity = context as MainActivity  // MainActivity의 메서드 호출을 위해 캐스팅
 
@@ -82,7 +82,7 @@ fun SplashScreen() {
         Text(
             text = "로캣냥",
             style = TextStyle(
-                fontSize = 30.sp,
+                fontSize = 32.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.neodgm))
@@ -91,7 +91,7 @@ fun SplashScreen() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "폰으로 이동해서\n게임을 시작해주세요",
+            text = "폰으로 이동해서\n결과를 확인하세요",
             style = TextStyle(
                 fontSize = 20.sp,
                 color = Color.White,
@@ -99,75 +99,31 @@ fun SplashScreen() {
                 textAlign = TextAlign.Center
             )
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-// 버튼들 배치
-        Row(
+        // 확인 버튼
+        Button(
+            onClick = {
+                mainActivity.startMobileApp()  // MainActivity의 메서드 호출
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF00FFCC)
+            ),
+            shape = RoundedCornerShape(8.dp),
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp)
+                .height(50.dp)
         ) {
-            // 확인 버튼
-            Button(
-                onClick = {
-                    mainActivity.startMobileApp()
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00FFCC)
-                ),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .width(69.dp)
-                    .height(34.dp)
-                    .padding(horizontal = 2.dp)
-            ) {
-                Text(
-                    text = "확인",
-                    style = TextStyle(
-                        fontSize = 16.sp,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily(Font(R.font.neodgm))
-                    ),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    softWrap = false  // 줄바꿈 방지
+            Text(
+                text = "확인",
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily(Font(R.font.neodgm))
                 )
-            }
-
-            // 게임 시작 버튼
-            Button(
-                onClick = {
-                    val intent = Intent(context, RunningActivity::class.java)
-                    context.startActivity(intent)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFA500)
-                ),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .width(69.dp)
-                    .height(34.dp)
-                    .padding(horizontal = 3.dp)
-            ) {
-                Text(
-                    text = "게임",
-                    style = TextStyle(
-                        fontSize = 16.sp,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily(Font(R.font.neodgm))
-                    ),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    softWrap = false  // 줄바꿈 방지
-                )
-            }
+            )
         }
-
     }
 }
+
