@@ -10,10 +10,10 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthTokens {
-    private String accessToken;
-    private String refreshToken;
-    private String grantType;
-    private Long expiresIn;
+    private String accessToken; // JWT 액세스 토큰
+    private String refreshToken; // JWT 리프레시 토큰
+    private String grantType; // 토큰 타입
+    private Long expiresIn; // 토큰 만료 시간
 
     public static AuthTokens of(String accessToken, String refreshToken, String grantType, Long expiresIn) {
         return new AuthTokens(accessToken, refreshToken, grantType, expiresIn);
