@@ -104,7 +104,7 @@ fun StatsScreen() {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.8f)
+                    .fillMaxHeight(0.77f)
                     .padding(10.dp)
                     .offset(x = 0.dp, y = 130.dp),
                 contentAlignment = Alignment.TopCenter
