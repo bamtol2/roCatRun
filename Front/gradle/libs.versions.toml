@@ -70,4 +70,3 @@ converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", ve
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
