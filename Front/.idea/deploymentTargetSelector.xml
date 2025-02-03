@@ -15,7 +15,7 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-01-31T04:54:10.061580300Z">
+        <DropdownSelection timestamp="2025-02-03T08:54:44.473686200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=R39M200TFHK" />
@@ -26,6 +26,14 @@
       </SelectionState>
       <SelectionState runConfigName="GameroomActivity">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2025-02-03T07:12:57.688240600Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="Default" identifier="serial=192.168.30.55:40839;connection=bcb36c7f" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="MatchingActivity">
         <option name="selectionMode" value="DROPDOWN" />
@@ -38,10 +46,10 @@
       </SelectionState>
       <SelectionState runConfigName="GamemultiActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-02-02T08:36:53.424942200Z">
+        <DropdownSelection timestamp="2025-02-03T08:28:56.078295500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.3.105:45381;connection=6366712b" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.30.55:40839;connection=bcb36c7f" />
             </handle>
           </Target>
         </DropdownSelection>

@@ -30,9 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 @Composable
-fun GamemultiScreen() {
+fun GamemultiScreen(runningData: GameMulti.RunningData?) {
 
     // 타이머 상태 관리
     var seconds by remember { mutableStateOf(0) }
@@ -184,14 +185,28 @@ fun GamemultiScreen() {
             Spacer(modifier = Modifier.height(80.dp))
 
             // 현재 상태 정보
-            CurrentInfo()
+            CurrentInfo(runningData)
         }
     }
 }
 
 // 현재 상태 출력 박스
 @Composable
-private fun CurrentInfo() {
+private fun CurrentInfo(runningData: GameMulti.RunningData?) {
+
+    fun formatTime(milliseconds: Long): String {
+        val totalSeconds = (milliseconds / 1000).toInt()
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return "%02d:%02d".format(minutes, seconds)
+    }
+    fun formatPace(pace: Double): String {
+        // 예: 5.5 -> "5'30""
+        val minutes = pace.toInt()
+        val seconds = ((pace - minutes) * 60).roundToInt()
+        return "$minutes'${"%02d".format(seconds)}\""
+    }
+
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
@@ -215,16 +230,20 @@ private fun CurrentInfo() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(23.dp)
                 ) {
-                    ResultItem("거리", "42.5km")
-                    ResultItem("시간", "00:20:30")
+                    val distanceText = runningData?.totalDistance?.let { "${"%.2f".format(it)} km" } ?: "N/A"
+                    val timeText = runningData?.elapsedTime?.let { formatTime(it) } ?: "N/A"
+                    ResultItem("거리", distanceText)
+                    ResultItem("시간", timeText)
                 }
                 Spacer(modifier = Modifier.height(25.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(23.dp)
                 ) {
-                    ResultItem("페이스", "06'32\"")
-                    ResultItem("칼로리", "320kcal")
+                    val paceText = runningData?.averagePace?.let { formatPace(it) } ?: "N/A"
+                    val heartText = runningData?.heartRate ?: "N/A"
+                    ResultItem("페이스", paceText)
+                    ResultItem("심박수", heartText)
                 }
 
                 Spacer(modifier = Modifier.height(15.dp))
@@ -246,8 +265,6 @@ private fun ResultItem(label: String, value: String) {
         }
     }
 }
-
-// 타이머 기능
 
 
 

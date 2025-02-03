@@ -2,7 +2,6 @@ package com.eeos.rocatrun.presentation
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -16,35 +15,53 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.material.*
-import com.google.android.gms.location.*
-import kotlin.math.roundToInt
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.ui.res.painterResource
-import androidx.compose.material3.Icon
-import kotlinx.coroutines.delay
 import com.eeos.rocatrun.R
-
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 
 class RunningActivity : ComponentActivity(), SensorEventListener {
@@ -69,6 +86,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var lastLocation: Location? = null
 
     private val handler = Handler(Looper.getMainLooper())
+
     private val updateRunnable = object : Runnable {
         override fun run() {
             if (isRunning) {
@@ -77,6 +95,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     val paceInSeconds = elapsedTime / 1000.0 / totalDistance
                     paceInSeconds / 60
                 } else 0.0
+
+                // 데이터 전송 추가
+                sendDataToPhone()
+
                 handler.postDelayed(this, 1000)
             }
         }
@@ -188,6 +210,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         Log.d("Stats", "Elapsed Time: ${formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
         showStats = true
     }
+
     @Composable
     fun RunningApp() {
         var isCountdownFinished by remember { mutableStateOf(false) }
@@ -208,6 +231,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             CountdownScreen(countdownValue)
         }
     }
+
     // 카운트 다운 화면
     @Composable
     fun CountdownScreen(countdownValue: Int) {
@@ -226,6 +250,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             )
         }
     }
+
     @Composable
     fun WatchAppUI() {
         val pagerState = rememberPagerState(pageCount = {3})
@@ -358,8 +383,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-
-
     @Composable
     fun ControlButtons(onStopTracking: () -> Unit) {
         Column(
@@ -382,6 +405,27 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     fontFamily = FontFamily(Font(R.font.neodgm)),)
             }
         }
+    }
+
+    // 폰에 데이터 전송
+    private fun sendDataToPhone() {
+        val dataMapRequest = PutDataMapRequest.create("/running_data").apply {
+            dataMap.putDouble("pace", averagePace)
+            dataMap.putDouble("distance", totalDistance)
+            dataMap.putLong("time", elapsedTime)
+            dataMap.putString("heartRate", heartRate)
+            dataMap.putLong("timestamp", System.currentTimeMillis())
+        }.asPutDataRequest()
+
+        dataMapRequest.setUrgent() // 즉시 전송하도록 설정
+
+        Wearable.getDataClient(this).putDataItem(dataMapRequest)
+            .addOnSuccessListener {
+                Log.d("RunningActivity", "Data sent successfully")
+            }
+            .addOnFailureListener { e ->
+                Log.e("RunningActivity", "Failed to send data", e)
+            }
     }
 
     @Composable
