@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
@@ -17,6 +16,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.eeos.rocatrun.R
 import androidx.compose.foundation.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.painter.Painter
 
 data class Player(
@@ -29,6 +32,9 @@ data class Player(
 
 @Composable
 fun DayStatsScreen() {
+    // 세부 모달 변수
+    var showDetail by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,7 +62,7 @@ fun DayStatsScreen() {
             ),
             isSuccess = true,
             bossImg = painterResource(id = R.drawable.all_img_boss1),
-            onClick = {}
+            onClick = { showDetail = true }
         )
         Spacer(modifier = Modifier.height(16.dp))
         DayStatCard(
@@ -73,7 +79,7 @@ fun DayStatsScreen() {
             ),
             isSuccess = false,
             bossImg = painterResource(id = R.drawable.all_img_boss2),
-            onClick = {}
+            onClick = { showDetail = true }
         )
         Spacer(modifier = Modifier.height(16.dp))
         DayStatCard(
@@ -97,9 +103,15 @@ fun DayStatsScreen() {
             ),
             isSuccess = true,
             bossImg = painterResource(id = R.drawable.all_img_boss1),
-            onClick = {}
+            onClick = { showDetail = true }
         )
     }
+
+    // 세부 모달 표시
+    if (showDetail) {
+        DetailDialog(onDismiss = { showDetail = false })
+    }
+
 }
 
 @Composable
