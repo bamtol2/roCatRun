@@ -10,9 +10,15 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class KaKaoRedirectHandler : Activity(){
-
+    companion object{
+        private var isCodeHandled = false // 인가 코드가 이미 처리되었는지 확인하는 변수
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(isCodeHandled){
+            finish()
+            return
+        }
 
         val data: Uri? = intent?.data
         val code = data?.getQueryParameter("code")

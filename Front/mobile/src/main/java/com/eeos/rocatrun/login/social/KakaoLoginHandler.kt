@@ -27,8 +27,9 @@ object KakaoLoginHandler{
                 .appendQueryParameter("redirect_uri", REDIRECT_URI)
                 .appendQueryParameter("response_type", "code")
                 .build()
-            val browserIntent = Intent(Intent.ACTION_VIEW, authorizationUri)
-            ContextCompat.startActivity(context, browserIntent, null)
+            Log.i("Authorization URL", authorizationUri.toString())
+            val customTabsIntent = CustomTabsIntent.Builder().build()
+            customTabsIntent.launchUrl(context, authorizationUri)
         } catch (e: Exception){
             Log.e("카카오 로그인 시도", "로그인 오류", e)
             onError(e)

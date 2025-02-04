@@ -131,8 +131,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 onClick = {
                     KakaoLoginHandler.performLogin(
                         context = context,
-                        onSuccess = {authCode ->
-                            Log.i("LoginScreen", "인가 코드 성공: $authCode")
+                        onSuccess = {code ->
+                            Log.i("LoginScreen", "인가 코드 성공: $code")
                         },
                         onError = { error ->
                             Log.e("LoginScreen", "카카오 로그인 오류", error)
