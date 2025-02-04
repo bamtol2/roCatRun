@@ -49,14 +49,17 @@ import com.eeos.rocatrun.login.social.LoginResponse
 
 // loginRespons = 백엔드에서 받아온 응답
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse? = null) {
+fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    var userInfo by remember { mutableStateOf<LoginResponse?>(null) }
+    var userInfo by remember { mutableStateOf(loginResponse) }
     // 응답이 업데이트되면 showDialog를 true로 설정
-    LaunchedEffect(loginResponse) {
-        if (loginResponse != null) {
+    LaunchedEffect(userInfo) {
+        if (userInfo != null) {
             showDialog = true
+            Log.i("로그인 스크린", "유저 정보 모달 표시: $userInfo")
+        } else {
+            Log.e("로그인 스크린", "리스폰스 null")
         }
     }
 
@@ -146,6 +149,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse? = 
 
     // 모달 표시(플래그가 트루이고 유저정보를 받아왔을 때만)
     if (showDialog && userInfo != null) {
+        Log.i("로그인 스크린", "유저 정보 입력 모달 켜짐 $userInfo")
         UserInfoDialog(
             userInfo = userInfo,
             onDismiss = { showDialog = false },

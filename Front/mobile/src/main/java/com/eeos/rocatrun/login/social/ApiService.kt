@@ -9,8 +9,7 @@ import retrofit2.http.Query
 
 interface ApiService {
     @GET("/api/auth/callback/kakao")
-    @FormUrlEncoded
     fun kakaoCallback(
-        @Field("code") code: String
+        @Query("code") code: String
     ): Call<LoginResponse>
 }
