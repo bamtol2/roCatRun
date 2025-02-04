@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.login
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
@@ -42,7 +43,8 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.gif.AnimatedImageDecoder
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-
+import com.eeos.rocatrun.home.HomeActivity
+import androidx.compose.material.AlertDialog
 
 
 @Composable
@@ -81,11 +83,11 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 .width(350.dp)
                 .height(370.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.login_bg_earth),
-                contentDescription = "Earth",
+            GifImage(
+
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
+                gifResId = R.drawable.login_gif_earth
+
             )
             GifImage(
                 modifier = Modifier
@@ -165,22 +167,22 @@ fun UserInfoDialog(
 ) {
     // 사용자 닉네임
     var nickname by remember { mutableStateOf("") }
-    // 프로필 이미지 URI
+    var showNicknameAlert by remember { mutableStateOf(false) } // 경고 알림 표시 여부
     var profileImageUri by remember { mutableStateOf<Uri?>(null) }
-    // 이미지 선택 런처 생성
+    val context = LocalContext.current
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        // 사용자가 선택한 이미지 URI 저장
         profileImageUri = uri
     }
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(1f)
+                .fillMaxWidth()
                 .background(Color.Transparent)
         ) {
-            // 테두리 이미지
             Image(
                 painter = painterResource(id = borderImageResId),
                 contentDescription = "Dialog Border",
@@ -197,7 +199,6 @@ fun UserInfoDialog(
                     .padding(32.dp)
                     .fillMaxWidth()
             ) {
-                // "유저 정보 입력" 텍스트
                 Text(
                     text = "유저 정보 입력",
                     style = TextStyle(
@@ -206,12 +207,9 @@ fun UserInfoDialog(
                         fontFamily = FontFamily(Font(R.font.neodgm)),
                         textAlign = TextAlign.Center
                     ),
-                    modifier = Modifier
-                        .offset(y = 50.dp)
-
+                    modifier = Modifier.offset(y = 50.dp)
                 )
 
-                // 프로필 이미지
                 Image(
                     painter = if (profileImageUri != null)
                         rememberAsyncImagePainter(model = profileImageUri)
@@ -226,62 +224,56 @@ fun UserInfoDialog(
                         .clickable {
                             imagePickerLauncher.launch("image/*")
                         },
-
                     contentScale = ContentScale.Crop
                 )
-                Text(
-                    text = "닉네임",
-                    style = TextStyle(
-                        fontSize = 24.sp,
-                        color = Color.White,
-                        fontFamily = FontFamily(Font(R.font.neodgm)),
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier
-                        .offset(y = 80.dp)
 
-                )
-                Spacer(modifier = Modifier.height(50.dp))
-                // 닉네임 입력 및 중복 확인 버튼
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = 15.dp)
+                Spacer(modifier = Modifier.height(80.dp))
+
+                // 닉네임 입력 필드
+                Box(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    TextField(
+                        value = nickname,
+                        onValueChange = { newNickname ->
+                            if (newNickname.length <= 8) {
+                                nickname = newNickname
+                            } else {
+                                showNicknameAlert = true // 경고 알림 표시
+                            }
+                        },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(R.font.neodgm))
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
+                        placeholder = {
+                            Text(
+                                text = "닉네임을 입력하세요",
+                                color = Color.Gray,
+                                style = TextStyle(
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily(Font(R.font.neodgm))
+                                )
+                            )
+                        }
+                    )
+
+                    // 중복 확인 버튼
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-
-
-                    ) {
-                        TextField(
-                            value = nickname,
-                            onValueChange = {newNickname -> nickname = newNickname},
-                            singleLine = true,
-                            textStyle = TextStyle(
-                                fontSize = 16.sp,
-                                fontFamily = FontFamily(Font(R.font.neodgm))
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth(),
-
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // 네모 모양의 중복 확인 버튼
-                    Box(
-                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 10.dp)
                             .background(Color(0xFF00FFCC), shape = RoundedCornerShape(8.dp))
-                            .padding(vertical = 10.dp, horizontal = 2.dp)
-                            .clickable { /* 중복 확인 로직 작성해야함*/ },
+                            .padding(vertical = 8.dp, horizontal = 16.dp)
+                            .clickable { /* 중복 확인 로직 */ },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "중복 확인",
-//                            modifier = Modifier.offset(y=15.dp),
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 color = Color.Black,
@@ -294,7 +286,6 @@ fun UserInfoDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // OK 버튼
                 Image(
                     painter = painterResource(id = okButtonImageResId),
                     contentDescription = "OK Button",
@@ -302,12 +293,42 @@ fun UserInfoDialog(
                         .width(150.dp)
                         .height(70.dp)
                         .offset(y = 40.dp)
-                        .clickable(onClick = onConfirm) // Intent 사용해서 회원 가입 완료 시 메인 페이지로 이동하도록 수정(메인 페이지 완료시)
+                        .clickable {
+                            val intent = Intent(context, HomeActivity::class.java)
+                            context.startActivity(intent)
+                        }
                 )
             }
         }
     }
+
+    // 닉네임 경고 알림 다이얼로그
+    if (showNicknameAlert) {
+        AlertDialog(
+            onDismissRequest = { showNicknameAlert = false },
+            confirmButton = {
+                Text(
+                    text = "확인",
+                    modifier = Modifier
+                        .clickable { showNicknameAlert = false }
+                        .padding(8.dp),
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "닉네임은 최대 8글자까지 입력 가능합니다.",
+                    style = TextStyle(fontSize = 16.sp, color = Color.Black)
+                )
+            }
+        )
+    }
 }
+
 
 @Composable
 fun GifImage(modifier: Modifier = Modifier, gifResId: Int) {
