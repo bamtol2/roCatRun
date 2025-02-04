@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.game
 
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,11 +36,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.home.HomeActivity
 
 @Composable
 fun MultiLoseScreen() {
 
     val pagerState = rememberPagerState(pageCount = {2})
+    val context = LocalContext.current
 
     Dialog(
         onDismissRequest = { /**/ },
@@ -128,8 +132,8 @@ fun MultiLoseScreen() {
                         // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
                             // 홈화면으로 이동.
-//                            val intent = Intent(context, Loading::class.java)
-//                            context.startActivity(intent)
+                            val intent = Intent(context, HomeActivity::class.java)
+                                context.startActivity(intent)
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
