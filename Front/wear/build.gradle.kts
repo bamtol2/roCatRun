@@ -36,9 +36,28 @@ android {
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.0"  // Compose와 Accompanist 호환성에 맞는 최신 버전
+    }
 }
 
 dependencies {
+    // 위치
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // 추가
+    implementation("androidx.wear:wear:1.3.0")
+    implementation("androidx.appcompat:appcompat:1.7.0-alpha03")
+    implementation("androidx.appcompat:appcompat-resources:1.7.0-alpha03")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    // Compose 공식 Pager 라이브러리 추가
+    implementation("androidx.compose.foundation:foundation:1.6.2")
+    implementation("androidx.compose.foundation:foundation-layout:1.6.2")
+    // Data Layer API
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
+
+
+
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -49,6 +68,7 @@ dependencies {
     implementation(libs.androidx.wear.tooling.preview)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.material3.android)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)

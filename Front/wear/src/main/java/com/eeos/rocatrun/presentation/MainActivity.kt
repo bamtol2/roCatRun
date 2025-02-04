@@ -1,72 +1,174 @@
-/* While this template provides a good starting point for using Wear Compose, you can always
- * take a look at https://github.com/android/wear-os-samples/tree/main/ComposeStarter to find the
- * most up to date changes to the libraries and their usages.
- */
-
 package com.eeos.rocatrun.presentation
 
+import android.util.Log
 import android.os.Bundle
+import android.os.Build
+import androidx.annotation.RequiresApi
+import android.net.Uri
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
-import androidx.wear.tooling.preview.devices.WearDevices
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.presentation.theme.RoCatRunTheme
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
+import android.content.Context
+import android.widget.Toast
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
-
         super.onCreate(savedInstanceState)
 
-        setTheme(android.R.style.Theme_DeviceDefault)
-
         setContent {
-            WearApp("Android")
+            SplashScreen()
+        }
+    }
+
+    // 모바일 앱 실행 요청 함수
+    fun startMobileApp() {
+        val messageClient: MessageClient = Wearable.getMessageClient(this)
+        val path = "/start_mobile_app"
+        val messageData = "Start Game".toByteArray()
+
+        Wearable.getNodeClient(this).connectedNodes.addOnSuccessListener { nodes ->
+            if (nodes.isNotEmpty()) {
+                val nodeId = nodes.first().id
+                Log.d("WearApp", "연결된 노드: ${nodes.first().displayName}")
+
+                messageClient.sendMessage(nodeId, path, messageData).apply {
+                    addOnSuccessListener {
+                        Log.d("Wear APP", "메시지 전송 성공")
+                        Toast.makeText(this@MainActivity, "모바일 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
+                    }
+                    addOnFailureListener {
+                        Toast.makeText(this@MainActivity, "모바일 앱 전송 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Log.d("WearApp", "연결된 노드가 없습니다.")
+                Toast.makeText(this, "연결된 디바이스가 없습니다.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
-
 @Composable
-fun WearApp(greetingName: String) {
-    RoCatRunTheme {
-        Box(
+fun SplashScreen() {
+    val context = LocalContext.current
+    val mainActivity = context as MainActivity  // MainActivity의 메서드 호출을 위해 캐스팅
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "로캣냥",
+            style = TextStyle(
+                fontSize = 30.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.neodgm))
+            ),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "폰으로 이동해서\n게임을 시작해주세요",
+            style = TextStyle(
+                fontSize = 20.sp,
+                color = Color.White,
+                fontFamily = FontFamily(Font(R.font.neodgm)),
+                textAlign = TextAlign.Center
+            )
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
+// 버튼들 배치
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            TimeText()
-            Greeting(greetingName = greetingName)
+            // 확인 버튼
+            Button(
+                onClick = {
+                    mainActivity.startMobileApp()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00FFCC)
+                ),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .width(69.dp)
+                    .height(34.dp)
+                    .padding(horizontal = 2.dp)
+            ) {
+                Text(
+                    text = "확인",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(R.font.neodgm))
+                    ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false  // 줄바꿈 방지
+                )
+            }
+
+            // 게임 시작 버튼
+            Button(
+                onClick = {
+                    val intent = Intent(context, RunningActivity::class.java)
+                    context.startActivity(intent)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFA500)
+                ),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .width(69.dp)
+                    .height(34.dp)
+                    .padding(horizontal = 3.dp)
+            ) {
+                Text(
+                    text = "게임",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(R.font.neodgm))
+                    ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false  // 줄바꿈 방지
+                )
+            }
         }
+
     }
-}
-
-@Composable
-fun Greeting(greetingName: String) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colors.primary,
-        text = stringResource(R.string.hello_world, greetingName)
-    )
-}
-
-@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
-@Composable
-fun DefaultPreview() {
-    WearApp("Preview Android")
 }

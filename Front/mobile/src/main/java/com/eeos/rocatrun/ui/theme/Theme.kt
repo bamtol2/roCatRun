@@ -1,6 +1,5 @@
 package com.eeos.rocatrun.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -43,7 +42,7 @@ private val LightColorScheme = lightColorScheme(
 // FontFamily 설정 (폰트 추가)
 val MyFontFamily = FontFamily(
     Font(R.font.neodgm, FontWeight.Normal), // 기본 글꼴
-    Font(R.font.neodgm, FontWeight.Bold)    // 볼드 글꼴
+    Font(R.font.neodgm, FontWeight.Bold),    // 볼드 글꼴
 )
 
 // Typography 설정 (전체 앱 글꼴 변경)
@@ -55,7 +54,8 @@ val AppTypography = Typography(
     titleLarge = TextStyle(
         fontFamily = MyFontFamily,
         fontSize = 20.sp
-    )
+    ),
+
 )
 
 @Composable

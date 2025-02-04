@@ -1,0 +1,158 @@
+package com.eeos.rocatrun.ranking
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.eeos.rocatrun.R
+import com.eeos.rocatrun.ui.theme.MyFontFamily
+
+data class RankData(
+    val rank: Int,
+    val name: String,
+    val level: String,
+    val highlight: Boolean
+)
+
+@Composable
+fun RankingDialog(onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .width(400.dp)
+                .height(650.dp)
+                .padding(0.dp),
+//                .background(Color(0x889E3434)), // 영역 확인용
+            contentAlignment = Alignment.Center,
+        ) {
+            // 모달 배경 이미지
+            Image(
+                painter = painterResource(id = R.drawable.home_bg_modal),
+                contentDescription = "Modal Background",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight(0.9f)
+                    .padding(horizontal = 20.dp, vertical = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 모달 Title
+                Text(text = "랭킹", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Ranking Data
+                val currentUser = RankData(3, "과즙가람", "Lv.11", true)
+                val rankingList = listOf(
+                    RankData(1, "타노스", "Lv.28", false),
+                    RankData(2, "찬주쌤", "Lv.12", false),
+                    RankData(4, "마이애미", "Lv.10", false),
+                    RankData(5, "규리규리", "Lv.7", false),
+                    RankData(6, "헤로로", "Lv.3", false),
+                    RankData(7, "헤로로", "Lv.2", false),
+                    RankData(8, "헤로로", "Lv.1", false),
+                    RankData(9, "헤로로", "Lv.1", false),
+                )
+
+                // 현재 유저 정보
+                RankingItem(rankData = currentUser, highlight = true)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 전체 유저 정보
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    rankingList.forEach { item ->
+                        RankingItem(rankData = item, highlight = false)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 닫기 버튼
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    modifier = Modifier
+                        .border(
+                            width = 2.dp,
+                            color = Color(0xFF36DBEB),
+                            shape = RoundedCornerShape(15.dp)
+                        ),
+                ) {
+                    Text(
+                        text = "닫기",
+                        style = TextStyle(
+                            fontFamily = MyFontFamily,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+// 화면 구성 일부
+@Composable
+fun RankingItem(rankData: RankData, highlight: Boolean) {
+    val backgroundColor = if (highlight) Color(0xDAFDFDFD) else Color.Transparent
+    val textColor = if (highlight) Color.Black else Color.White
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, shape = RoundedCornerShape(8.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = "${rankData.rank}위", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textColor)
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Image(
+            painter = painterResource(id = R.drawable.all_img_whitecat),
+            contentDescription = "Profile Image",
+            modifier = Modifier.size(30.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(text = rankData.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textColor)
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(text = rankData.level, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(
+            0xFFFFC107
+        )
+        )
+    }
+
+    if (!highlight) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(0.5.dp)
+                .background(Color.White)
+        )
+    }
+}
