@@ -2,13 +2,11 @@ package com.ssafy.roCatRun.domain.game.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
 @AllArgsConstructor
-public class MatchStatus {
-    private String roomId;
-    private int currentPlayers;
+public class PlayerLeftResponse {
+    private String userId;
+    private int remainingPlayers;
     private int maxPlayers;
 }

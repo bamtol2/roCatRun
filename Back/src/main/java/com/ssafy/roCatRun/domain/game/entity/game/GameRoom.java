@@ -14,6 +14,7 @@ public class GameRoom {
     private BossLevel bossLevel;
     private int maxPlayers;
     private boolean isRandomMatch;
+    private boolean isPrivate;
     private GameStatus status = GameStatus.WAITING;
     private List<Player> players = new ArrayList<>();
     private int bossHealth;
