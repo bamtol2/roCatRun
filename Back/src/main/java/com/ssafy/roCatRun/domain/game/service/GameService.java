@@ -176,8 +176,8 @@ public class GameService {
                 "게임이 곧 시작됩니다!"
         ));
 
-        // 3초 뒤 카운트다운
-        AtomicInteger count = new AtomicInteger(3);
+        // 5초 뒤 카운트다운
+        AtomicInteger count = new AtomicInteger(5);
         ScheduledFuture<?> countdownTask = scheduler.scheduleAtFixedRate(()->{
             if(count.get()>0){
                 //카운트다운 전송
@@ -199,7 +199,7 @@ public class GameService {
         }, 0, 1, TimeUnit.SECONDS);
 
         // 에러 핸들링(카운트다운 완료 시 태스크 종료)
-        scheduler.schedule(()->countdownTask.cancel(true), 4, TimeUnit.SECONDS);
+        scheduler.schedule(()->countdownTask.cancel(true), 6, TimeUnit.SECONDS);
     }
 
 
