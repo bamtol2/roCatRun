@@ -17,6 +17,10 @@
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
         <activity
+            android:name=".stats.StatsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
