@@ -60,6 +60,10 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
+    // coil 추가
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-gif:3.0.4")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
