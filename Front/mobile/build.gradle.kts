@@ -52,6 +52,9 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
+//    // 네이버 SDK
+//    implementation("com.navercorp.nid:oauth:5.10.0")
+//    implementation("com.navercorp.nid:oauth-jdk8:5.10.0")
 
     // Retrofit
     implementation(libs.retrofit)

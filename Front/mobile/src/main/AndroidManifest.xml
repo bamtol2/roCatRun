@@ -45,17 +45,22 @@
         </activity>
 
         <activity
-            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
-            android:exported="true">
+            android:name=".login.social.KaKaoRedirectHandler"
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:host="oauth"
-                    android:scheme="kakaoee4a19a75c1dad14d8d226e4285b1cba" />
+                    android:scheme="http"
+                    android:host="i12e205.p.ssafy.io"
+                    android:port="8080"
+                    android:pathPrefix="/api/auth/callback/kakao"
+                    />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>
