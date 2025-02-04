@@ -164,17 +164,19 @@ fun MainButtons() {
         }
 
         // 랜덤 찾기 버튼
-        CustomButton(
-            buttonImage = R.drawable.game_btn_darkblue,
-            buttonText = "랜덤 찾기",
-            iconImage = R.drawable.game_icon_random,
-            // 클릭하면 랜덤 찾는중 화면 이동
-            onClick = {
-                // 랜덤 매칭중 페이지로 이동
-                val intent = Intent(context, Matching::class.java)
-                context.startActivity(intent)
-            }
-        )
+        if (selectedButton == "random") {
+            RandomContent(
+                onBack = { selectedButton = null }
+            )
+        } else {
+            CustomButton(
+                buttonImage = R.drawable.game_btn_darkblue,
+                buttonText = "랜덤 찾기",
+                iconImage = R.drawable.game_icon_random,
+                // 클릭하면 랜덤 찾는중 화면 이동
+                onClick = { selectedButton = "random" }
+            )
+        }
     }
 }
 
@@ -325,7 +327,7 @@ fun CreateRoomContent(onBack: () -> Unit) {
                     generatedCode = code,
                     onGenerateClick = {
                         // 여기에 코드 생성 로직 추가
-                        code = "TK38NBBF" // 임시로 하드코딩
+                        code = "TK3NBF" // 임시로 6자 하드코딩
                     }
                 )
             }
@@ -387,7 +389,7 @@ fun CodeGenerationSection(
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontSize = 25.sp
                         ),
-                        modifier = Modifier.align(Alignment.CenterStart)
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 } else {
                     Box(
@@ -428,7 +430,8 @@ fun CodeGenerationSection(
 fun InviteCodeContent(onBack: () -> Unit) {
     val context = LocalContext.current
     var inviteCode by remember { mutableStateOf("") }
-    val maxLength = 8
+    // 코드 최대 글자
+    val maxLength = 6
 
     Box(
         modifier = Modifier
@@ -550,9 +553,178 @@ fun InviteCodeContent(onBack: () -> Unit) {
     }
 }
 
+// 랜덤 찾기 extend 창
+@Composable
+fun RandomContent(onBack: () -> Unit) {
+    val context = LocalContext.current
+    var randomDifficulty by remember { mutableStateOf("") }
+    var randomPeople by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 3.dp,
+                color = Color(0xFF6A00F4)
+            )
+            .background(color = Color(0xB2000000))
+            .padding(0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(25.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF6A00F4))
+                    .height(50.dp)
+            ){
+                Text(
+                    text = "랜덤 찾기",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = Color.Black,
+                        fontSize = 30.sp
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 난이도 선택
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 25.dp)
+                ) {
+                    Text(
+                        text = ">> ",
+                        color = Color(0xFF6A00F4),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Text(
+                        text = "난이도를 선택해 주세요",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp
+                        )
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    RandomText(
+                        text = "상",
+                        isSelected = randomDifficulty == "상",
+                        onClick = { randomDifficulty = "상" }
+                    )
+                    RandomText(
+                        text = "중",
+                        isSelected = randomDifficulty == "중",
+                        onClick = { randomDifficulty = "중" }
+                    )
+                    RandomText(
+                        text = "하",
+                        isSelected = randomDifficulty == "하",
+                        onClick = { randomDifficulty = "하" }
+                    )
+                }
+            }
+
+            // 인원 선택
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 25.dp)
+                ) {
+                    Text(
+                        text = ">> ",
+                        color = Color(0xFF6A00F4),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp
+                        )
+                    )
+                    Text(
+                        text = "인원을 선택해 주세요",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp
+                        )
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    RandomText(
+                        text = "1인",
+                        isSelected = randomPeople == "1인",
+                        onClick = { randomPeople = "1인" }
+                    )
+                    RandomText(
+                        text = "2인",
+                        isSelected = randomPeople == "2인",
+                        onClick = { randomPeople = "2인" }
+                    )
+                    RandomText(
+                        text = "3인",
+                        isSelected = randomPeople == "3인",
+                        onClick = { randomPeople = "3인" }
+                    )
+                    RandomText(
+                        text = "4인",
+                        isSelected = randomPeople == "4인",
+                        onClick = { randomPeople = "4인" }
+                    )
+                }
+            }
+            // 입장 버튼
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .border(
+                        width = 2.dp,
+                        color = Color(0xFF6A00F4),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    // 입장 클릭하면 대기중 화면 띄우기
+                    .clickable {
+                        // Matching으로 이동
+                        val intent = Intent(context, Matching::class.java)
+                        context.startActivity(intent)
+                    }
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    "입장",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 20.sp
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(15.dp))
+        }
+    }
+}
+
 // 메인 3개 버튼 양식
 @Composable
-fun CustomButton(
+private fun CustomButton(
     buttonImage: Int,
     buttonText: String,
     iconImage: Int,
@@ -595,9 +767,9 @@ fun CustomButton(
     }
 }
 
-// 선택한 텍스트 색 변경
+// 방 선택한 텍스트 색 변경
 @Composable
-fun SelectableText(
+private fun SelectableText(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit
@@ -609,6 +781,39 @@ fun SelectableText(
         Text(
             text = text,
             color = if (isSelected) Color(0xFFFF00CC) else Color(0xFF796D76),
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = 25.sp,
+                drawStyle = Stroke(
+                    width = 10f,
+                    join = StrokeJoin.Round
+                )
+            )
+        )
+        // 기본 텍스트
+        Text(
+            text = text,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = 25.sp
+            )
+        )
+    }
+}
+
+// 랜덤 선택한 텍스트 색 변경
+@Composable
+private fun RandomText(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        // Stroke 텍스트
+        Text(
+            text = text,
+            color = if (isSelected) Color(0xFF6A00F4) else Color(0xFF796D76),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontSize = 25.sp,
                 drawStyle = Stroke(

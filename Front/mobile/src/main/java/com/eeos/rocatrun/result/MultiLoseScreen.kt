@@ -1,4 +1,5 @@
-package com.eeos.rocatrun.game
+package com.eeos.rocatrun.result
+
 
 import android.content.Intent
 import androidx.compose.foundation.Image
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,21 +42,23 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.game.GifImage
 import com.eeos.rocatrun.home.HomeActivity
 import kotlinx.coroutines.delay
 
 @Composable
-fun MultiWinScreen() {
-    // confetti GIF 표시 여부 상태
-    var showConfetti by remember { mutableStateOf(true) }
+fun MultiLoseScreen() {
+    // Thunder GIF 표시 여부 상태
+    var showThunder by remember { mutableStateOf(true) }
+
+    val pagerState = rememberPagerState(pageCount = {2})
     val context = LocalContext.current
 
-    // 모달이 시작되면 3초 후에 confetti 숨김
+    // 모달이 시작되면 2초 뒤에 gif 숨김
     LaunchedEffect(Unit) {
-        delay(4000L)
-        showConfetti = false
+        delay(2000L)
+        showThunder = false
     }
-    val pagerState = rememberPagerState(pageCount = {2})
 
     Dialog(
         onDismissRequest = { /**/ },
@@ -86,21 +90,20 @@ fun MultiWinScreen() {
                 Spacer(modifier = Modifier.height(60.dp))
 
                 Text(
-                    text = "정복 완료",
+                    text = "다음 기회에",
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = Color.White,
                         fontSize = 32.sp
                     )
                 )
                 Image(
-                    painter = painterResource(id = R.drawable.game_img_wincat),
+                    painter = painterResource(id = R.drawable.game_img_losecat),
                     contentDescription = null,
                     modifier = Modifier
                         .size(130.dp)
                 )
 
                 // 게임 결과 정보 HorizontalPager
-
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
@@ -145,7 +148,7 @@ fun MultiWinScreen() {
                         .clickable {
                             // 홈화면으로 이동.
                             val intent = Intent(context, HomeActivity::class.java)
-                            context.startActivity(intent)
+                                context.startActivity(intent)
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
@@ -159,17 +162,18 @@ fun MultiWinScreen() {
                 }
             }
 
-            // confetti GIF
-            if (showConfetti) {
+            // thunder GIF
+            if (showThunder) {
                 GifImage(
-                    modifier = Modifier.width(360.dp),
-                    gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.game_gif_confetti}"
+                    modifier = Modifier
+                        .height(220.dp)
+                        .align(Alignment.TopCenter)
+                        .offset(y = 35.dp),
+                    gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.game_gif_thunder}"
                 )
             }
         }
-
     }
-
 }
 
 @Composable
@@ -275,7 +279,7 @@ private fun SecondResultPage() {
                 participants.forEachIndexed { index, (nickname, distance, reward) ->
                     RankingRow(
                         rank = index + 1,
-                        profileImage = R.drawable.game_img_wincat,
+                        profileImage = R.drawable.game_img_losecat,
                         nickname = nickname,
                         distance = distance,
                         reward = reward,
@@ -342,26 +346,10 @@ private fun RankingRow(
             ) {
                 // 순위 표시 (메달 이미지 또는 텍스트)
                 Box(modifier = Modifier.width(24.dp)) {
-                    when (rank) {
-                        1 -> Image(
-                            painter = painterResource(id = R.drawable.game_img_goldpaw),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        2 -> if (totalParticipants >= 2) Image(
-                            painter = painterResource(id = R.drawable.game_img_silverpaw),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        3 -> if (totalParticipants >= 3) Image(
-                            painter = painterResource(id = R.drawable.game_img_bronzepaw),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        else -> Text(text = "-", color = Color.White, fontSize = 24.sp,
+                     Text(text = "-", color = Color.White, fontSize = 24.sp,
                             modifier = Modifier.align(Alignment.Center))
-                    }
                 }
+
 
                 Spacer(modifier = Modifier.width(5.dp))
                 Image(
@@ -398,4 +386,3 @@ private fun RankingRow(
         }
     }
 }
-

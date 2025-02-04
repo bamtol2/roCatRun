@@ -31,6 +31,10 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.result.MultiLoseScreen
+import com.eeos.rocatrun.result.MultiWinScreen
+import com.eeos.rocatrun.result.SingleLoseScreen
+import com.eeos.rocatrun.result.SingleWinScreen
 
 
 @Composable
