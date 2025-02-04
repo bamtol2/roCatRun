@@ -40,6 +40,8 @@ android {
 }
 
 dependencies {
+    // Data Layer API
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.wearable)
@@ -68,4 +70,9 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     wearApp(project(":wear"))
+
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
+
+    implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
 }

@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.home.HomeActivity
 
 
 @Composable
@@ -91,6 +92,8 @@ fun GameroomScreen() {
 fun TopNavigation(
     onInfoClick: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -99,7 +102,10 @@ fun TopNavigation(
             .height(50.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        IconButton(onClick = { /* 홈 으로 이동 */ }) {
+        IconButton(onClick = {
+            val intent = Intent(context, HomeActivity::class.java)
+            context.startActivity(intent)
+        }) {
             Image(
                 painter = painterResource(id = R.drawable.game_icon_home),
                 contentDescription = "Home",
