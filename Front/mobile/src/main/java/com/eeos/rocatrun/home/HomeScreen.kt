@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.home
 
+import android.content.Intent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
@@ -18,11 +20,14 @@ import androidx.compose.ui.unit.*
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.ranking.RankingDialog
+import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
 fun HomeScreen() {
+    val context = LocalContext.current
+
     // 랭킹 모달 변수
     var showRanking by remember { mutableStateOf(false) }
 
@@ -81,7 +86,7 @@ fun HomeScreen() {
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
-                    onClick = { /* 통계 화면으로 전환 */ },
+                    onClick = { context.startActivity(Intent(context, StatsActivity::class.java)) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     shape = RoundedCornerShape(0.dp),
                     contentPadding = PaddingValues(0.dp)

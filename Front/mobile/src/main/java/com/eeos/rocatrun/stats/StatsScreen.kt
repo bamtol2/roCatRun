@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.stats
 
+import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -17,12 +18,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun StatsScreen() {
+    val context = LocalContext.current
+
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("일", "주", "월")
     val pagerState = rememberPagerState(
@@ -52,7 +57,7 @@ fun StatsScreen() {
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 10.dp, y = 0.dp),
-                onClick = { /* 홈 화면으로 이동 */ },
+                onClick = { context.startActivity(Intent(context, HomeActivity::class.java)) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 shape = RoundedCornerShape(0.dp),
                 contentPadding = PaddingValues(0.dp)
