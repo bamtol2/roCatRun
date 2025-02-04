@@ -20,29 +20,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RoCatRunTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "게임 시작",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                // 로그인 여부 확인
+                // 로그인이 안되어 있다면 LoginActivity로 이동
+
+                // 로그인이 되어 있다면 HomeActivity로 이동
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RoCatRunTheme {
-        Greeting("게임 시작")
     }
 }
