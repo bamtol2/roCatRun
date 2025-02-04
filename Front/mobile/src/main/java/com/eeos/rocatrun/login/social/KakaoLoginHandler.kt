@@ -34,7 +34,5 @@ object KakaoLoginHandler{
             Log.e("카카오 로그인 시도", "로그인 오류", e)
             onError(e)
         }
-
-
     }
 }

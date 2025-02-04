@@ -133,6 +133,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                         context = context,
                         onSuccess = {code ->
                             Log.i("LoginScreen", "인가 코드 성공: $code")
+                            showDialog = true
                         },
                         onError = { error ->
                             Log.e("LoginScreen", "카카오 로그인 오류", error)

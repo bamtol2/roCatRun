@@ -15,6 +15,7 @@ class KaKaoRedirectHandler : Activity(){
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("시작", "시작")
         if(isCodeHandled){
             finish()
             return
