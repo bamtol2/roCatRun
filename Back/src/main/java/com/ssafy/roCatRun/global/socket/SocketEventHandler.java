@@ -3,12 +3,13 @@ package com.ssafy.roCatRun.global.socket;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.google.gson.JsonObject;
+import com.ssafy.roCatRun.domain.game.dto.request.CreateRoomRequest;
+import com.ssafy.roCatRun.domain.game.dto.request.JoinRoomRequest;
+import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.game.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.dto.request.AuthenticateRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.MatchRequest;
-import com.ssafy.roCatRun.domain.game.dto.response.AuthResponse;
-import com.ssafy.roCatRun.domain.game.dto.response.MatchStatus;
 import com.ssafy.roCatRun.domain.game.service.GameService;
 import com.ssafy.roCatRun.global.util.JwtUtil;
 import jakarta.annotation.PostConstruct;
@@ -35,7 +36,15 @@ public class SocketEventHandler {
 
         // 유저 인증 이벤트
         server.addEventListener("authenticate", AuthenticateRequest.class,
-                (client, data, ack) -> handleAuthentication(client, data));
+                (client,  data, ack) -> handleAuthentication(client, data));
+
+        // 비공개 방 생성 이벤트
+        server.addEventListener("createRoom", CreateRoomRequest.class,
+                (client, data, ack)->handleCreateRoom(client, data));
+
+        // 초대 코드로 방 참여 이벤트
+        server.addEventListener("joinRoom", JoinRoomRequest.class,
+                (client, data,ack)->handleJoinRoom(client, data));
 
         // 랜덤 매칭 이벤트
         server.addEventListener("randomMatch", MatchRequest.class,
@@ -52,22 +61,71 @@ public class SocketEventHandler {
         server.start();
     }
 
+    private void handleJoinRoom(SocketIOClient client, JoinRoomRequest request) {
+        String userId = client.get("userId");
+        if(userId==null){
+            client.sendEvent("error", "Not authenticated");
+            return;
+        }
+
+        try{
+            GameRoom room = gameService.joinRoomByInviteCode(userId, request.getInviteCode());
+            client.joinRoom(room.getId());
+
+            // 방 참여 성공 응답
+            client.sendEvent("roomJoined", new RoomJoinedResponse(
+                    room.getId(),
+                    room.getInviteCode(),
+                    room.getPlayers().size(),
+                    room.getMaxPlayers()
+            ));
+
+            // 같은 방의 다른 유저들에게 새 유저 입장 알림
+            server.getRoomOperations(room.getId()).sendEvent("playerJoined", new PlayerJoinedResponse(
+                    userId,
+                    room.getPlayers().size(),
+                    room.getMaxPlayers()
+            ));
+
+            // 게임 시작 조건 체크
+            gameService.checkAndStartGame(room);
+        }catch (Exception e){
+            client.sendEvent("error", e.getMessage());
+        }
+    }
+
+    private void handleCreateRoom(SocketIOClient client, CreateRoomRequest request) {
+        String userId = client.get("userId");
+        if(userId==null){
+            client.sendEvent("error", "Not authenticated");
+            return;
+        }
+
+        try{
+            GameRoom room = gameService.createPrivateRoom(userId, request);
+            client.joinRoom(room.getId());
+
+
+            client.sendEvent("roomCreated", new roomCreatedResponse(
+                    room.getId(),
+                    room.getInviteCode(),
+                    room.getPlayers().size(),
+                    room.getMaxPlayers()
+            ));
+
+            // 게임 시작 조건 체크
+            gameService.checkAndStartGame(room);
+        }catch (Exception e){
+            client.sendEvent("error", e.getMessage());
+        }
+    }
+
     private void handleConnect(SocketIOClient client) {
         log.info("Client connected: {}", client.getSessionId());
     }
 
-    private void handleDisconnect(SocketIOClient client) {
-        String socketId = client.getSessionId().toString();
-        sessionManager.getSession(socketId).ifPresent(session -> {
-            gameService.handleUserDisconnect(session.getUserId());
-            sessionManager.removeSession(socketId);
-        });
-        log.info("Client disconnected: {}", socketId);
-    }
-
     private void handleAuthentication(SocketIOClient client, AuthenticateRequest data) {
         try {
-            log.info("Received authentication request with token: {}", data.getToken());  // 추가
             // JWT 토큰 검증
             String userId = validateAndGetUserId(data.getToken());
 
@@ -104,11 +162,20 @@ public class SocketEventHandler {
             client.joinRoom(room.getId());
 
             // 매칭 상태 전송
-            client.sendEvent("matchStatus", new MatchStatus(
+            client.sendEvent("matchStatus", new MatchStatusResponse(
                     room.getId(),
                     room.getPlayers().size(),
                     room.getMaxPlayers()
             ));
+
+            // 같은 방의 다른 유저들에게 새 유저 입장 알림
+            server.getRoomOperations(room.getId()).sendEvent("playerJoined", new PlayerJoinedResponse(
+                    userId,
+                    room.getPlayers().size(),
+                    room.getMaxPlayers()));
+
+            // 게임 시작 조건 체크
+            gameService.checkAndStartGame(room);
 
         } catch (Exception e) {
             client.sendEvent("matchError", e.getMessage());
@@ -129,6 +196,14 @@ public class SocketEventHandler {
                     gameRoomManager.removeRoom(room.getId());
                 } else {
                     gameRoomManager.updateRoom(room);
+                    // 남은 플레이어들에게 알림
+                    server.getRoomOperations(room.getId()).sendEvent("playerLeft",
+                            new PlayerLeftResponse(
+                                    userId,
+                                    room.getPlayers().size(),
+                                    room.getMaxPlayers()
+                            )
+                    );
                 }
                 client.leaveRoom(room.getId());
             });
@@ -152,5 +227,35 @@ public class SocketEventHandler {
             throw new RuntimeException("Invalid token: userId not found");
         }
         return userId;
+    }
+
+    private void handleDisconnect(SocketIOClient client) {
+        String socketId = client.getSessionId().toString();
+        sessionManager.getSession(socketId).ifPresent(session -> {
+            String userId = session.getUserId();
+
+            gameRoomManager.findRoomByUserId(userId).ifPresent(room -> {
+                String roomId = room.getId();
+                room.getPlayers().removeIf(player -> player.getId().equals(userId));
+
+                if (room.getPlayers().isEmpty()) {
+                    gameRoomManager.removeRoom(roomId);
+                } else {
+                    gameRoomManager.updateRoom(room);
+
+                    // 남은 플레이어들에게 알림
+                    server.getRoomOperations(roomId).sendEvent("playerLeft",
+                            new PlayerLeftResponse(
+                                    userId,
+                                    room.getPlayers().size(),
+                                    room.getMaxPlayers()
+                            )
+                    );
+                }
+            });
+
+            sessionManager.removeSession(socketId);
+        });
+        log.info("Client disconnected: {}", socketId);
     }
 }
