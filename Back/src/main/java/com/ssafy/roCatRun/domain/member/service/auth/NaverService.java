@@ -218,6 +218,6 @@ public class NaverService {
                 TOKEN_EXPIRATION_TIME_MS
         );
 
-        return new LoginResponse(member.getId(), member.getNickname(), null, jwtTokens);
+        return new LoginResponse(jwtTokens);
     }
 }
