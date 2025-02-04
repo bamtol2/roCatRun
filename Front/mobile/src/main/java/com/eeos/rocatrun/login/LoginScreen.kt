@@ -42,34 +42,13 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.gif.AnimatedImageDecoder
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.eeos.rocatrun.login.social.GoogleLoginHandler
-import com.google.android.gms.auth.api.signin.GoogleSignIn
+
 
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier) {
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val googleLoginHandler = remember { GoogleLoginHandler(context).apply { initGoogleLogin() } }
-
-    // ActivityResultLauncher 설정
-    val googleSignInLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = googleLoginHandler.handleSignInResult(task)
-            if (account != null) {
-                Log.d("LoginScreen", "구글 로그인 성공: ${account.email}")
-                showDialog = true
-            } else {
-                Log.e("LoginScreen", "구글 로그인 실패",task.exception)
-            }
-        } catch (e: Exception) {
-            Log.e("LoginScreen", "로그인 예외 발생: ${e.message}")
-            // 사용자에게 실패 메시지 표시
-        }
-    }
 
 
         Column(
@@ -156,8 +135,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 backgroundColor = Color(0x4AFFFFFF),
                 iconResId = R.drawable.login_icon_google,
                 onClick = {
-                    val signInIntent = googleLoginHandler.getSignInIntent()
-                    googleSignInLauncher.launch(signInIntent)
+                    showDialog = true
                     }
             )
         }

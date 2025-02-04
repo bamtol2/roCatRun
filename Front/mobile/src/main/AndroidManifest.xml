@@ -35,15 +35,7 @@
             android:name=".login.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
-<!--           구글 서비스 메타데이터     -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="@string/google_app_id" /> <!-- google-services.json에서 자동으로 추가됨 -->
 
-<!--         Firebase 인증 관련 서비스 필요 시 -->
-        <meta-data
-            android:name="firebase_crashlytics_collection_enabled"
-            android:value="false" />
 
         <activity
             android:name=".game.GameRoom"
