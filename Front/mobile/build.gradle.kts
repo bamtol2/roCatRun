@@ -77,7 +77,5 @@ dependencies {
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
 
     // socket.io
-//    implementation ('io.socket:socket.io-client:2.0.0') {
-//        exclude group: 'org.json', module: 'json'
-//    }
+    implementation ("io.socket:socket.io-client:2.0.0")
 }
