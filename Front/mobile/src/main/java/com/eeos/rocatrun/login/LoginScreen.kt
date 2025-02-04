@@ -45,13 +45,20 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eeos.rocatrun.home.HomeActivity
 import androidx.compose.material.AlertDialog
+import com.eeos.rocatrun.login.social.LoginResponse
 
-
+// loginRespons = 백엔드에서 받아온 응답
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier) {
+fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse? = null) {
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
+    var userInfo by remember { mutableStateOf<LoginResponse?>(null) }
+    // 응답이 업데이트되면 showDialog를 true로 설정
+    LaunchedEffect(loginResponse) {
+        if (loginResponse != null) {
+            showDialog = true
+        }
+    }
 
         Column(
         modifier = modifier
@@ -111,14 +118,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 iconResId = R.drawable.login_icon_kakao,
                 onClick = {
                     KakaoLoginHandler.performLogin(
-                        context = context,
-                        onSuccess = {code ->
-                            Log.i("LoginScreen", "인가 코드 성공: $code")
-                            showDialog = true
-                        },
-                        onError = { error ->
-                            Log.e("LoginScreen", "카카오 로그인 오류", error)
-                        }
+                        context = context
+
                         )
 
                 }
@@ -143,11 +144,11 @@ fun LoginScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    // 모달 표시
-    if (showDialog) {
+    // 모달 표시(플래그가 트루이고 유저정보를 받아왔을 때만)
+    if (showDialog && userInfo != null) {
         UserInfoDialog(
+            userInfo = userInfo,
             onDismiss = { showDialog = false },
-            onConfirm = { showDialog = false },
             profileImageResId = R.drawable.login_img_profile,  // 프로필 이미지 리소스
             borderImageResId = R.drawable.login_bg_greenmodal, // 모달 테두리 이미지 리소스
             okButtonImageResId = R.drawable.login_btn_ok,   // OK 버튼 이미지 리소스
@@ -159,12 +160,14 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun UserInfoDialog(
+    userInfo : LoginResponse?,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
     profileImageResId: Int,
     borderImageResId: Int,
     okButtonImageResId: Int
 ) {
+    // 사용자 정보가 null이 아닌 경우만 모달 표시
+    if (userInfo == null) return
     // 사용자 닉네임
     var nickname by remember { mutableStateOf("") }
     var showNicknameAlert by remember { mutableStateOf(false) } // 경고 알림 표시 여부

@@ -9,16 +9,13 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 
 
-object KakaoLoginHandler{
+object KakaoLoginHandler {
     private const val KAKAO_AUTH_URL = "https://kauth.kakao.com/oauth/authorize"
     private const val CLIENT_ID = "08554835b2f79b10c4673f267862ac7f"
     private const val REDIRECT_URI = "http://i12e205.p.ssafy.io:8080/api/auth/callback/kakao"
 
-
-    fun performLogin(context: Context,
-                     onSuccess : (String) -> Unit,
-                     onError : (Throwable) -> Unit){
-        try{
+    fun performLogin(context: Context) {
+        try {
             val authorizationUri = Uri.Builder()
                 .scheme("https")
                 .authority("kauth.kakao.com")
@@ -27,12 +24,21 @@ object KakaoLoginHandler{
                 .appendQueryParameter("redirect_uri", REDIRECT_URI)
                 .appendQueryParameter("response_type", "code")
                 .build()
-            Log.i("Authorization URL", authorizationUri.toString())
-            val customTabsIntent = CustomTabsIntent.Builder().build()
-            customTabsIntent.launchUrl(context, authorizationUri)
-        } catch (e: Exception){
-            Log.e("카카오 로그인 시도", "로그인 오류", e)
-            onError(e)
+
+            Log.i("KakaoLoginHandler", "Authorization URL: $authorizationUri")
+
+            // Custom Tabs 실행
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setShareState(CustomTabsIntent.SHARE_STATE_OFF)
+                .build()
+            var texte = customTabsIntent.launchUrl(context, authorizationUri)
+            Log.i("message", "text : $context")
+//
+        } catch (e: Exception) {
+            Log.e("KakaoLoginHandler", "카카오 로그인 시도 중 오류 발생", e)
+
         }
     }
 }
+

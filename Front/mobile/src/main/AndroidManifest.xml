@@ -36,7 +36,6 @@
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
 
-
         <activity
             android:name=".game.GameRoom"
             android:exported="true" />
@@ -76,7 +75,7 @@
             android:name=".login.social.KaKaoRedirectHandler"
             android:exported="true"
             android:launchMode="singleTask">
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
