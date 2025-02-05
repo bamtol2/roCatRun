@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * GameRoomManager.java
- * 게임방 관리 클래스
+ * 게임방 관리 클래스(방 생성/삭제/조회 등 관리)
  */
 @Component
 @Slf4j

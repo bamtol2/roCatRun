@@ -3,13 +3,12 @@ package com.ssafy.roCatRun.global.socket;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.google.gson.JsonObject;
-import com.ssafy.roCatRun.domain.game.dto.request.CreateRoomRequest;
-import com.ssafy.roCatRun.domain.game.dto.request.JoinRoomRequest;
+import com.ssafy.roCatRun.domain.game.dto.request.*;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.manager.GameRoomManager;
-import com.ssafy.roCatRun.domain.game.dto.request.AuthenticateRequest;
-import com.ssafy.roCatRun.domain.game.dto.request.MatchRequest;
+import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
+import com.ssafy.roCatRun.domain.game.entity.raid.Player;
 import com.ssafy.roCatRun.domain.game.service.GameService;
 import com.ssafy.roCatRun.global.util.JwtUtil;
 import jakarta.annotation.PostConstruct;
@@ -18,6 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ public class SocketEventHandler {
     private final GameService gameService;
     private final GameRoomManager gameRoomManager;
     private final JwtUtil jwtUtil;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @PostConstruct
     public void init() {
@@ -54,12 +58,70 @@ public class SocketEventHandler {
         server.addEventListener("cancelMatch", JsonObject.class,
                 (client, data, ack) -> handleCancelMatch(client));
 
+
+        // 실시간 러닝 데이터 업데이트 이벤트
+        server.addEventListener("updateRunningData", RunningDataUpdateRequest.class,
+                (client, data, ack) -> handleRunningDataUpdate(client, data));
+
+        // 아이템 사용 이벤트
+        server.addEventListener("useItem", UseItemRequest.class,
+                (client, data, ack) -> handleItemUse(client));
+
         // 연결 상태 확인 이벤트
         server.addEventListener("ping", JsonObject.class,
                 (client, data, ack) -> handlePing(client));
 
         server.start();
     }
+
+    private void handleRunningDataUpdate(SocketIOClient client, RunningDataUpdateRequest data) {
+        String userId = client.get("userId");
+        if (userId == null) {
+            client.sendEvent("error", "Not authenticated");
+            return;
+        }
+
+        try {
+            gameService.handleRunningDataUpdate(userId, data.getRunningData());
+        } catch (Exception e) {
+            client.sendEvent("error", e.getMessage());
+        }
+    }
+
+    private void handleItemUse(SocketIOClient client) {
+        String userId = client.get("userId");
+        if (userId == null) {
+            client.sendEvent("error", "Not authenticated");
+            return;
+        }
+
+        try {
+            gameService.handleItemUse(userId);
+        } catch (Exception e) {
+            client.sendEvent("error", e.getMessage());
+        }
+    }
+
+    private void handleGameOver(GameRoom room) {
+        GameResultResponse result = new GameResultResponse(
+                room.isGameFinished() && room.getBossHealth() <= 0,
+                room.getPlayers().stream()
+                        .map(p -> new GameResultResponse.PlayerResult(
+                                p.getId(),
+                                p.getRunningData().getDistance(),
+                                p.getRunningData().getPace(),
+                                p.getRunningData().getCalories(),
+                                p.getUsedItemCount()
+                        ))
+                        .sorted((p1, p2) -> Double.compare(p2.getDistance(), p1.getDistance()))
+                        .collect(Collectors.toList())
+        );
+
+        server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
+        room.setStatus(GameStatus.FINISHED);
+        gameRoomManager.updateRoom(room);
+    }
+
 
     private void handleJoinRoom(SocketIOClient client, JoinRoomRequest request) {
         String userId = client.get("userId");

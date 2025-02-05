@@ -3,27 +3,24 @@ package com.ssafy.roCatRun.domain.game.service;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.ssafy.roCatRun.domain.game.dto.request.CreateRoomRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.MatchRequest;
-import com.ssafy.roCatRun.domain.game.dto.response.GameCountdownResponse;
-import com.ssafy.roCatRun.domain.game.dto.response.GameReadyResponse;
-import com.ssafy.roCatRun.domain.game.dto.response.GameStartResponse;
+import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
 import com.ssafy.roCatRun.domain.game.entity.raid.Player;
 import com.ssafy.roCatRun.domain.game.entity.manager.GameRoomManager;
+import com.ssafy.roCatRun.domain.game.entity.raid.RunningData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * GameService.java
- * 게임 매칭 및 방 관리 로직을 처리하는 서비스 클래스
+ * 게임 비즈니스 로직(게임 매칭 및 방 관리 로직을 처리하는 서비스 클래스)
  */
 @Service
 @RequiredArgsConstructor
@@ -107,6 +104,22 @@ public class GameService {
         gameRoomManager.addRoom(newRoom);
         handlePlayerJoin(newRoom, userId); // handlePlayerJoin 사용
         return newRoom;
+    }
+
+    /**
+     * 초대코드 생성
+     */
+    private String generateInviteCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder code;
+        do{
+            code = new StringBuilder();
+            for(int i=0; i<INVITE_CODE_LENGTH; i++){
+                code.append(chars.charAt(new Random().nextInt(chars.length())));
+            }
+        }while(inviteCodes.containsKey(code.toString())); // 중복체크
+
+        return code.toString();
     }
 
     /**
@@ -201,20 +214,148 @@ public class GameService {
         scheduler.schedule(()->countdownTask.cancel(true), 6, TimeUnit.SECONDS);
     }
 
+    /**
+     * 유저 러닝 정보 실시간 업데이트 및 브로드캐스트
+     * @param userId 유저 식별자
+     * @param newData 실시간 유저 러닝 정보
+     */
+    public void handleRunningDataUpdate(String userId, RunningData newData) {
+        GameRoom room = gameRoomManager.findRoomByUserId(userId)
+                .orElseThrow(() -> new IllegalStateException("Room not found"));
+
+        if (room.getStatus() != GameStatus.PLAYING) {
+            return;
+        }
+
+        // 유저ID로 유저 상세 정보 가져오기
+        Player player = room.getPlayerById(userId);
+        // 유저 상세 정보 중 러닝 데이터 갱신
+        player.updateRunningData(newData);
+        // 레이드 뛰는 사람들에게 공유하기 위한 갱신
+        gameRoomManager.updateRoom(room);
+
+        broadcastPlayerUpdate(room, player);
+    }
 
     /**
-     * 초대코드 생성
+     * 유저의 아이템 사용
+     * @param userId 유저 식별자
      */
-    private String generateInviteCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder code;
-        do{
-            code = new StringBuilder();
-            for(int i=0; i<INVITE_CODE_LENGTH; i++){
-                code.append(chars.charAt(new Random().nextInt(chars.length())));
-            }
-        }while(inviteCodes.containsKey(code.toString())); // 중복체크
+    public void handleItemUse(String userId) {
+        GameRoom room = gameRoomManager.findRoomByUserId(userId)
+                .orElseThrow(() -> new IllegalStateException("Room not found"));
 
-        return code.toString();
+        Player player = room.getPlayerById(userId);
+        // 아이템 사용
+        player.useItem();
+        // 보스 피격
+        room.applyDamage(GameRoom.ITEM_DAMAGE);
+
+        // 피버타임 체크 및 처리
+        handleFeverTimeCheck(room);
+
+        gameRoomManager.updateRoom(room);
+
+        // 게임 종료 체크
+        if (room.isGameFinished()) {
+            handleGameOver(room);
+        } else {
+            broadcastGameStatus(room, player);
+        }
+    }
+
+    /**
+     * 방 정보를 바탕으로 피버타임 체크
+     * @param room 방 정보
+     */
+    private void handleFeverTimeCheck(GameRoom room) {
+        if (room.checkFeverCondition()) {
+            room.startFeverTime();
+            broadcastFeverTimeStart(room);
+
+            // 피버타임 종료 스케줄링
+            scheduler.schedule(() -> {
+                room.endFeverTime();
+                gameRoomManager.updateRoom(room);
+                broadcastFeverTimeEnd(room);
+            }, GameRoom.FEVER_TIME_DURATION, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * 게임 종료 처리
+     * @param room 방 정보
+     */
+    private void handleGameOver(GameRoom room) {
+        room.setStatus(GameStatus.FINISHED);
+        GameResultResponse result = createGameResult(room);
+        server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
+    }
+
+    /**
+     * 게임 결과 생성
+     * @param room 방 정보를 바탕으로 유저들의 달린 거리를 기준으로 순위 출력
+     * @return 레이드에 참여한 유저들의 러닝정보(러닝거리 내림차순)
+     */
+    private GameResultResponse createGameResult(GameRoom room) {
+        List<GameResultResponse.PlayerResult> playerResults = room.getPlayers().stream()
+                .map(p -> new GameResultResponse.PlayerResult(
+                        p.getId(),
+                        p.getRunningData().getDistance(),
+                        p.getRunningData().getPace(),
+                        p.getRunningData().getCalories(),
+                        p.getUsedItemCount()
+                ))
+                .sorted((p1, p2) -> Double.compare(p2.getDistance(), p1.getDistance()))
+                .collect(Collectors.toList());
+
+        return new GameResultResponse(room.getBossHealth() <= 0, playerResults);
+    }
+
+    /**
+     * 레이드 방 내 유저 정보 실시간 알림
+     * @param room 방 정보
+     * @param player 유저 정보
+     */
+    private void broadcastPlayerUpdate(GameRoom room, Player player) {
+        RunningDataUpdateResponse response = new RunningDataUpdateResponse(
+                player.getId(),
+                player.getRunningData().getDistance(),
+                player.getUsedItemCount()
+        );
+        server.getRoomOperations(room.getId()).sendEvent("playerDataUpdated", response);
+    }
+
+    /**
+     * 유저가 아이템 사용 시, 게임 상태에 대해 알림
+     * @param room 방 정보
+     * @param player 플레이어 정보
+     */
+    private void broadcastGameStatus(GameRoom room, Player player) {
+        GameStatusResponse response = new GameStatusResponse(
+                room.getBossHealth(),
+                room.isFeverTimeActive(),
+                player.getId(),
+                player.getUsedItemCount()
+        );
+        server.getRoomOperations(room.getId()).sendEvent("gameStatusUpdated", response);
+    }
+
+    /**
+     * 피버타임 시작 시, 피버 지속 시간 알림
+     * @param room 방 정보
+     */
+    private void broadcastFeverTimeStart(GameRoom room) {
+        server.getRoomOperations(room.getId()).sendEvent("feverTimeStarted",
+                new FeverTimeStartedResponse(true, GameRoom.FEVER_TIME_DURATION));
+    }
+
+    /**
+     * 피버타임 종료 알림
+     * @param room
+     */
+    private void broadcastFeverTimeEnd(GameRoom room) {
+        server.getRoomOperations(room.getId()).sendEvent("feverTimeEnded",
+                new FeverTimeEndedResponse("피버타임이 종료되었습니다"));
     }
 }

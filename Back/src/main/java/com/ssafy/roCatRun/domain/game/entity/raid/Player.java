@@ -14,7 +14,6 @@ public class Player {
     private String nickname;
     private String socketId;
     private RunningData runningData = new RunningData();
-    private double itemGauge = 0.0;
     private List<Item> items = new ArrayList<>();
     private int usedItemCount = 0;
 
@@ -22,6 +21,7 @@ public class Player {
         this.id = id;
         this.items = new ArrayList<>();
         this.runningData = new RunningData();
+        this.usedItemCount = 0;
     }
 
     public Player(String id, String nickname, String socketId) {
@@ -40,16 +40,11 @@ public class Player {
         items.add(item);
     }
 
-    public Optional<Item> useItem(String itemId) {
-        Optional<Item> itemOpt = items.stream()
-                .filter(item -> item.getId().equals(itemId))
-                .findFirst();
+    public void useItem() {
+        this.usedItemCount++;
+    }
 
-        itemOpt.ifPresent(item -> {
-            items.remove(item);
-            usedItemCount++;
-        });
-
-        return itemOpt;
+    public void resetItemCount() {
+        this.usedItemCount = 0;
     }
 }

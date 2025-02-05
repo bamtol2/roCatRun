@@ -1,17 +1,23 @@
 package com.ssafy.roCatRun.domain.game.entity.raid;
 
+import lombok.Getter;
+
+@Getter
 public enum BossLevel {
-    EASY(1000),
-    NORMAL(2000),
-    HARD(3000);
+    EASY(1000, 1800),    // 1km당 1000HP, 30분
+    NORMAL(1000, 1800),  // 1km당 1000HP, 30분
+    HARD(1000, 1800);    // 1km당 1000HP, 30분
 
-    private final int health;
+    private final int hpPerKm;   // 1km당 HP
+    private final int timeLimit; // 제한시간(초)
 
-    BossLevel(int health) {
-        this.health = health;
+    BossLevel(int hpPerKm, int timeLimit) {
+        this.hpPerKm = hpPerKm;
+        this.timeLimit = timeLimit;
     }
 
-    public int getHealth() {
-        return health;
+    // 인원 수에 따른 보스 체력
+    public int calculateInitialHp(int playerCount) {
+        return hpPerKm * 4 * playerCount;  // 4km * 인원수 만큼의 HP
     }
 }
