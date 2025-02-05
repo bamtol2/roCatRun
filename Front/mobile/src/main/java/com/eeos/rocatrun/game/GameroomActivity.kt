@@ -12,8 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
+import io.socket.client.Socket
 
 class GameRoom : ComponentActivity() {
+    private lateinit var mSocket: Socket
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
