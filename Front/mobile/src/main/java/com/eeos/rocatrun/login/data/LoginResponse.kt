@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.login.social
+package com.eeos.rocatrun.login.data
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

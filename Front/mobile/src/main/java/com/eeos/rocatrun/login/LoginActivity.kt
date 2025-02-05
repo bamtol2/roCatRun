@@ -8,10 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.eeos.rocatrun.login.LoginScreen
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 import android.content.Intent
-import com.eeos.rocatrun.login.social.LoginResponse
+import com.eeos.rocatrun.login.data.LoginResponse
 import android.util.Log
 
 class LoginActivity : ComponentActivity() {

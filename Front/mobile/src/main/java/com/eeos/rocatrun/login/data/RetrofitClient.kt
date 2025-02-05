@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.login.social
+package com.eeos.rocatrun.login.data
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
@@ -26,26 +25,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.login.LoginButton
 import androidx.compose.ui.platform.LocalContext
-import com.eeos.rocatrun.login.social.KakaoLoginHandler
-// 프로필 이미지 갤러리에서 불러오기
-import android.net.Uri
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.ui.draw.clip
 import coil3.ImageLoader
-import androidx.compose.material3.TextFieldDefaults
 import coil3.compose.rememberAsyncImagePainter
 import coil3.gif.AnimatedImageDecoder
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eeos.rocatrun.home.HomeActivity
-import androidx.compose.material.AlertDialog
-import com.eeos.rocatrun.login.social.LoginResponse
+import androidx.compose.material3.AlertDialog
+import com.eeos.rocatrun.login.data.LoginResponse
+import com.eeos.rocatrun.login.social.KakaoWebViewLoginActivity
+import com.eeos.rocatrun.login.social.NaverWebViewLoginActivity
+import com.eeos.rocatrun.login.social.GoogleWebViewLoginActivity
 
 // loginRespons = 백엔드에서 받아온 응답
 @Composable
@@ -120,10 +113,9 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                 backgroundColor = Color(0x4AFFEB3C),
                 iconResId = R.drawable.login_icon_kakao,
                 onClick = {
-                    KakaoLoginHandler.performLogin(
-                        context = context
+                    val intent = Intent(context, KakaoWebViewLoginActivity::class.java)
+                    context.startActivity(intent)
 
-                        )
 
                 }
             )
@@ -133,7 +125,9 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                 backgroundColor = Color(0x4A00C73C),
                 iconResId = R.drawable.login_icon_naver,
                 onClick = {
-                    showDialog = true }
+                    val intent = Intent(context, NaverWebViewLoginActivity::class.java)
+                    context.startActivity(intent)
+                   }
             )
             LoginButton(
                 text = "구글 로그인",
@@ -141,8 +135,9 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                 backgroundColor = Color(0x4AFFFFFF),
                 iconResId = R.drawable.login_icon_google,
                 onClick = {
-                    showDialog = true
-                    }
+                    val intent = Intent(context, GoogleWebViewLoginActivity::class.java)
+                    context.startActivity(intent)
+                }
             )
         }
     }
@@ -175,14 +170,9 @@ fun UserInfoDialog(
     // 사용자 닉네임
     var nickname by remember { mutableStateOf("") }
     var showNicknameAlert by remember { mutableStateOf(false) } // 경고 알림 표시 여부
-    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        profileImageUri = uri
-    }
+
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -218,19 +208,13 @@ fun UserInfoDialog(
                 )
 
                 Image(
-                    painter = if (profileImageUri != null)
-                        rememberAsyncImagePainter(model = profileImageUri)
-                    else
-                        painterResource(id = profileImageResId),
+                    painter = painterResource(id = profileImageResId),
                     contentDescription = "Profile Image",
                     modifier = Modifier
                         .offset(y = 70.dp)
                         .size(100.dp)
                         .clip(CircleShape)
-                        .border(2.dp, Color.White, CircleShape)
-                        .clickable {
-                            imagePickerLauncher.launch("image/*")
-                        },
+                        .border(2.dp, Color.White, CircleShape),
                     contentScale = ContentScale.Crop
                 )
 
@@ -275,14 +259,14 @@ fun UserInfoDialog(
                             .align(Alignment.CenterEnd)
                             .padding(end = 10.dp)
                             .background(Color(0xFF00FFCC), shape = RoundedCornerShape(8.dp))
-                            .padding(vertical = 8.dp, horizontal = 16.dp)
+                            .padding(vertical = 8.dp, horizontal = 12.dp)
                             .clickable { /* 중복 확인 로직 */ },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "중복 확인",
                             style = TextStyle(
-                                fontSize = 14.sp,
+                                fontSize = 12.sp,
                                 color = Color.Black,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = FontFamily(Font(R.font.neodgm))
@@ -303,6 +287,7 @@ fun UserInfoDialog(
                         .clickable {
                             val intent = Intent(context, HomeActivity::class.java)
                             context.startActivity(intent)
+                            // 닉네임 테이블에 닉네임 저장하는 API 호출
                         }
                 )
             }

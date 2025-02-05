@@ -61,6 +61,19 @@
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
         <activity
+            android:name=".login.social.NaverWebViewLoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+        <activity
+            android:name=".login.social.KakaoWebViewLoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+        <activity
+            android:name=".login.social.GoogleWebViewLoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
@@ -72,22 +85,7 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".login.social.KaKaoRedirectHandler"
-            android:exported="true"
-            android:launchMode="singleTask">
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="http"
-                    android:host="i12e205.p.ssafy.io"
-                    android:port="8080"
-                    android:pathPrefix="/api/auth/callback/kakao"
-                    />
-            </intent-filter>
-        </activity>
+
 
         <service
             android:name=".service.MessageHandlerService"
