@@ -3,8 +3,6 @@ package com.ssafy.roCatRun.api.controller.auth;
 import com.ssafy.roCatRun.domain.member.dto.token.AuthTokens;
 import com.ssafy.roCatRun.domain.member.service.auth.GoogleService;
 import com.ssafy.roCatRun.domain.member.service.auth.KakaoService;
-//import com.ssafy.roCatRun.domain.member.service.auth.NaverService;
-//import com.ssafy.roCatRun.domain.member.service.auth.GoogleService;
 import com.ssafy.roCatRun.domain.member.dto.response.LoginResponse;
 import com.ssafy.roCatRun.domain.member.service.auth.NaverService;
 import com.ssafy.roCatRun.global.common.ApiResponse;
@@ -12,12 +10,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * 소셜 로그인 콜백을 처리하는 컨트롤러
  * 프론트엔드에서 소셜 로그인 인증 후 받은 인가 코드를 처리
  */
+
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
@@ -72,7 +73,18 @@ public class SocialLoginController {
             HttpServletRequest request
     ) {
         String currentDomain = request.getServerName();
-        return ApiResponse.success(googleService.googleLogin(code, currentDomain));
+
+        log.info("Google OAuth Callback - Authorization Code: {}", code);
+        log.info("Current Domain: {}", currentDomain);
+
+        try {
+            LoginResponse response = googleService.googleLogin(code, currentDomain);
+            log.info("Google Login Success - User Info: {}", response);
+            return ApiResponse.success(response);
+        } catch (Exception e) {
+            log.error("Google Login Error", e);
+            throw e;
+        }
     }
 
     @PostMapping("/refresh/google")

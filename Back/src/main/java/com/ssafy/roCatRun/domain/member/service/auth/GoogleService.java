@@ -3,8 +3,10 @@ package com.ssafy.roCatRun.domain.member.service.auth;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.roCatRun.domain.member.dto.oauth.GoogleLoginDto;
 import com.ssafy.roCatRun.domain.member.dto.response.LoginResponse;
 import com.ssafy.roCatRun.domain.member.dto.token.AuthTokens;
+import com.ssafy.roCatRun.domain.member.dto.userinfo.GoogleUserInfoResponseDto;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.domain.member.repository.RefreshTokenRedisRepository;
@@ -56,15 +58,17 @@ public class GoogleService {
         log.info("인가 코드: {}", code);
 
         String redirectUri = selectRedirectUri(currentDomain);
+        log.info("Redirect URI: {}", redirectUri);
+
         // 구글 토큰 정보 받아오기
-        GoogleTokenInfo googleTokenInfo = getGoogleTokens(code, redirectUri);
-        log.info("구글 액세스 토큰: {}", googleTokenInfo.accessToken);
+        GoogleLoginDto.TokenResponse tokenInfo = getGoogleTokens(code, redirectUri);
+        log.info("구글 액세스 토큰: {}", tokenInfo.getAccess_token());
 
         // 구글 사용자 정보 조회
-        HashMap<String, Object> userInfo = getGoogleUserInfo(googleTokenInfo.accessToken);
+        GoogleUserInfoResponseDto userInfo = getGoogleUserInfo(tokenInfo.getAccess_token());
         log.info("구글 사용자 정보: {}", userInfo);
 
-        return processGoogleLogin(userInfo, googleTokenInfo);
+        return processGoogleLogin(userInfo, tokenInfo);
     }
 
     public AuthTokens refreshGoogleToken(String refreshToken) {
@@ -92,17 +96,11 @@ public class GoogleService {
                 String.class
         );
 
-        JsonNode jsonNode = parseJsonResponse(response.getBody());
-        String newGoogleAccessToken = jsonNode.get("access_token").asText();
-        String newGoogleRefreshToken = jsonNode.has("refresh_token")
-                ? jsonNode.get("refresh_token").asText()
-                : googleRefreshToken;
-
+        GoogleLoginDto.TokenResponse tokenInfo = parseResponse(response.getBody(), GoogleLoginDto.TokenResponse.class);
         AuthTokens newJwtTokens = authTokensGenerator.generate(userId);
-        log.info("Generated new JWT tokens: Access={}, Refresh={}",
-                newJwtTokens.getAccessToken(),
-                newJwtTokens.getRefreshToken()
-        );
+
+        String newGoogleRefreshToken = tokenInfo.getRefresh_token() != null ?
+                tokenInfo.getRefresh_token() : googleRefreshToken;
 
         if (!googleRefreshToken.equals(newGoogleRefreshToken)) {
             refreshTokenRedisRepository.save("GOOGLE_" + userId, newGoogleRefreshToken, TOKEN_EXPIRATION_TIME_MS);
@@ -112,17 +110,7 @@ public class GoogleService {
         return newJwtTokens;
     }
 
-    private static class GoogleTokenInfo {
-        String accessToken;
-        String refreshToken;
-
-        GoogleTokenInfo(String accessToken, String refreshToken) {
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-        }
-    }
-
-    private GoogleTokenInfo getGoogleTokens(String code, String redirectUri) {
+    private GoogleLoginDto.TokenResponse getGoogleTokens(String code, String redirectUri) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
@@ -142,16 +130,11 @@ public class GoogleService {
                 String.class
         );
 
-        JsonNode jsonNode = parseJsonResponse(response.getBody());
-        return new GoogleTokenInfo(
-                jsonNode.get("access_token").asText(),
-                jsonNode.get("refresh_token").asText()
-        );
+        log.info("Google Token Response: {}", response.getBody());
+        return parseResponse(response.getBody(), GoogleLoginDto.TokenResponse.class);
     }
 
-    private HashMap<String, Object> getGoogleUserInfo(String accessToken) {
-        HashMap<String, Object> userInfo = new HashMap<>();
-
+    private GoogleUserInfoResponseDto getGoogleUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
 
@@ -164,35 +147,24 @@ public class GoogleService {
                 String.class
         );
 
-        JsonNode jsonNode = parseJsonResponse(response.getBody());
-
-        String id = jsonNode.get("id").asText();
-        String name = jsonNode.get("name").asText();
-
-        userInfo.put("id", id);
-        userInfo.put("nickname", name);
-
-        return userInfo;
+        log.info("Google User Info Response: {}", response.getBody());
+        return parseResponse(response.getBody(), GoogleUserInfoResponseDto.class);
     }
 
-    private JsonNode parseJsonResponse(String response) {
+    private <T> T parseResponse(String response, Class<T> valueType) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.readTree(response);
+            return objectMapper.readValue(response, valueType);
         } catch (JsonProcessingException e) {
-            log.error("JSON 파싱 실패", e);
+            log.error("JSON 파싱 실패. Response: {}", response, e);
             throw new RuntimeException("JSON 파싱 실패", e);
         }
     }
 
-    private LoginResponse processGoogleLogin(HashMap<String, Object> userInfo, GoogleTokenInfo googleTokenInfo) {
-        // socialId 타입 통일
-        String socialId = String.valueOf(userInfo.get("id"));
-        String nickname = userInfo.get("nickname").toString();
-
-        Member member = memberRepository.findBySocialIdAndLoginType(socialId, "GOOGLE")
+    private LoginResponse processGoogleLogin(GoogleUserInfoResponseDto userInfo, GoogleLoginDto.TokenResponse tokenInfo) {
+        Member member = memberRepository.findBySocialIdAndLoginType(userInfo.getId(), "GOOGLE")
                 .orElseGet(() -> {
-                    Member newMember = Member.createMember(null, nickname, "GOOGLE", socialId);
+                    Member newMember = Member.createMember(null, userInfo.getName(), "GOOGLE", userInfo.getId());
                     return memberRepository.save(newMember);
                 });
 
@@ -208,11 +180,14 @@ public class GoogleService {
                 jwtTokens.getRefreshToken(),
                 TOKEN_EXPIRATION_TIME_MS
         );
-        refreshTokenRedisRepository.save(
-                "GOOGLE_" + member.getId().toString(),
-                googleTokenInfo.refreshToken,
-                TOKEN_EXPIRATION_TIME_MS
-        );
+
+        if (tokenInfo.getRefresh_token() != null) {
+            refreshTokenRedisRepository.save(
+                    "GOOGLE_" + member.getId().toString(),
+                    tokenInfo.getRefresh_token(),
+                    TOKEN_EXPIRATION_TIME_MS
+            );
+        }
 
         return new LoginResponse(jwtTokens);
     }
