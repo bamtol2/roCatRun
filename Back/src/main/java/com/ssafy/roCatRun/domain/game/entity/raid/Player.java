@@ -1,4 +1,4 @@
-package com.ssafy.roCatRun.domain.game.entity.game;
+package com.ssafy.roCatRun.domain.game.entity.raid;
 
 import lombok.Getter;
 import lombok.Setter;

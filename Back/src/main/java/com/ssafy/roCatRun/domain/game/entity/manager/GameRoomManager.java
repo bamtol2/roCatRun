@@ -1,8 +1,8 @@
 package com.ssafy.roCatRun.domain.game.entity.manager;
 
-import com.ssafy.roCatRun.domain.game.entity.game.BossLevel;
-import com.ssafy.roCatRun.domain.game.entity.game.GameRoom;
-import com.ssafy.roCatRun.domain.game.entity.game.GameStatus;
+import com.ssafy.roCatRun.domain.game.entity.raid.BossLevel;
+import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
+import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

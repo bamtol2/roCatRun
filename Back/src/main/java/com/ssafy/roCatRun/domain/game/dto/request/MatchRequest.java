@@ -1,6 +1,6 @@
 package com.ssafy.roCatRun.domain.game.dto.request;
 
-import com.ssafy.roCatRun.domain.game.entity.game.BossLevel;
+import com.ssafy.roCatRun.domain.game.entity.raid.BossLevel;
 import lombok.Getter;
 import lombok.Setter;
 

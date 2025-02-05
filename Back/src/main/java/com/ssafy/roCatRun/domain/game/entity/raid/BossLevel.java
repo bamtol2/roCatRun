@@ -1,4 +1,4 @@
-package com.ssafy.roCatRun.domain.game.entity.game;
+package com.ssafy.roCatRun.domain.game.entity.raid;
 
 public enum BossLevel {
     EASY(1000),

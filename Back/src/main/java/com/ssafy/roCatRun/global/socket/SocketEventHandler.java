@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.ssafy.roCatRun.domain.game.dto.request.CreateRoomRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.JoinRoomRequest;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
-import com.ssafy.roCatRun.domain.game.entity.game.GameRoom;
+import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.dto.request.AuthenticateRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.MatchRequest;

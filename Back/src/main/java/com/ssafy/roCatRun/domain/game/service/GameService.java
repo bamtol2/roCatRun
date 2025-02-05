@@ -1,15 +1,14 @@
 package com.ssafy.roCatRun.domain.game.service;
 
 import com.corundumstudio.socketio.SocketIOServer;
-import com.google.gson.JsonObject;
 import com.ssafy.roCatRun.domain.game.dto.request.CreateRoomRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.MatchRequest;
 import com.ssafy.roCatRun.domain.game.dto.response.GameCountdownResponse;
 import com.ssafy.roCatRun.domain.game.dto.response.GameReadyResponse;
 import com.ssafy.roCatRun.domain.game.dto.response.GameStartResponse;
-import com.ssafy.roCatRun.domain.game.entity.game.GameRoom;
-import com.ssafy.roCatRun.domain.game.entity.game.GameStatus;
-import com.ssafy.roCatRun.domain.game.entity.game.Player;
+import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
+import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
+import com.ssafy.roCatRun.domain.game.entity.raid.Player;
 import com.ssafy.roCatRun.domain.game.entity.manager.GameRoomManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

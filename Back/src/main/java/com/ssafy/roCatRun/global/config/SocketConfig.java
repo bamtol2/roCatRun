@@ -47,33 +47,35 @@ public class SocketConfig {
         // 인증 리스너 설정
         config.setAuthorizationListener(handshakeData -> {
             try {
-                String token = handshakeData.getSingleUrlParam("token");
-                log.info("Received token: {}", token); // 토큰 로깅
+                // Authorization 헤더에서 토큰 추출
+                String authHeader = handshakeData.getHttpHeaders().get("Authorization");
+                log.info("Received Authorization header: {}", authHeader);
 
-                if (token == null || token.isEmpty()) {
-                    log.error("Token is null or empty");
+                if (authHeader == null || authHeader.isEmpty()) {
+                    log.error("Authorization header is null or empty");
                     return false;
                 }
 
-                if (token.startsWith("Bearer ")) {
-                    token = token.substring(7);
-                }
+                // Bearer 접두사 확인 및 제거
+                if (authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7);
+                    boolean isValid = jwtUtil.validateToken(token);
 
-                boolean isValid = jwtUtil.validateToken(token);
-                log.info("Token validation result: {}", isValid); // 검증 결과 로깅
+                    if (!isValid) {
+                        log.error("Token validation failed");
+                        return false;
+                    }
 
-                 if (!isValid) {
-                    log.error("Token validation failed");
+                    String userId = jwtUtil.extractUserId(token);
+                    log.info("Extracted userId: {}", userId);
+
+                    return userId != null;
+                } else {
+                    log.error("Invalid Authorization header format");
                     return false;
                 }
-
-                String userId = jwtUtil.extractUserId(token);
-                log.info("Extracted userId: {}", userId); // 추출된 userId 로깅
-
-                return userId != null;
-
             } catch (Exception e) {
-                log.error("Authorization error", e); // 상세 에러 로깅
+                log.error("Authorization error", e);
                 return false;
             }
         });
