@@ -4,12 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.roCatRun.domain.member.dto.response.LoginResponse;
-import com.ssafy.roCatRun.domain.member.dto.token.AuthTokens;
+import com.ssafy.roCatRun.domain.member.dto.token.JwtTokens;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.domain.member.repository.RefreshTokenRedisRepository;
 import com.ssafy.roCatRun.global.exception.TokenRefreshException;
-import com.ssafy.roCatRun.global.security.jwt.AuthTokensGenerator;
+import com.ssafy.roCatRun.global.security.jwt.JwtTokenGenerator;
 import com.ssafy.roCatRun.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ import java.util.HashMap;
 public class NaverService {
     private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthTokensGenerator authTokensGenerator;
+    private final JwtTokenGenerator jwtTokensGenerator;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
     @Value("${oauth2.naver.client_id}")
@@ -67,7 +67,7 @@ public class NaverService {
         return processNaverLogin(userInfo, naverTokenInfo);
     }
 
-    public AuthTokens refreshNaverToken(String refreshToken) {
+    public JwtTokens refreshNaverToken(String refreshToken) {
         log.info("=================== Token Refresh Start ===================");
 
         String userId = jwtTokenProvider.extractSubject(refreshToken);
@@ -98,7 +98,7 @@ public class NaverService {
                 ? jsonNode.get("refresh_token").asText()
                 : naverRefreshToken;
 
-        AuthTokens newJwtTokens = authTokensGenerator.generate(userId);
+        JwtTokens newJwtTokens = jwtTokensGenerator.generate(userId);
         log.info("Generated new JWT tokens: Access={}, Refresh={}",
                 newJwtTokens.getAccessToken(),
                 newJwtTokens.getRefreshToken()
@@ -199,7 +199,7 @@ public class NaverService {
                     return memberRepository.save(newMember);
                 });
 
-        AuthTokens jwtTokens = authTokensGenerator.generate(member.getId().toString());
+        JwtTokens jwtTokens = jwtTokensGenerator.generate(member.getId().toString());
         log.info("Generated JWT tokens for user {}: Access={}, Refresh={}",
                 member.getId(),
                 jwtTokens.getAccessToken(),

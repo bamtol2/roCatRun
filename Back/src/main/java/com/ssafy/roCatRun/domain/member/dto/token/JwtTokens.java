@@ -1,17 +1,16 @@
+// domain/member/dto/token/JwtTokens.java
 package com.ssafy.roCatRun.domain.member.dto.token;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-// Redis 저장용 엔티티
+import lombok.AllArgsConstructor;
 
 @Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class RefreshToken {
+public class JwtTokens {
+    private String accessToken;
     private String refreshToken;
-    private String memberId;
-    private Long expirationTime;
 }

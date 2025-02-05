@@ -1,6 +1,6 @@
 package com.ssafy.roCatRun.api.controller.auth;
 
-import com.ssafy.roCatRun.domain.member.dto.token.AuthTokens;
+import com.ssafy.roCatRun.domain.member.dto.token.JwtTokens;
 import com.ssafy.roCatRun.domain.member.service.auth.GoogleService;
 import com.ssafy.roCatRun.domain.member.service.auth.KakaoService;
 import com.ssafy.roCatRun.domain.member.dto.response.LoginResponse;
@@ -41,7 +41,7 @@ public class SocialLoginController {
 
     @PostMapping("/refresh/kakao")
     @Operation(summary = "카카오 토큰 재발급", description = "만료된 액세스 토큰을 리프레시 토큰으로 재발급합니다.")
-    public ApiResponse<AuthTokens> refreshKakaoToken(
+    public ApiResponse<JwtTokens> refreshKakaoToken(
             @RequestHeader("Refresh-Token") String refreshToken
     ) {
         return ApiResponse.success(kakaoService.refreshKakaoToken(refreshToken));
@@ -60,7 +60,7 @@ public class SocialLoginController {
 
     @PostMapping("/refresh/naver")
     @Operation(summary = "네이버 토큰 재발급", description = "만료된 액세스 토큰을 리프레시 토큰으로 재발급합니다.")
-    public ApiResponse<AuthTokens> refreshNaverToken(
+    public ApiResponse<JwtTokens> refreshNaverToken(
             @RequestHeader("Refresh-Token") String refreshToken
     ) {
         return ApiResponse.success(naverService.refreshNaverToken(refreshToken));
@@ -89,7 +89,7 @@ public class SocialLoginController {
 
     @PostMapping("/refresh/google")
     @Operation(summary = "구글 토큰 재발급", description = "만료된 액세스 토큰을 리프레시 토큰으로 재발급합니다.")
-    public ApiResponse<AuthTokens> refreshGoogleToken(
+    public ApiResponse<JwtTokens> refreshGoogleToken(
             @RequestHeader("Refresh-Token") String refreshToken
     ) {
         return ApiResponse.success(googleService.refreshGoogleToken(refreshToken));

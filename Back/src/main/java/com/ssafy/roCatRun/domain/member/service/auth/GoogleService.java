@@ -1,17 +1,16 @@
 package com.ssafy.roCatRun.domain.member.service.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.roCatRun.domain.member.dto.oauth.GoogleLoginDto;
 import com.ssafy.roCatRun.domain.member.dto.response.LoginResponse;
-import com.ssafy.roCatRun.domain.member.dto.token.AuthTokens;
+import com.ssafy.roCatRun.domain.member.dto.token.JwtTokens;
 import com.ssafy.roCatRun.domain.member.dto.userinfo.GoogleUserInfoResponseDto;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.domain.member.repository.RefreshTokenRedisRepository;
 import com.ssafy.roCatRun.global.exception.TokenRefreshException;
-import com.ssafy.roCatRun.global.security.jwt.AuthTokensGenerator;
+import com.ssafy.roCatRun.global.security.jwt.JwtTokenGenerator;
 import com.ssafy.roCatRun.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +22,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,7 +29,7 @@ import java.util.HashMap;
 public class GoogleService {
     private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthTokensGenerator authTokensGenerator;
+    private final JwtTokenGenerator jwtTokensGenerator;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
     @Value("${oauth2.google.client_id}")
@@ -71,7 +68,7 @@ public class GoogleService {
         return processGoogleLogin(userInfo, tokenInfo);
     }
 
-    public AuthTokens refreshGoogleToken(String refreshToken) {
+    public JwtTokens refreshGoogleToken(String refreshToken) {
         log.info("=================== Token Refresh Start ===================");
 
         String userId = jwtTokenProvider.extractSubject(refreshToken);
@@ -97,7 +94,7 @@ public class GoogleService {
         );
 
         GoogleLoginDto.TokenResponse tokenInfo = parseResponse(response.getBody(), GoogleLoginDto.TokenResponse.class);
-        AuthTokens newJwtTokens = authTokensGenerator.generate(userId);
+        JwtTokens newJwtTokens = jwtTokensGenerator.generate(userId);
 
         String newGoogleRefreshToken = tokenInfo.getRefresh_token() != null ?
                 tokenInfo.getRefresh_token() : googleRefreshToken;
@@ -168,7 +165,7 @@ public class GoogleService {
                     return memberRepository.save(newMember);
                 });
 
-        AuthTokens jwtTokens = authTokensGenerator.generate(member.getId().toString());
+        JwtTokens jwtTokens = jwtTokensGenerator.generate(member.getId().toString());
         log.info("Generated JWT tokens for user {}: Access={}, Refresh={}",
                 member.getId(),
                 jwtTokens.getAccessToken(),

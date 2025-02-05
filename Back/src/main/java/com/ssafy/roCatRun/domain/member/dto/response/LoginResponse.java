@@ -1,15 +1,15 @@
 package com.ssafy.roCatRun.domain.member.dto.response;
 
-import com.ssafy.roCatRun.domain.member.dto.token.AuthTokens;
+import com.ssafy.roCatRun.domain.member.dto.token.JwtTokens;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
 public class LoginResponse {
-    private AuthTokens token; // JWT 토큰
+    private JwtTokens token; // JWT 토큰
 
-    public LoginResponse(AuthTokens token) {
+    public LoginResponse(JwtTokens token) {
         this.token = token;
     }
 }

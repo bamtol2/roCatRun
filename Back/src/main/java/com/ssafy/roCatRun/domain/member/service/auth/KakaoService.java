@@ -4,12 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.roCatRun.domain.member.dto.response.LoginResponse;
-import com.ssafy.roCatRun.domain.member.dto.token.AuthTokens;
+import com.ssafy.roCatRun.domain.member.dto.token.JwtTokens;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.domain.member.repository.RefreshTokenRedisRepository;
 import com.ssafy.roCatRun.global.exception.TokenRefreshException;
-import com.ssafy.roCatRun.global.security.jwt.AuthTokensGenerator;
+import com.ssafy.roCatRun.global.security.jwt.JwtTokenGenerator;
 import com.ssafy.roCatRun.global.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ import java.util.HashMap;
 public class KakaoService {
     private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthTokensGenerator authTokensGenerator;
+    private final JwtTokenGenerator jwtTokensGenerator;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
     @Value("${oauth2.kakao.client_id}")
@@ -64,7 +64,7 @@ public class KakaoService {
         return processKakaoLogin(userInfo, kakaoTokenInfo);
     }
 
-    public AuthTokens refreshKakaoToken(String refreshToken) {
+    public JwtTokens refreshKakaoToken(String refreshToken) {
         log.info("=================== Token Refresh Start ===================");
 
         // Redis에서 카카오 리프레시 토큰 조회
@@ -98,7 +98,7 @@ public class KakaoService {
                 : kakaoRefreshToken;
 
         // 새로운 JWT 토큰 발급
-        AuthTokens newJwtTokens = authTokensGenerator.generate(userId);
+        JwtTokens newJwtTokens = jwtTokensGenerator.generate(userId);
         log.info("Generated new JWT tokens: Access={}, Refresh={}",
                 newJwtTokens.getAccessToken(),
                 newJwtTokens.getRefreshToken()
@@ -197,7 +197,7 @@ public class KakaoService {
                 });
 
         // JWT 토큰 생성
-        AuthTokens jwtTokens = authTokensGenerator.generate(member.getId().toString());
+        JwtTokens jwtTokens = jwtTokensGenerator.generate(member.getId().toString());
         log.info("Generated JWT tokens for user {}: Access={}, Refresh={}",
                 member.getId(),
                 jwtTokens.getAccessToken(),
@@ -206,6 +206,7 @@ public class KakaoService {
 
         // Redis에 토큰 저장
         // JWT 리프레시 토큰 저장
+        log.info("Saving refresh token to Redis for user: {}", member.getId());
         refreshTokenRedisRepository.save(
                 member.getId().toString(),
                 jwtTokens.getRefreshToken(),
