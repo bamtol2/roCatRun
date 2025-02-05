@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.game
 
+//import com.eeos.rocatrun.socket.SocketHandler
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
@@ -45,8 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
-import com.eeos.rocatrun.service.SocketHandler
-import io.socket.emitter.Emitter
 import org.json.JSONObject
 
 
@@ -323,15 +322,36 @@ fun CreateRoomContent(onBack: () -> Unit) {
                 }
             }
 
-            // 코드 생성
+            // 코드 생성 및 소켓 요청 전송
             Box(
                 modifier = Modifier.padding(bottom = 20.dp)
             ){
-                CreateRoomSocket()
                 CodeGenerationSection(
                     generatedCode = code,
+
+                    //생성 버튼 누를때 request 보내줘야됨.
                     onGenerateClick = {
-                        // 여기에 코드 생성 로직 추가
+
+                        // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
+                        val bossLevel = when (selectedDifficulty) {
+                            "상" -> "HARD"
+                            "중" -> "MEDIUM"
+                            "하" -> "EASY"
+                            else -> "EASY" // 기본값 설정 - 2가지 선택 안되면 생성 버튼 비활성화 시켜야 될 듯
+                        }
+
+                        // 인원 수 변환: "1인" -> 1, "2인" -> 2, …
+                        val maxPlayers = when (selectedPeople) {
+                            "1인" -> 1
+                            "2인" -> 2
+                            "3인" -> 3
+                            "4인" -> 4
+                            else -> 2 // 기본값 설정
+                        }
+
+                        // 웹소켓 요청 보냄
+                        CreateRoomSocket(bossLevel, maxPlayers)
+
                         code = "TK3NBF" // 임시로 6자 하드코딩
                     }
                 )
@@ -838,49 +858,22 @@ private fun RandomText(
     }
 }
 
-
 // 방 생성 소켓 연결
-fun CreateRoomSocket() {
+fun CreateRoomSocket(bossLevel: String, maxPlayers: Int) {
     // 화면이 생성될 때 소켓 연결 및 리스너 등록
     // 컴포저블이 사라질 때(더 이상 정보 필요하지 않을 때 리스너 해제)
 
-    // 소켓 초기화 및 연결
-    SocketHandler.initialize()
-    SocketHandler.connect()
-
-    // 이벤트 리스너 등록
-    SocketHandler.socket.on("roomCreated", roomCreatedListener)
-
-    // 전송은 그 화면 자리에서
     // 전송할 JSON 생성
     val createRoomJson = JSONObject().apply {
-        put("bossLevel", "EASY")    // or "MEDIUM", "HARD"
-        put("maxPlayers", 2)        // 1-4 사이의 숫자
-        put("isPrivate", true)      // 비밀 방 여부(초대코드 생성 여부)
+        put("bossLevel", bossLevel)    // or "MEDIUM", "HARD"
+        put("maxPlayers", maxPlayers)        // 1-4 사이의 숫자
+//        put("isPrivate", true)      // 비밀 방 여부(초대코드 생성 여부)
     }
 
+    Log.d("Socket", "emit")
+
     // 메세지 전송
-    SocketHandler.socket.emit("createRoom", createRoomJson)
+//    SocketHandler.socket.emit("createRoom", createRoomJson)
+
 }
 
-// 방 생성 리스너
-private val roomCreatedListener = Emitter.Listener { args ->
-    val data = args.getOrNull(0) as? JSONObject ?: return@Listener
-    val roomId = data.optString("roomId")
-    val inviteCode = data.optString("inviteCode")
-    val currentPlayers = data.optInt("currentPlayers")
-    val maxPlayers = data.optInt("maxPlayers")
-
-    // 로그 출력
-    Log.d("Socket", "roomCreated: roomId=$roomId inviteCode=$inviteCode current=$currentPlayers max=$maxPlayers")
-}
-
-// 플레이어 방 접속 확인 리스너
-private val playerJoinedListener = Emitter.Listener { args ->
-    val data = args.getOrNull(0) as? JSONObject ?: return@Listener
-    val userId = data.optString("userId")
-    val currentPlayers = data.optInt("currentPlayers")
-    val maxPlayers = data.optInt("maxPlayers")
-
-    Log.d("Socket", "playerJoined: userId=$userId current=$currentPlayers max=$maxPlayers")
-}
