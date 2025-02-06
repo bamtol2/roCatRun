@@ -30,13 +30,16 @@ class MainActivity : ComponentActivity() {
         val accessToken = TokenStorage.getAccessToken(this)
 
         if (TokenManager.isTokenVaild(accessToken)) {
-            Log.i("토큰 유효함", "토큰 있음")
+            Log.i("토큰 유효함", "토큰 있음!")
+            Log.i("MainActivity", "엑세스 토큰: $accessToken")
+            Log.i("MainActivity", "리프레시 토큰: ${TokenStorage.getRefreshToken(this)}")
             navigateToHome()
         } else {
             Log.i("토큰 유효하지 않음", "토큰 유효 X, 갱신 시도")
             TokenManager.refreshTokensIfNeeded(this) { isRefreshSuccessful ->
                 if (isRefreshSuccessful) {
                     val newAccessToken = TokenStorage.getAccessToken(this)
+                    Log.i("새로운 토큰 확인", "$newAccessToken")
                     if (TokenManager.isTokenVaild(newAccessToken)) {
                         Log.i("토큰 갱신 성공", "새 토큰 유효")
                         navigateToHome()
@@ -46,6 +49,7 @@ class MainActivity : ComponentActivity() {
                     }
                 } else {
                     Log.i("토큰 갱신 실패", "로그인 필요")
+                    Log.i("리프레시 토큰 확인", "${TokenStorage.getRefreshToken(this)}")
                     navigateToLogin()
                 }
             }

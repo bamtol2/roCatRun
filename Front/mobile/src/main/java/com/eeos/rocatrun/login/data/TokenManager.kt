@@ -19,16 +19,22 @@ object TokenManager {
         if (isAccessTokenExpired(accessToken)) {
             val refreshToken = TokenStorage.getRefreshToken(context)
             if (refreshToken != null) {
-                RetrofitClient.apiService.refreshKakaoToken(refreshToken).enqueue(object : Callback<AuthTokens> {
-                    override fun onResponse(call: Call<AuthTokens>, response: Response<AuthTokens>) {
+                val request = JwtTokenRequest(refreshToken = refreshToken)
+                Log.i("토큰 갱신 요청", "리프레시 토큰: $refreshToken")
+                Log.i("리퀘스트", "리퀘스트: $request")
+                RetrofitClient.apiService.refreshJwtToken(request).enqueue(object : Callback<LoginResponse> {
+                    override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                         if (response.isSuccessful) {
-                            val newTokens = response.body()?.data
+                            val newTokens = response.body()?.data?.token
                             if (newTokens != null) {
                                 TokenStorage.saveTokens(context, newTokens.accessToken ?: "", newTokens.refreshToken ?: "")
                                 Log.i("토큰 갱신", "토큰 갱신 성공")
+                                Log.i("newTokens", "새로운 JWT 토큰 : ${newTokens.accessToken}")
+                                Log.i("newTokens", "새로운 JWT 토큰 : ${newTokens.refreshToken}")
                                 onRefreshComplete(true)  // 갱신 성공 알림
                             } else {
-                                onRefreshComplete(false) // 갱신 실패
+                                Log.e("토큰 갱신", "응답 데이터가 없음")
+                                onRefreshComplete(false)
                             }
                         } else {
                             Log.e("토큰 갱신", "토큰 갱신 실패: ${response.errorBody()?.string()}")
@@ -36,7 +42,7 @@ object TokenManager {
                         }
                     }
 
-                    override fun onFailure(call: Call<AuthTokens>, t: Throwable) {
+                    override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                         Log.e("토큰 갱신", "네트워크 요청 실패", t)
                         onRefreshComplete(false)
                     }
@@ -62,13 +68,15 @@ object TokenManager {
         return try {
             val parts = accessToken.split(".")
             if (parts.size == 3) {
-                val payload = String(Base64.decode(parts[1], Base64.URL_SAFE))
+                val payload = String(Base64.decode(parts[1], Base64.URL_SAFE or Base64.NO_WRAP))
+                Log.i("JWT Payload 확인", "Payload: $payload")
                 val jsonPayload = JSONObject(payload)
                 val exp = jsonPayload.optLong("exp", 0)
 
                 // 현재 시간과 만료 시간 비교
                 exp != 0L && exp * 1000 < Date().time
             } else {
+                Log.i("토큰 만료", "토큰이 만료되었습니다")
                 true  // 토큰 형식이 올바르지 않으면 만료된 것으로 간주
             }
         } catch (e: Exception) {

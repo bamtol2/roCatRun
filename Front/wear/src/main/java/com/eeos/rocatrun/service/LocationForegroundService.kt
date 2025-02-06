@@ -1,5 +1,8 @@
 package com.eeos.rocatrun.service
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import android.app.Notification
 import android.app.Service
 import android.content.Intent
@@ -21,7 +24,16 @@ class LocationForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotification(): Notification {
-        // 알림을 생성하여 포그라운드 서비스로 등록
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "location_channel",
+                "Location Tracking",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
+
         return Notification.Builder(this, "location_channel")
             .setContentTitle("Running App")
             .setContentText("Tracking your location and heart rate.")

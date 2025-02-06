@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.login.data
 
 import retrofit2.Call
+import retrofit2.http.Body
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
@@ -13,12 +14,6 @@ interface ApiService {
         @Query("code") code: String
     ): Call<LoginResponse>
 
-    @FormUrlEncoded
-    @POST("/api/auth/refresh/kakao")
-    fun refreshKakaoToken(
-        @Field("refreshToken") refreshToke: String
-    ): Call<AuthTokens>
-
     @GET("/api/auth/callback/google")
     fun googleCallback(
         @Query("code") code: String
@@ -29,5 +24,14 @@ interface ApiService {
         @Query("code") code: String,
         @Query("state") state: String
     ): Call<LoginResponse>
+
+    @POST("/api/auth/refresh/jwt")
+    fun refreshJwtToken(
+        @Body request : JwtTokenRequest
+    ): Call<LoginResponse>
 }
+
+data class JwtTokenRequest(
+    val refreshToken: String
+)
 

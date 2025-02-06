@@ -2,6 +2,7 @@ package com.eeos.rocatrun.presentation
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -52,6 +53,7 @@ import androidx.core.app.ActivityCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.service.LocationForegroundService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -99,7 +101,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 // 데이터 전송 추가
                 sendDataToPhone()
 
-                handler.postDelayed(this, 1000)
+                handler.postDelayed(this, 500)
             }
         }
     }
@@ -109,6 +111,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { RunningApp() }
+
+        // 포그라운드 서비스 시작
+        startForegroundService()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationCallback = object : LocationCallback() {
@@ -126,6 +131,12 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
         requestPermissions()
     }
+
+    private fun startForegroundService() {
+        val serviceIntent = Intent(this, LocationForegroundService::class.java)
+        startForegroundService(serviceIntent)  // Android 8.0 이상에서는 이 메서드 사용
+    }
+
 
     override fun onResume() {
         super.onResume()

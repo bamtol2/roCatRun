@@ -57,7 +57,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
 
 
-
+    implementation(libs.androidx.lifecycle.livedata.core)
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.runtime.livedata)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
