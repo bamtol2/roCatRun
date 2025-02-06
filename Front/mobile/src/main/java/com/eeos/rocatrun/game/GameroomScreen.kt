@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.socket.SocketHandler
 import org.json.JSONObject
 
 
@@ -341,7 +342,7 @@ fun CreateRoomContent(onBack: () -> Unit) {
                         }
 
                         // 인원 수 변환: "1인" -> 1, "2인" -> 2, …
-                        val maxPlayers = when (selectedPeople) {
+                        val roomPlayers = when (selectedPeople) {
                             "1인" -> 1
                             "2인" -> 2
                             "3인" -> 3
@@ -350,7 +351,7 @@ fun CreateRoomContent(onBack: () -> Unit) {
                         }
 
                         // 웹소켓 요청 보냄
-                        CreateRoomSocket(bossLevel, maxPlayers)
+                        CreateRoomSocket(bossLevel, roomPlayers)
 
                         code = "TK3NBF" // 임시로 6자 하드코딩
                     }
@@ -859,21 +860,34 @@ private fun RandomText(
 }
 
 // 방 생성 소켓 연결
-fun CreateRoomSocket(bossLevel: String, maxPlayers: Int) {
-    // 화면이 생성될 때 소켓 연결 및 리스너 등록
-    // 컴포저블이 사라질 때(더 이상 정보 필요하지 않을 때 리스너 해제)
+fun CreateRoomSocket(bossLevel: String, roomPlayers: Int) {
 
     // 전송할 JSON 생성
     val createRoomJson = JSONObject().apply {
         put("bossLevel", bossLevel)    // or "MEDIUM", "HARD"
-        put("maxPlayers", maxPlayers)        // 1-4 사이의 숫자
-//        put("isPrivate", true)      // 비밀 방 여부(초대코드 생성 여부)
+        put("maxPlayers", roomPlayers)        // 1-4 사이의 숫자
+        put("isPrivate", true)      // 비밀 방 여부(초대코드 생성 여부)
     }
+    Log.d("Socket", "emit 방생성")
 
-    Log.d("Socket", "emit")
+    // 방 생성 전송
+    SocketHandler.mSocket.emit("createRoom", createRoomJson)
 
-    // 메세지 전송
-//    SocketHandler.socket.emit("createRoom", createRoomJson)
+    // 방 생성 응답 이벤트 리스너 등록
+    SocketHandler.mSocket.on("roomCreated") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+            val roomId = json.optString("roomId", "")
+            val inviteCode = json.optString("inviteCode", "")
+            val currentPlayers = json.optInt("currentPlayers", 0)
+            val maxPlayers = json.optInt("maxPlayers", 0)
 
+            // JSON 데이터 로그 출력
+            Log.d(
+                "Socket",
+                "Room Created: roomId: $roomId, inviteCode: $inviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+            )
+        }
+    }
 }
 
