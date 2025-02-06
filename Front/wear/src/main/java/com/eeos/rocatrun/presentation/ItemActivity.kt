@@ -76,10 +76,11 @@ fun AnimatedGifView(resourceId: Int) {
 
 fun triggerVibration(context: Context) {
     val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    val timings = longArrayOf(200,300,200,300,200,300,200,300,200,300,200,300)
+    val amplitudes = intArrayOf(100,100,100,100,100,100,100,100,100,100,100,100)
     if (vibrator.hasVibrator()) {
-        val vibrationEffect = VibrationEffect.createOneShot(
-            500,  // 진동 시간 (밀리초)
-            VibrationEffect.DEFAULT_AMPLITUDE
+        val vibrationEffect = VibrationEffect.createWaveform(
+            timings,amplitudes,-1  // 진동 시간 (밀리초)
         )
         vibrator.vibrate(vibrationEffect)
     }
@@ -144,8 +145,8 @@ fun GameScreen() {
             Log.i("아이템 횟수", "아이템 횟수 : $itemUsageCount")
             showItemGif = true
             delay(1000)  // 1초 동안 GIF 유지
-
-            bossGaugeValue = (bossGaugeValue - 400).coerceAtLeast(0)
+            itemGaugeValue = 0
+            bossGaugeValue = (bossGaugeValue - 20).coerceAtLeast(0)
             showItemGif = false
 
 
@@ -155,28 +156,31 @@ fun GameScreen() {
                 coroutineScope.launch {
                     triggerVibration(context)
                 }
-                delay(30000) // 30초간 피버타임
+                delay(5000)
                 feverTimeActive = false
                 itemUsageCount = 0
+                Log.d("아이템 사용수", "$itemUsageCount")
+
+                Log.d("피버타임 종료", "종료 : $feverTimeActive")
             }
         }
     }
 
-//    // "게이지 올리기" 버튼 (상단에 작게 배치)
-//    Column(
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.Top,
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(top = 16.dp)
-//    ) {
-//        Button(
-//            onClick = {
-//                itemGaugeValue = (itemGaugeValue + 20).coerceAtMost(maxGaugeValue)
-//            },
-//            modifier = Modifier.wrapContentSize() // 버튼 크기 조정
-//        ) {
-//            Text("게이지+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
-//        }
-//    }
+    // "게이지 올리기" 버튼 (상단에 작게 배치)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 16.dp)
+    ) {
+        Button(
+            onClick = {
+                itemGaugeValue = (itemGaugeValue + 20).coerceAtMost(maxGaugeValue)
+            },
+            modifier = Modifier.wrapContentSize() // 버튼 크기 조정
+        ) {
+            Text("게이지+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
+        }
+    }
 }

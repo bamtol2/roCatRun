@@ -33,7 +33,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 @Composable
-fun GamemultiScreen(runningData: GameMulti.RunningData?) {
+fun GamemultiScreen(runningData: GameMulti.RunningData?, gpxFileReceived: Boolean) {
 
     // 타이머 상태 관리
     var seconds by remember { mutableStateOf(0) }
@@ -59,6 +59,19 @@ fun GamemultiScreen(runningData: GameMulti.RunningData?) {
 
     Box(modifier = Modifier.fillMaxSize()
     ) {
+
+        // GPX 파일 수신 상태 표시
+        if (gpxFileReceived) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(Color.Green)
+                    .padding(8.dp)
+            ) {
+                Text("GPX 파일 수신 완료", color = Color.White)
+            }
+        }
         // Background Image
         Image(
             painter = painterResource(id = R.drawable.game_bg_gameroom),
