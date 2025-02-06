@@ -1,72 +1,97 @@
 plugins {
 	id 'java'
+	// Spring Boot 최신 안정화 버전 (2024년 2월 기준)
 	id 'org.springframework.boot' version '3.2.2'
-	id 'io.spring.dependency-management' version '1.1.7'
+	// Spring 의존성 관리 플러그인
+	id 'io.spring.dependency-management' version '1.1.4'
 }
 
+// 프로젝트 그룹 ID
 group = 'com.ssafy'
+// 프로젝트 버전
 version = '0.0.1-SNAPSHOT'
 
+// plain jar 생성 비활성화 (Spring Boot jar만 사용)
 jar {
 	enabled = false
 }
 
+// Java 버전 설정
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
+// 설정 관련
 configurations {
 	compileOnly {
+		// 애노테이션 프로세서 설정 확장
 		extendsFrom annotationProcessor
 	}
 }
 
+// 의존성을 가져올 저장소 설정
 repositories {
+	// Maven 중앙 저장소 사용
 	mavenCentral()
 }
 
 dependencies {
-	// Spring Boot Starters
+	// === Spring Boot 핵심 스타터 패키지 ===
+	// JPA: 데이터베이스 ORM 기능
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// OAuth2: 소셜 로그인 기능
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	// Validation: 데이터 유효성 검증
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Web: 웹 애플리케이션 기능
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// WebFlux: 비동기 웹 클라이언트 기능
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// Redis: 인메모리 데이터 저장소
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+	// Actuator: 애플리케이션 모니터링
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-	//security
+	// === 보안 관련 ===
+	// Spring Security: 보안 기능
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// Thymeleaf Security: 템플릿 엔진 보안 확장
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
-	// JWT
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+	// === JWT 관련 ===
+	// JWT: 토큰 기반 인증
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 
-	// Swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
-
-	// Lombok
+	// === 개발 도구 ===
+	// Lombok: 반복 코드 제거
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	// Database
+	// === 데이터베이스 ===
+	// MySQL: 데이터베이스 드라이버
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
-	// Dev Tools
+	// === 개발 편의성 ===
+	// DevTools: 자동 리로드 등 개발 편의 기능
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// Test Dependencies
+	// === 테스트 관련 ===
+	// 스프링 부트 테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	// 리액티브 테스트
 	testImplementation 'io.projectreactor:reactor-test'
+	// 보안 테스트
 	testImplementation 'org.springframework.security:spring-security-test'
+	// JUnit 실행을 위한 런처
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// JUnit 플랫폼으로 테스트 실행
 tasks.named('test') {
 	useJUnitPlatform()
 }
