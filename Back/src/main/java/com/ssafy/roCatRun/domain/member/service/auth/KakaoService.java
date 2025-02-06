@@ -22,7 +22,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
-
+/**
+* 카카오 소셜 로그인 관련 서비스
+*/
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,6 +43,11 @@ public class KakaoService {
 
     private static final long TOKEN_EXPIRATION_TIME_MS = 1000 * 60 * 60 * 24 * 14;
 
+    /**
+     * 현재 도메인에 따라 적절한 리다이렉트 URI를 선택
+     * @param currentDomain 현재 도메인
+     * @return 선택된 리다이렉트 URI
+     */
     private String selectRedirectUri(String currentDomain) {
         if (currentDomain.contains("localhost")) {
             return defaultRedirectUri;
@@ -48,7 +55,9 @@ public class KakaoService {
             return defaultRedirectUri.replace("localhost:8080", currentDomain);
         }
     }
-
+    /**
+    * 카카오 로그인
+    */
     public LoginResponse kakaoLogin(String code, String currentDomain) {
         log.info("인가 코드: {}", code);
 
@@ -63,7 +72,11 @@ public class KakaoService {
 
         return processKakaoLogin(userInfo, kakaoTokenInfo);
     }
-
+    /**
+     * 카카오 토큰 갱신 처리
+     * @param refreshToken JWT 리프레시 토큰
+     * @return 새로운 JWT 토큰 세트
+     */
     public JwtTokens refreshKakaoToken(String refreshToken) {
         log.info("=================== Token Refresh Start ===================");
 
@@ -112,7 +125,9 @@ public class KakaoService {
 
         return newJwtTokens;
     }
-
+    /**
+     * 카카오 토큰 정보 내부클래스
+     */
     private static class KakaoTokenInfo {
         String accessToken;
         String refreshToken;
@@ -123,6 +138,12 @@ public class KakaoService {
         }
     }
 
+    /**
+     * 카카오 토큰을 얻어오는 메서드
+     * @param code 인가 코드
+     * @param redirectUri 리다이렉트 URI
+     * @return 카카오 토큰 정보
+     */
     private KakaoTokenInfo getKakaoTokens(String code, String redirectUri) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -193,7 +214,7 @@ public class KakaoService {
         Member member = memberRepository.findBySocialIdAndLoginType(socialId, "KAKAO")
                 .orElseGet(() -> {
                     Member newMember = Member.createMember(null, nickname, "KAKAO", socialId);
-                    return memberRepository.save(newMember);
+                    return memberRepository.save(newMember); // 여기서 MySQL 에 저장
                 });
 
         // JWT 토큰 생성
