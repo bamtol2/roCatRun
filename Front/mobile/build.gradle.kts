@@ -99,16 +99,7 @@ dependencies {
     // 통계 차트
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
 
-
-
-    // Paging 3 for Jetpack Compose
-    implementation("androidx.paging:paging-compose:3.2.0")
-
-    // Paging 3 for ViewModel
-    implementation("androidx.paging:paging-runtime:3.2.0")
-
-    // Retrofit과 함께 사용할 경우 (필요시 추가)
-    implementation("androidx.paging:paging-common:3.2.0")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    // composable에서 viewModel 이용
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")// 버전은 필요에 따라 변경할 수 있음
+    implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
 }

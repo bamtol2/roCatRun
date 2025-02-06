@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.stats
 
+import android.util.Log
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
@@ -17,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +33,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import com.eeos.rocatrun.R
 import androidx.compose.ui.window.Dialog
+import com.eeos.rocatrun.stats.api.StatsViewModel
+import com.eeos.rocatrun.stats.api.WeekStatsResponse
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
@@ -45,15 +49,27 @@ import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.LineProperties
 import ir.ehsannarmani.compose_charts.models.StrokeStyle
 import java.util.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun WeekStatsScreen() {
-    var isDialogVisible by remember { mutableStateOf(false) } // 다이얼로그의 표시 여부 상태
-    var selectedDate by remember { mutableStateOf("2024년 7월 3주") } // 선택된 날짜를 저장하는 상태
+fun WeekStatsScreen(weekStatsData: WeekStatsResponse?) {
+    // 초기 날짜를 현재 날짜에 맞게 설정
+    val currentDate = remember { android.icu.util.Calendar.getInstance() }
+    var year = currentDate.get(android.icu.util.Calendar.YEAR)
+    var month = currentDate.get(android.icu.util.Calendar.MONTH) + 1
+    var week = currentDate.get(android.icu.util.Calendar.WEEK_OF_MONTH)
 
-    val (year, month, week) = selectedDate.split(Regex("년|월|주")).let {
-        Triple(it[0].trim().toInt(), it[1].trim().toInt(), it[2].trim().toInt())
-    }
+
+    // 다이얼로그의 표시 여부 상태
+    var isDialogVisible by remember { mutableStateOf(false) }
+
+    // 선택된 날짜를 저장하는 상태
+    var selectedDate by remember { mutableStateOf("${year}년 ${month}월 ${week}주") }
+    val previousDate = rememberUpdatedState(selectedDate)
+    val (sYear, sMonth, sWeek) = parseSelectedDate(selectedDate)
+
+    // 주차를 선택할 때마다 API 호출
+    val statsViewModel: StatsViewModel = viewModel()
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -97,9 +113,9 @@ fun WeekStatsScreen() {
             // DatePickerDialog 보여주기
             if (isDialogVisible) {
                 DatePickerDialog(
-                    initialYear = year,
-                    initialMonth = month,
-                    initialWeek = week,
+                    initialYear = sYear,
+                    initialMonth = sMonth,
+                    initialWeek = sWeek,
                     onDateSelected = { selectedYear, selectedMonth, selectedWeek ->
                         selectedDate = "${selectedYear}년 ${selectedMonth}월 ${selectedWeek}주" // 날짜 선택 후 상태 업데이트
                         isDialogVisible = false
@@ -108,6 +124,14 @@ fun WeekStatsScreen() {
                         isDialogVisible = false
                     }
                 )
+            }
+
+            // API 호출
+            LaunchedEffect(selectedDate) {
+                if (selectedDate != previousDate.value) {
+                    val (selectedYear, selectedMonth, selectedWeek) = parseSelectedDate(selectedDate)
+                    statsViewModel.getWeekStats(selectedYear, selectedMonth, selectedWeek)
+                }
             }
 
             // 총 거리
@@ -124,7 +148,7 @@ fun WeekStatsScreen() {
                 contentAlignment = Alignment.Center
             ) {
                 StrokedText(
-                    text = "20.6 KM",
+                    text = "${weekStatsData?.data?.summary?.totalDistance} KM",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,
@@ -140,9 +164,9 @@ fun WeekStatsScreen() {
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem(label = "러닝", value = "3")
-                StatItem(label = "페이스", value = "05'43\"")
-                StatItem(label = "총 시간", value = "01h 48m")
+                StatItem(label = "러닝", value = "${weekStatsData?.data?.summary?.totalRuns}")
+                StatItem(label = "페이스", value = "${weekStatsData?.data?.summary?.averagePace}")
+                StatItem(label = "총 시간", value = "${formatTotalTime(weekStatsData?.data?.summary?.totalTime ?: "00:00:00")}")
             }
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -154,12 +178,31 @@ fun WeekStatsScreen() {
                     .height(300.dp)
                     .background(Color(0x8200001E), RoundedCornerShape(8.dp))
             ) {
-                BarGraph()
+                BarGraph(weekStatsData = weekStatsData)
             }
         }
     }
 }
 
+// 시간 형식 변환 함수
+fun formatTotalTime(totalTime: String): String {
+    val timeParts = totalTime.split(":")
+    val hours = timeParts[0].padStart(2, '0') // 2자리로 맞추기 위해 '0' 채우기
+    val minutes = timeParts[1].padStart(2, '0')
+
+    return "${hours}h ${minutes}m"
+}
+
+// 날짜를 파싱하는 함수
+fun parseSelectedDate(date: String): Triple<Int, Int, Int> {
+    val parts = date.split("년", "월", "주").map { it.trim() }
+    val selectedYear = parts[0].toInt()
+    val selectedMonth = parts[1].toInt()
+    val selectedWeek = parts[2].toInt()
+    return Triple(selectedYear, selectedMonth, selectedWeek)
+}
+
+// 정보 디자인 함수
 @Composable
 fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -178,26 +221,27 @@ fun StatItem(label: String, value: String) {
     }
 }
 
+// 그래프 함수
 @Composable
-fun BarGraph() {
-    // 더미 데이터
-    val dataList = listOf(
-        "월" to 20.0,
-        "화" to 50.0,
-        "수" to 80.0,
-        "목" to 30.0,
-        "금" to 60.0,
-        "토" to 40.0,
-        "일" to 70.0
+fun BarGraph(weekStatsData: WeekStatsResponse?) {
+    val dataList = weekStatsData?.data?.dailyStats ?: emptyList()
+
+    val maxDistance = (dataList.maxOfOrNull { it.distance } ?: 1.0).coerceAtLeast(1.0)
+    val yAxisIndicators = listOf(
+        maxDistance,
+        maxDistance * 0.75,
+        maxDistance * 0.5,
+        maxDistance * 0.25,
+        0.0
     )
 
     // Bars 데이터 생성
-    val chartData = dataList.map { (day, value) ->
+    val chartData = dataList.map { (day, distance) ->
         Bars(
             label = day,
             values = listOf(
                 Bars.Data(
-                    value = value,
+                    value = distance,
                     color = Brush.verticalGradient(
                         colors = listOf(Color.Blue, Color.Green),
                         startY = 0f,
@@ -231,10 +275,9 @@ fun BarGraph() {
             count = IndicatorCount.CountBased(count = 5),
             position = IndicatorPosition.Horizontal.Start,
             padding = 16.dp,
-            contentBuilder = { indicator ->
-                "%.2f".format(indicator)
+            contentBuilder = { indicator -> "%.1f".format(indicator)
             },
-            indicators = listOf(80.0, 60.0, 40.0, 20.0, 0.0)
+            indicators = yAxisIndicators
         ),
         labelProperties = LabelProperties(
             enabled = true,
@@ -274,7 +317,7 @@ fun BarGraph() {
             yAxisProperties = GridProperties.AxisProperties(
                 enabled = false,
             )
-        )
+        ),
     )
 }
 
@@ -358,7 +401,6 @@ fun DatePickerDialog(
 fun <T> WheelPicker(items: List<T>, selectedItem: T, onItemSelected: (T) -> Unit) {
     val paddedItems = listOf(null) + items + listOf(null)
     val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
     // 초기값 자동 선택
     LaunchedEffect(Unit) {

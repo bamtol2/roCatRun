@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.stats
+package com.eeos.rocatrun.stats.api
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

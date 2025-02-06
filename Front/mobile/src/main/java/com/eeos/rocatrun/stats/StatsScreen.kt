@@ -25,17 +25,21 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.stats.api.StatsViewModel
 import com.eeos.rocatrun.ui.theme.MyFontFamily
-import com.google.android.play.integrity.internal.y
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun StatsScreen(statsViewModel: StatsViewModel) {
     val context = LocalContext.current
 
-    // ViewModel에서 가져온 데이터를 관찰
-    val statsData = statsViewModel.statsData.observeAsState()
-    val isLoading = statsViewModel.loading.observeAsState(initial = false)
+    // Daily stats - ViewModel에서 가져온 데이터를 관찰
+    val dailyStatsData = statsViewModel.dailyStatsData.observeAsState()
+    val dailyLoading = statsViewModel.dailyLoading.observeAsState(initial = false)
+
+    // Week stats
+    val weekStatsData = statsViewModel.weekStatsData.observeAsState()
+    val weekLoading = statsViewModel.weekLoading.observeAsState(initial = false)
 
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("일", "주", "월")
@@ -125,7 +129,7 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
                     .offset(x = 0.dp, y = 130.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (isLoading.value) {
+                if (dailyLoading.value || weekLoading.value) {
                     GifImage(
                         modifier = Modifier.size(400.dp)
                                     .offset(y = (-40).dp),
@@ -134,8 +138,10 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
                 } else {
                     HorizontalPager(state = pagerState, userScrollEnabled = true) { page ->
                         when (page) {
-                            0 -> statsData.value?.let { DayStatsScreen(games = it.games) }
-                            1 -> WeekStatsScreen()
+                            0 -> dailyStatsData.value?.let { DayStatsScreen(games = it.games) }
+                            1 -> weekStatsData.value?.let {
+                                WeekStatsScreen(weekStatsData = it) // WeekStatsScreen에 데이터 전달
+                            }
                             2 -> MonStatsScreen()
                         }
                     }
