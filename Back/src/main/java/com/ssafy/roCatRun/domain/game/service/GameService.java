@@ -272,7 +272,7 @@ public class GameService {
      * 방 정보를 바탕으로 피버타임 체크
      * @param room 방 정보
      */
-    private void handleFeverTimeCheck(GameRoom room) {
+    private void  handleFeverTimeCheck(GameRoom room) {
         if (room.checkFeverCondition()) {
             room.startFeverTime();
             broadcastFeverTimeStart(room);

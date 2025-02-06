@@ -16,12 +16,14 @@ public class Player {
     private RunningData runningData = new RunningData();
     private List<Item> items = new ArrayList<>();
     private int usedItemCount = 0;
+    private int itemCountForFever = 0;  // 피버타임을 위한 아이템 카운트
 
     public Player(String id) {
         this.id = id;
         this.items = new ArrayList<>();
         this.runningData = new RunningData();
         this.usedItemCount = 0;
+        this.itemCountForFever=0;
     }
 
     public Player(String id, String nickname, String socketId) {
@@ -30,6 +32,8 @@ public class Player {
         this.socketId = socketId;
         this.items = new ArrayList<>();
         this.runningData = new RunningData();
+        this.usedItemCount=0;
+        this.itemCountForFever=0;
     }
 
     public void updateRunningData(RunningData newData) {
@@ -42,9 +46,13 @@ public class Player {
 
     public void useItem() {
         this.usedItemCount++;
+        // 피버타임용 카운트는 이전 피버타임에서 사용한 아이템은 제외하고 카운트
+        if (itemCountForFever < GameRoom.REQUIRED_ITEMS_FOR_FEVER) {
+            this.itemCountForFever++;
+        }
     }
 
-    public void resetItemCount() {
-        this.usedItemCount = 0;
+    public void resetFeverItemCount() {
+        this.itemCountForFever = 0;
     }
 }

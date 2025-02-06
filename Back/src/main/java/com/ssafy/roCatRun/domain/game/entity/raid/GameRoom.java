@@ -84,7 +84,7 @@ public class GameRoom {
 
         // 모든 플레이어가 REQUIRED_ITEMS_FOR_FEVER의 배수만큼 아이템을 사용했는지 확인
         return players.stream().allMatch(p ->
-                p.getUsedItemCount() > 0 && p.getUsedItemCount() % REQUIRED_ITEMS_FOR_FEVER == 0);
+                p.getItemCountForFever() >= REQUIRED_ITEMS_FOR_FEVER);
     }
 
     // 피버 타임 시작
@@ -93,13 +93,15 @@ public class GameRoom {
         // 지금으로부터 피버 종료 시간 설정
         this.feverTimeEndAt = System.currentTimeMillis() + (FEVER_TIME_DURATION * 1000);
         // 피버타임 시작시 모든 플레이어의 아이템 사용 카운트 초기화
-        players.forEach(Player::resetItemCount);
+        players.forEach(Player::resetFeverItemCount);
     }
 
     // 피버타임 종료
     public void endFeverTime() {
         this.feverTimeActive = false;
         this.feverTimeEndAt = null;
+        // 피버타임 종료시에도 모든 플레이어의 피버타임용 아이템 카운트 초기화
+        players.forEach(Player::resetFeverItemCount);
     }
 
     // 보스 피격
