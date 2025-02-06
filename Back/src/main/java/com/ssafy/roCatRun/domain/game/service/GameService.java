@@ -185,7 +185,8 @@ public class GameService {
 
         // 모든 플레이어에게 READY 상태 알림
         server.getRoomOperations(room.getId()).sendEvent("gameReady", new GameReadyResponse(
-                "게임이 곧 시작됩니다!"
+                "게임이 곧 시작됩니다!",
+                room.getPlayers()
         ));
 
         // 5초 뒤 카운트다운
@@ -200,9 +201,12 @@ public class GameService {
                 // 게임시작
                 room.setStatus(GameStatus.PLAYING);
                 gameRoomManager.updateRoom(room);
-                server.getRoomOperations(room.getId()).sendEvent("gameStart", new GameStartResponse(
+                server.getRoomOperations(room.getId()).sendEvent("gameStart"
+                        , GameStartResponse.of(
                         room.getId(),
-                        "게임이 시작되었습니다!"
+                        "게임이 시작되었습니다!",
+                        room.getBossHealth(),
+                        room.getPlayers()
                 ));
 
                 // 카운트다운 테스크 종료
@@ -290,6 +294,10 @@ public class GameService {
         room.setStatus(GameStatus.FINISHED);
         GameResultResponse result = createGameResult(room);
         server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
+        // 방에서 제외 및 방 제거 처리
+        for(Player player : room.getPlayers()){
+            handleUserDisconnect(player.getId());
+        }
     }
 
     /**
