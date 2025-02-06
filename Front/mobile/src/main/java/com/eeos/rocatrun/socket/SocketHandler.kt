@@ -15,8 +15,8 @@ object SocketHandler {
     lateinit var mSocket: Socket
 
     // 유저 1 생성 토큰
-    private var user1Token: String =
-        "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTczODc2NzQ5MywiZXhwIjoxNzM4ODUzODkzfQ.kpjTeOXiA6zHYBwTelS_ISkUQXbmmPX24UKsKevvmx_E-Lr6feaiQXj9hYXft4lvX1Uy-BzZwndtIxfTrCEZ1g"
+    private var user1Token: String = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTczODg1NDI3NCwiZXhwIjoxNzM4OTQwNjc0fQ.HrSsdbl1ePMIPKwHqy1pz7RrBMQcHFE0Tdyc3L-IRFo5wrF7EAepi_SChfSmqUmFykosOMQpUT12kOWTGpNWHQ"
+
     private var authValue = "Bearer $user1Token"
 
     // 웹소켓 통신 베이스 주소
@@ -60,7 +60,7 @@ object SocketHandler {
         mSocket.off(Socket.EVENT_CONNECT)
 
         mSocket.on(Socket.EVENT_CONNECT) {
-            Log.d("Socket", "Connected")
+            Log.d("Socket", "Connected!")
             authenticate() // 연결 완료 후 인증 이벤트 emit
         }
 
@@ -69,7 +69,7 @@ object SocketHandler {
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject
                 val success = json.optBoolean("success", false)
-                Log.d("Socket", "Authenticated: success=$success")
+                Log.d("Socket", "On - authenticated : success=$success")
             }
         }
 
@@ -81,12 +81,12 @@ object SocketHandler {
     fun authenticate() {
 
         try {
-            Log.d("Socket", "Sending authenticate event")
+            Log.d("Socket", "Emit - authenticate")
             mSocket.emit("authenticate", JSONObject().apply {
                 put("token", user1Token)
             })
         } catch (e: URISyntaxException) {
-            Log.d("ERR", e.toString())
+            Log.d("Socket", e.toString())
         }
 
     }

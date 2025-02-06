@@ -352,11 +352,13 @@ fun CreateRoomContent(onBack: () -> Unit) {
                             else -> 2 // 기본값 설정
                         }
 
-                        // 웹소켓 요청 보냄
-                        CreateRoomSocket(bossLevel, roomPlayers) {
-                            inviteCode -> code = inviteCode
+                        // 방생성 - 웹소켓
+                        CreateRoomSocket(bossLevel, roomPlayers) { inviteCode, currentPlayers, maxPlayers ->
+
                             val intent = Intent(context, Loading::class.java)
                             intent.putExtra("inviteCode", inviteCode)
+                            intent.putExtra("currentPlayers", currentPlayers)
+                            intent.putExtra("maxPlayers", maxPlayers)
                             context.startActivity(intent)
                         }
 
@@ -367,7 +369,7 @@ fun CreateRoomContent(onBack: () -> Unit) {
     }
 }
 
-// 코드 생성
+// 방 생성 버튼
 @Composable
 fun CodeGenerationSection(
     enabled: Boolean,
@@ -382,7 +384,7 @@ fun CodeGenerationSection(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 코드 생성 버튼
+        // 방 생성 버튼
         Box(
             modifier = Modifier
                 .border(
@@ -518,14 +520,22 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
 
-                            // 웹소켓 입장 이벤트 호출
-                            JoinRoomSocket(inviteCode,
-                                onSuccess = {
-                                    // Loading 화면으로 이동
-                                    val intent = Intent(context, Loading::class.java)
+                            // 웹소켓 입장 이벤트 호출: 성공하면 LoadingActivity로 이동, 에러면 모달 띄움
+                            JoinRoomSocket(inviteCode = inviteCode,
+                                onSuccess = { rInviteCode, currentPlayers, maxPlayers ->
+
+                                    // 성공하면 LoadingActivity로 이동
+                                    val intent = Intent(context, Loading::class.java).apply {
+                                        putExtra("inviteCode", rInviteCode)
+                                        putExtra("currentPlayers", currentPlayers)
+                                        putExtra("maxPlayers", maxPlayers)
+                                    }
+
                                     context.startActivity(intent)
                                 },
                                 onError = { error ->
+
+                                    // 실패하면 모달 띄우기
                                     errorMessage = error
                                     showErrorDialog = true
                                 }
@@ -843,15 +853,20 @@ private fun RandomText(
 }
 
 // 웹소켓 방 생성 이벤트
-fun CreateRoomSocket(bossLevel: String, roomPlayers: Int, onInviteCodeReceived: (String) -> Unit) {
-
+fun CreateRoomSocket(
+    bossLevel: String,
+    roomPlayers: Int,
+    onRoomCreated: (inviteCode: String,
+                    currentPlayers: Int,
+                    maxPlayers: Int) -> Unit)
+{
     // 전송할 JSON 생성
     val createRoomJson = JSONObject().apply {
         put("bossLevel", bossLevel)    // or "MEDIUM", "HARD"
         put("maxPlayers", roomPlayers)        // 1-4 사이의 숫자
         put("isPrivate", true)      // 비밀 방 여부(초대코드 생성 여부)
     }
-    Log.d("Socket", "Emit 방생성")
+    Log.d("Socket", "Emit - createRoom")
 
     // 방 생성 전송
     SocketHandler.mSocket.emit("createRoom", createRoomJson)
@@ -868,29 +883,34 @@ fun CreateRoomSocket(bossLevel: String, roomPlayers: Int, onInviteCodeReceived: 
             // JSON 데이터 로그 출력
             Log.d(
                 "Socket",
-                "Room Created: roomId: $roomId, inviteCode: $inviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                "On - roomCreated: roomId: $roomId, inviteCode: $inviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
             )
 
-            // 콜백으로 inviteCode 전달
-            onInviteCodeReceived(inviteCode)
+            // 콜백으로 초대코드, 현재수, 정원수 전달
+            onRoomCreated(inviteCode, currentPlayers, maxPlayers)
         }
     }
 }
 
 // 웹소켓 입장 이벤트
-fun JoinRoomSocket(inviteCode: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-
+fun JoinRoomSocket(
+    inviteCode: String,
+    onSuccess: (inviteCode: String,
+                   currentPlayers: Int,
+                   maxPlayers: Int) -> Unit,
+    onError: (String) -> Unit)
+{
     // 전송할 JSON 생성
     val joinRoomJson = JSONObject().apply {
         put("inviteCode", inviteCode)
 
     }
-    Log.d("Socket", "Emit 방 입장")
+    Log.d("Socket", "Emit - joinRoom")
 
-    // 방 생성 전송
+    // 입장 요청
     SocketHandler.mSocket.emit("joinRoom", joinRoomJson)
 
-    // 방 생성 응답 이벤트 리스너 등록
+    // 입장 응답 이벤트 리스너 등록
     SocketHandler.mSocket.off("roomJoined") // 중복 등록 방지
     SocketHandler.mSocket.on("roomJoined") { args ->
         if (args.isNotEmpty() && args[0] is JSONObject) {
@@ -900,19 +920,25 @@ fun JoinRoomSocket(inviteCode: String, onSuccess: () -> Unit, onError: (String) 
             // 만약 json에 "error" 키가 있으면 에러 처리
             if (json.has("error")) {
                 val errorMsg = json.optString("error", "알 수 없는 에러")
-                Log.d("Socket", "Join error: $errorMsg")
+                Log.d("Socket", "Error - roomJoined : $errorMsg")
                 onError(errorMsg)
-            } else {
-                val userId = json.optString("userId", "")
+            } else
+            {
+                // 정상 응답일 경우
+                val roomId = json.optString("roomId", "")
+                val extractedInviteCode = json.optString("inviteCode", "")
                 val currentPlayers = json.optInt("currentPlayers", 0)
                 val maxPlayers = json.optInt("maxPlayers", 0)
 
                 Log.d(
                     "Socket",
-                    "Joined Room: userId: $userId, inviteCode: $inviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                    "On - roomJoined : userId: $roomId, inviteCode: $extractedInviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
                 )
-                onSuccess()
+                // 콜백으로 초대코드, 현재수, 정원수 전달
+                onSuccess(inviteCode, currentPlayers, maxPlayers)
             }
+        } else {
+           Log.d("Socket", "Error - roomJoined : 잘못된 응답")
         }
     }
 }

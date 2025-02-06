@@ -19,6 +19,8 @@ class Loading : ComponentActivity() {
 
         // intent로 전달된 inviteCode 추출
         val inviteCode = intent.getStringExtra("inviteCode")
+        val initialCurrentUsers = intent.getIntExtra("currentPlayers", 1)
+        val initialMaxUsers = intent.getIntExtra("maxPlayers", 4)
 
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
@@ -37,7 +39,12 @@ class Loading : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    LoadingScreen(generatedCode = inviteCode)
+                    // LoadingScreen에 전달받은 데이터를 전달
+                    LoadingScreen(
+                        generatedCode = inviteCode,
+                        initialCurrentUsers = initialCurrentUsers,
+                        initialMaxUsers = initialMaxUsers
+                    )
                 }
             }
         }

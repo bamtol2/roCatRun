@@ -36,6 +36,9 @@
             android:name=".game.Loading"
             android:exported="true" />
         <activity
+            android:name=".game.Joining"
+            android:exported="true" />
+        <activity
             android:name=".game.GamePlay"
             android:exported="true" />
         <activity

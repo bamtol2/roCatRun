@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.game
 
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,6 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,16 +44,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.socket.SocketHandler
+import org.json.JSONObject
 
 @Composable
 fun LoadingScreen(
     generatedCode: String? = null,
-    // 임시로 넣어둠. 연동할 때 바꿀 예정
-    currentUsers: Int = 3,   // 현재 접속한 사용자 수
-    maxUsers: Int = 4        // 방 정원
+    initialCurrentUsers: Int = 0,   // 현재 접속한 사용자 수
+    initialMaxUsers: Int = 0       // 방 정원
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    var currentUsers by remember { mutableStateOf(initialCurrentUsers) }
+    var maxUsers by remember { mutableStateOf(initialMaxUsers) }
+
+    LaunchedEffect(Unit) {
+        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
+        SocketHandler.mSocket.on("playerJoined") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val json = args[0] as JSONObject
+                val userId = json.optString("userId", "")
+                val currentPlayers = json.optInt("currentPlayers", 0)
+                val maxPlayers = json.optInt("maxPlayers", 0)
+                Log.d(
+                    "Socket",
+                    "On - playerJoined: userId: $userId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                )
+                // 갱신된 값을 상태에 반영
+                currentUsers = json.optInt("currentPlayers", currentUsers)
+                maxUsers = json.optInt("maxPlayers", maxUsers)
+
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -58,88 +87,136 @@ fun LoadingScreen(
             modifier = Modifier.matchParentSize()
         )
 
+
         // Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 25.dp, vertical = 100.dp),
-            horizontalAlignment = Alignment.Start,
+                .padding(horizontal = 20.dp, vertical = 100.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            Spacer(modifier = Modifier.height(50.dp))
 
             // 큰 박스
             Box(
                 modifier = Modifier
-                    .padding(start = 0.dp)  // 이미지가 왼쪽으로 나갈 공간 확보
+                    .padding(start = 50.dp)  // 이미지가 왼쪽으로 나갈 공간 확보
+                    .align(Alignment.Start)
             ) {
                 // 고스트 이미지 (앞으로 나오도록 zIndex 설정)
                 Image(
                     painter = painterResource(id = R.drawable.game_img_ghost),
                     contentDescription = "Ghost character",
                     modifier = Modifier
-                        .size(50.dp)
-                        .offset(x = (-25).dp)  // 왼쪽으로 이미지 이동
+                        .size(70.dp)
+                        .offset(x = (-50).dp, y = 42.dp)  // 왼쪽으로 이미지 이동
                         .zIndex(1f)  // 이미지가 박스 위로 오도록 설정
                 )
+
 
                 // 초대코드 박스
                 Box(
                     modifier = Modifier
                         .background(
-                            color = Color(0xFF881958),
+                            color = Color(0xFF17204D),
                             shape = RoundedCornerShape(10.dp)
                         )
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+//                        .border(width = 2.dp, color = Color(0xFF2D4FFF),shape = RoundedCornerShape(size = 10.dp))
+                        .width(230.dp)
+                        .height(110.dp)
+                        .padding(horizontal = 5.dp, vertical = 5.dp)
                         .zIndex(0f)  // 박스는 이미지 뒤로
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(start = 20.dp)  // 이미지 공간만큼 내용물 오른쪽으로 이동
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp)
+                            .align(Alignment.Center)
+
                     ) {
-                        Column {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.Start))
+                        {
                             Text(
                                 text = "초대코드는",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    color = Color(0xFF596CCE),
+                                    fontSize = 15.sp,
+                                    drawStyle = Stroke(
+                                        width = 10f,
+                                        join = StrokeJoin.Round
+                                    ))
+                            )
+                            Text(
+                                text = "초대코드는",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    color = Color(0xFFFFFFFF),
+                                    fontSize = 15.sp)
+
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // 코드박스
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),  // Row가 전체 너비를 차지하도록 함
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = generatedCode ?: "",
                                 color = Color.White,
-                                fontSize = 14.sp,
-                                modifier = Modifier
-                                    .padding(bottom = 2.dp)
-                                    .padding(start = 4.dp)  // 왼쪽으로 이동
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold
                             )
 
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = generatedCode ?: "",
-                                    color = Color.White,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            Spacer(modifier = Modifier.width(5.dp))
 
-                                Image(
-                                    painter = painterResource(id = R.drawable.game_icon_copy),
-                                    contentDescription = "Copy",
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .clickable {
-                                            generatedCode?.let {
-                                                clipboardManager.setText(AnnotatedString(it))
-                                                Toast.makeText(
-                                                    context,
-                                                    "코드가 복사되었습니다",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
+                            Image(
+                                painter = painterResource(id = R.drawable.game_icon_copy),
+                                contentDescription = "Copy",
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable {
+                                        generatedCode?.let {
+                                            clipboardManager.setText(AnnotatedString(it))
+                                            Toast.makeText(
+                                                context,
+                                                "코드가 복사되었습니다",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                         }
-                                )
-                            }
+                                    }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(top = 4.dp))
+                        {
+                            Text(
+                                text = "여기있다냥",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    color = Color(0xFF596CCE),
+                                    fontSize = 15.sp,
+                                    drawStyle = Stroke(
+                                        width = 10f,
+                                        join = StrokeJoin.Round
+                                    ))
+                            )
 
                             Text(
                                 text = "여기있다냥",
                                 color = Color.White,
-                                fontSize = 14.sp,
-                                modifier = Modifier.padding(top = 2.dp)
+                                fontSize = 15.sp,
+
                             )
                         }
                     }
@@ -147,7 +224,7 @@ fun LoadingScreen(
             }
 
             // 큰 박스와 대기 중 박스 사이 간격
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // 대기 중 박스
             Box(
@@ -158,8 +235,8 @@ fun LoadingScreen(
                     painter = painterResource(id = R.drawable.game_img_lightpink),
                     contentDescription = null,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
+                        .width(300.dp)
+                        .height(100.dp),
                     contentScale = ContentScale.FillBounds
                 )
 
@@ -168,9 +245,9 @@ fun LoadingScreen(
                     text = "대기 중...",
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = Color(0xFFF20089),
-                        fontSize = 45.sp,
+                        fontSize = 40.sp,
                         drawStyle = Stroke(
-                            width = 10f,
+                            width = 13f,
                             join = StrokeJoin.Round
                         )
                     ),
@@ -181,7 +258,7 @@ fun LoadingScreen(
                     text = "대기 중...",
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = Color.White,
-                        fontSize = 45.sp,
+                        fontSize = 40.sp,
                     ),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.align(Alignment.Center)
@@ -248,7 +325,7 @@ fun LoadingScreen(
                                 color = Color(0xA8F20089),
                                 fontSize = 35.sp,
                                 drawStyle = Stroke(
-                                    width = 18f,
+                                    width = 20f,
                                     join = StrokeJoin.Round
                                 ),
                                 textDecoration = TextDecoration.Underline
@@ -267,6 +344,24 @@ fun LoadingScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+
+fun PlayerJoinedSocket() {
+    SocketHandler.mSocket.on("playerJoined") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+            val userId = json.optString("userId", "")
+            val currentPlayers = json.optInt("currentPlayers", 0)
+            val maxPlayers = json.optInt("maxPlayers", 0)
+
+            // JSON 데이터 로그 출력
+            Log.d(
+                "Socket",
+                "On - playerJoined : roomId: $userId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+            )
         }
     }
 }
