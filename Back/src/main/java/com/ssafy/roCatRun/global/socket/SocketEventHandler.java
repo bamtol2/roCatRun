@@ -64,7 +64,7 @@ public class SocketEventHandler {
                 (client, data, ack) -> handleRunningDataUpdate(client, data));
 
         // 아이템 사용 이벤트
-        server.addEventListener("useItem", UseItemRequest.class,
+        server.addEventListener("useItem", JsonObject.class,
                 (client, data, ack) -> handleItemUse(client));
 
         // 연결 상태 확인 이벤트

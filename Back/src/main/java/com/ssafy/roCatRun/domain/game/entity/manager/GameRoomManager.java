@@ -3,6 +3,7 @@ package com.ssafy.roCatRun.domain.game.entity.manager;
 import com.ssafy.roCatRun.domain.game.entity.raid.BossLevel;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
+import com.ssafy.roCatRun.domain.game.entity.raid.Player;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -55,22 +56,29 @@ public class GameRoomManager {
      * @return 조건에 맞는 게임방 (없으면 Optional.empty)
      */
     public Optional<GameRoom> findRandomRoom(BossLevel bossLevel, int maxPlayers) {
-        return rooms.values().stream()
-                .filter(room -> room.isRandomMatch() &&
-                        room.getBossLevel() == bossLevel &&
-                        room.getMaxPlayers() == maxPlayers &&
-                        room.getStatus() == GameStatus.WAITING &&
-                        room.getPlayers().size() < room.getMaxPlayers())
-                .findFirst();
+        for (GameRoom room : rooms.values()) {
+            if (room.isRandomMatch() &&
+                    room.getBossLevel() == bossLevel &&
+                    room.getMaxPlayers() == maxPlayers &&
+                    room.getStatus() == GameStatus.WAITING &&
+                    room.getPlayers().size() < room.getMaxPlayers()) {
+                return Optional.of(room);
+            }
+        }
+        return Optional.empty();
     }
 
     /**
      * 유저 ID로 게임방 찾기
      */
     public Optional<GameRoom> findRoomByUserId(String userId) {
-        return rooms.values().stream()
-                .filter(room -> room.getPlayers().stream()
-                        .anyMatch(player -> player.getId().equals(userId)))
-                .findFirst();
+        for (GameRoom room : rooms.values()) {
+            for (Player player : room.getPlayers()) {
+                if (player.getId().equals(userId)) {
+                    return Optional.of(room);
+                }
+            }
+        }
+        return Optional.empty();
     }
 }
