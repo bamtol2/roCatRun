@@ -17,6 +17,9 @@ class Loading : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // intent로 전달된 inviteCode 추출
+        val inviteCode = intent.getStringExtra("inviteCode")
+
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
                 Color.Transparent.toArgb()
@@ -34,7 +37,7 @@ class Loading : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    LoadingScreen()
+                    LoadingScreen(generatedCode = inviteCode)
                 }
             }
         }

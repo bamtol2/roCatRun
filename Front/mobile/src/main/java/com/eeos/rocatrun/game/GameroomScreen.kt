@@ -3,7 +3,6 @@ package com.eeos.rocatrun.game
 //import com.eeos.rocatrun.socket.SocketHandler
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,9 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,10 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -187,9 +186,13 @@ fun MainButtons() {
 // 방 생성 extend 창
 @Composable
 fun CreateRoomContent(onBack: () -> Unit) {
+    val context = LocalContext.current
     var selectedDifficulty by remember { mutableStateOf("") }
     var selectedPeople by remember { mutableStateOf("") }
     var code by remember { mutableStateOf<String?>(null) }
+
+    // 두 항목 모두 선택되어야 생성 버튼이 활성화됨
+    val isGenerateEnabled = selectedDifficulty.isNotBlank() && selectedPeople.isNotBlank()
 
     Box(
         modifier = Modifier
@@ -328,9 +331,8 @@ fun CreateRoomContent(onBack: () -> Unit) {
                 modifier = Modifier.padding(bottom = 20.dp)
             ){
                 CodeGenerationSection(
-                    generatedCode = code,
+                    enabled = isGenerateEnabled,
 
-                    //생성 버튼 누를때 request 보내줘야됨.
                     onGenerateClick = {
 
                         // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
@@ -351,9 +353,13 @@ fun CreateRoomContent(onBack: () -> Unit) {
                         }
 
                         // 웹소켓 요청 보냄
-                        CreateRoomSocket(bossLevel, roomPlayers)
+                        CreateRoomSocket(bossLevel, roomPlayers) {
+                            inviteCode -> code = inviteCode
+                            val intent = Intent(context, Loading::class.java)
+                            intent.putExtra("inviteCode", inviteCode)
+                            context.startActivity(intent)
+                        }
 
-                        code = "TK3NBF" // 임시로 6자 하드코딩
                     }
                 )
             }
@@ -364,17 +370,16 @@ fun CreateRoomContent(onBack: () -> Unit) {
 // 코드 생성
 @Composable
 fun CodeGenerationSection(
-    generatedCode: String? = null,
+    enabled: Boolean,
     onGenerateClick: () -> Unit
 ) {
-    val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
+    val borderColor = if (enabled) Color(0xFFFF00CC) else Color.Gray // 활성/비활성 보더 색상
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 코드 생성 버튼
@@ -382,71 +387,22 @@ fun CodeGenerationSection(
             modifier = Modifier
                 .border(
                     width = 2.dp,
-                    color = Color(0xFFFF00CC),
+                    color = borderColor,
                     shape = RoundedCornerShape(10.dp)
                 )
-                .clickable { onGenerateClick() }
+                // 버튼이 활성화되었을 때만 클릭 이벤트 반응
+                .then(if (enabled) Modifier
+                    .clickable {
+                        onGenerateClick()
+                    } else Modifier)
+
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Text(
-                "코드 생성",
+                "방 생성",
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 20.sp
-                )
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp)
             )
-        }
-
-        // 코드 표시 영역과 복사 버튼
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.width(160.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(120.dp)
-                    .height(30.dp)
-            ) {
-                if (generatedCode != null) {
-                    Text(
-                        text = generatedCode,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontSize = 25.sp
-                        ),
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(2.dp)
-                            .background(Color.White)
-                            .align(Alignment.BottomCenter)
-                    )
-                }
-            }
-            // 복사 버튼
-            IconButton(
-                onClick = {
-                    generatedCode?.let {
-                        clipboardManager.setText(AnnotatedString(it))
-                        Toast.makeText(
-                            context,
-                            "코드가 복사되었습니다",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                },
-                modifier = Modifier.size(24.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.game_icon_copy),
-                    contentDescription = "Copy code",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
     }
 }
@@ -458,6 +414,9 @@ fun InviteCodeContent(onBack: () -> Unit) {
     var inviteCode by remember { mutableStateOf("") }
     // 코드 최대 글자
     val maxLength = 6
+
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -558,9 +517,19 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         )
                         // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
-                            // Loading으로 이동. 근데 여기서 코드 있는건지 없는건지 확인해서 예외처리 작업 필요함
-                            val intent = Intent(context, Loading::class.java)
-                            context.startActivity(intent)
+
+                            // 웹소켓 입장 이벤트 호출
+                            JoinRoomSocket(inviteCode,
+                                onSuccess = {
+                                    // Loading 화면으로 이동
+                                    val intent = Intent(context, Loading::class.java)
+                                    context.startActivity(intent)
+                                },
+                                onError = { error ->
+                                    errorMessage = error
+                                    showErrorDialog = true
+                                }
+                            )
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
@@ -576,6 +545,20 @@ fun InviteCodeContent(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(30.dp))
             }
         }
+    }
+
+    // 에러가 발생했을 때 모달 다이얼로그 표시
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = { Text("에러 발생") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { showErrorDialog = false }) {
+                    Text("확인")
+                }
+            }
+        )
     }
 }
 
@@ -859,8 +842,8 @@ private fun RandomText(
     }
 }
 
-// 방 생성 소켓 연결
-fun CreateRoomSocket(bossLevel: String, roomPlayers: Int) {
+// 웹소켓 방 생성 이벤트
+fun CreateRoomSocket(bossLevel: String, roomPlayers: Int, onInviteCodeReceived: (String) -> Unit) {
 
     // 전송할 JSON 생성
     val createRoomJson = JSONObject().apply {
@@ -868,7 +851,7 @@ fun CreateRoomSocket(bossLevel: String, roomPlayers: Int) {
         put("maxPlayers", roomPlayers)        // 1-4 사이의 숫자
         put("isPrivate", true)      // 비밀 방 여부(초대코드 생성 여부)
     }
-    Log.d("Socket", "emit 방생성")
+    Log.d("Socket", "Emit 방생성")
 
     // 방 생성 전송
     SocketHandler.mSocket.emit("createRoom", createRoomJson)
@@ -887,7 +870,49 @@ fun CreateRoomSocket(bossLevel: String, roomPlayers: Int) {
                 "Socket",
                 "Room Created: roomId: $roomId, inviteCode: $inviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
             )
+
+            // 콜백으로 inviteCode 전달
+            onInviteCodeReceived(inviteCode)
         }
     }
 }
 
+// 웹소켓 입장 이벤트
+fun JoinRoomSocket(inviteCode: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+
+    // 전송할 JSON 생성
+    val joinRoomJson = JSONObject().apply {
+        put("inviteCode", inviteCode)
+
+    }
+    Log.d("Socket", "Emit 방 입장")
+
+    // 방 생성 전송
+    SocketHandler.mSocket.emit("joinRoom", joinRoomJson)
+
+    // 방 생성 응답 이벤트 리스너 등록
+    SocketHandler.mSocket.off("roomJoined") // 중복 등록 방지
+    SocketHandler.mSocket.on("roomJoined") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+
+            val json = args[0] as JSONObject
+
+            // 만약 json에 "error" 키가 있으면 에러 처리
+            if (json.has("error")) {
+                val errorMsg = json.optString("error", "알 수 없는 에러")
+                Log.d("Socket", "Join error: $errorMsg")
+                onError(errorMsg)
+            } else {
+                val userId = json.optString("userId", "")
+                val currentPlayers = json.optInt("currentPlayers", 0)
+                val maxPlayers = json.optInt("maxPlayers", 0)
+
+                Log.d(
+                    "Socket",
+                    "Joined Room: userId: $userId, inviteCode: $inviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                )
+                onSuccess()
+            }
+        }
+    }
+}

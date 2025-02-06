@@ -1,8 +1,11 @@
 package com.eeos.rocatrun.game
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,9 +13,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,21 +27,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.eeos.rocatrun.R
 
 @Composable
 fun LoadingScreen(
+    generatedCode: String? = null,
     // 임시로 넣어둠. 연동할 때 바꿀 예정
     currentUsers: Int = 3,   // 현재 접속한 사용자 수
     maxUsers: Int = 4        // 방 정원
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -51,11 +62,98 @@ fun LoadingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 25.dp, vertical = 250.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 25.dp, vertical = 100.dp),
+            horizontalAlignment = Alignment.Start,
         ) {
-            // 매칭 중 박스
-            Box {
+
+            // 큰 박스
+            Box(
+                modifier = Modifier
+                    .padding(start = 0.dp)  // 이미지가 왼쪽으로 나갈 공간 확보
+            ) {
+                // 고스트 이미지 (앞으로 나오도록 zIndex 설정)
+                Image(
+                    painter = painterResource(id = R.drawable.game_img_ghost),
+                    contentDescription = "Ghost character",
+                    modifier = Modifier
+                        .size(50.dp)
+                        .offset(x = (-25).dp)  // 왼쪽으로 이미지 이동
+                        .zIndex(1f)  // 이미지가 박스 위로 오도록 설정
+                )
+
+                // 초대코드 박스
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFF881958),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .zIndex(0f)  // 박스는 이미지 뒤로
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(start = 20.dp)  // 이미지 공간만큼 내용물 오른쪽으로 이동
+                    ) {
+                        Column {
+                            Text(
+                                text = "초대코드는",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .padding(bottom = 2.dp)
+                                    .padding(start = 4.dp)  // 왼쪽으로 이동
+                            )
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = generatedCode ?: "",
+                                    color = Color.White,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Image(
+                                    painter = painterResource(id = R.drawable.game_icon_copy),
+                                    contentDescription = "Copy",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable {
+                                            generatedCode?.let {
+                                                clipboardManager.setText(AnnotatedString(it))
+                                                Toast.makeText(
+                                                    context,
+                                                    "코드가 복사되었습니다",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                )
+                            }
+
+                            Text(
+                                text = "여기있다냥",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 큰 박스와 대기 중 박스 사이 간격
+            Spacer(modifier = Modifier.height(50.dp))
+
+            // 대기 중 박스
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.game_img_lightpink),
                     contentDescription = null,
