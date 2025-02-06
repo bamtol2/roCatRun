@@ -15,18 +15,27 @@ import com.google.accompanist.pager.*
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.ui.theme.MyFontFamily
+import com.google.android.play.integrity.internal.y
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun StatsScreen() {
+fun StatsScreen(statsViewModel: StatsViewModel) {
     val context = LocalContext.current
+
+    // ViewModel에서 가져온 데이터를 관찰
+    val statsData = statsViewModel.statsData.observeAsState()
+    val isLoading = statsViewModel.loading.observeAsState(initial = false)
 
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("일", "주", "월")
@@ -95,7 +104,9 @@ fun StatsScreen() {
                             text = {
                                 Text(
                                     text = title,
-                                    color = if (tabIndex == index) Color(0xFF36DBEB) else Color(0xFFFFFFFF),
+                                    color = if (tabIndex == index) Color(0xFF36DBEB) else Color(
+                                        0xFFFFFFFF
+                                    ),
                                     fontSize = 42.86.sp,
                                     fontFamily = MyFontFamily,
                                 )
@@ -112,17 +123,45 @@ fun StatsScreen() {
                     .fillMaxHeight(0.77f)
                     .padding(10.dp)
                     .offset(x = 0.dp, y = 130.dp),
-                contentAlignment = Alignment.TopCenter
+                contentAlignment = Alignment.Center
             ) {
-                HorizontalPager(state = pagerState, userScrollEnabled = true) { page ->
-                    when (page) {
-                        0 -> DayStatsScreen()
-                        1 -> WeekStatsScreen()
-                        2 -> MonStatsScreen()
+                if (isLoading.value) {
+                    GifImage(
+                        modifier = Modifier.size(400.dp)
+                                    .offset(y = (-40).dp),
+                        gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.stats_gif_loading2}"
+                    )
+                } else {
+                    HorizontalPager(state = pagerState, userScrollEnabled = true) { page ->
+                        when (page) {
+                            0 -> statsData.value?.let { DayStatsScreen(games = it.games) }
+                            1 -> WeekStatsScreen()
+                            2 -> MonStatsScreen()
+                        }
                     }
                 }
             }
         }
 
     }
+}
+
+
+// gif 불러오는 함수
+@Composable
+fun GifImage(modifier: Modifier = Modifier, gifUrl: String) {
+
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(gifUrl)
+            .crossfade(false)
+            .build()
+    )
+
+    Image(
+        painter = painter,
+        contentDescription = "GIF Image",
+        modifier = modifier,
+        contentScale = ContentScale.Crop
+    )
 }

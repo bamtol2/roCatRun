@@ -85,10 +85,8 @@ dependencies {
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.runtime.livedata)
 
-    // coil 추가
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-gif:3.0.4")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -98,5 +96,19 @@ dependencies {
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
 
+    // 통계 차트
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
+
+
+
+    // Paging 3 for Jetpack Compose
+    implementation("androidx.paging:paging-compose:3.2.0")
+
+    // Paging 3 for ViewModel
+    implementation("androidx.paging:paging-runtime:3.2.0")
+
+    // Retrofit과 함께 사용할 경우 (필요시 추가)
+    implementation("androidx.paging:paging-common:3.2.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
 }
