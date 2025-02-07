@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.stats.api.GameDetails
+import com.eeos.rocatrun.ui.components.StrokedText
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 

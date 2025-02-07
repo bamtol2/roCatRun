@@ -21,11 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.stats.api.StatsViewModel
+import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
@@ -41,6 +39,11 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
     val weekStatsData = statsViewModel.weekStatsData.observeAsState()
     val weekLoading = statsViewModel.weekLoading.observeAsState(initial = false)
 
+    // Mon stats
+    val monStatsData = statsViewModel.monStatsData.observeAsState()
+    val monLoading = statsViewModel.monLoading.observeAsState(initial = false)
+
+    // Tab Settings
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("일", "주", "월")
     val pagerState = rememberPagerState(
@@ -50,6 +53,7 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
     )
     val tabIndex = pagerState.currentPage
 
+    // UI
     Box(modifier = Modifier.fillMaxSize()) {
         // 배경 이미지
         Image(
@@ -129,7 +133,7 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
                     .offset(x = 0.dp, y = 130.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (dailyLoading.value || weekLoading.value) {
+                if (dailyLoading.value || weekLoading.value || monLoading.value) {
                     GifImage(
                         modifier = Modifier.size(400.dp)
                                     .offset(y = (-40).dp),
@@ -139,10 +143,8 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
                     HorizontalPager(state = pagerState, userScrollEnabled = true) { page ->
                         when (page) {
                             0 -> dailyStatsData.value?.let { DayStatsScreen(games = it.games) }
-                            1 -> weekStatsData.value?.let {
-                                WeekStatsScreen(weekStatsData = it) // WeekStatsScreen에 데이터 전달
-                            }
-                            2 -> MonStatsScreen()
+                            1 -> weekStatsData.value?.let { WeekStatsScreen(weekStatsData = it) }
+                            2 -> monStatsData.value?.let { MonStatsScreen(monStatsData = it) }
                         }
                     }
                 }
@@ -150,24 +152,4 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
         }
 
     }
-}
-
-
-// gif 불러오는 함수
-@Composable
-fun GifImage(modifier: Modifier = Modifier, gifUrl: String) {
-
-    val painter = rememberAsyncImagePainter(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(gifUrl)
-            .crossfade(false)
-            .build()
-    )
-
-    Image(
-        painter = painter,
-        contentDescription = "GIF Image",
-        modifier = modifier,
-        contentScale = ContentScale.Crop
-    )
 }

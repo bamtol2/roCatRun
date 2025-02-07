@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.painter.Painter
 import com.eeos.rocatrun.stats.api.Game
 import com.eeos.rocatrun.stats.api.Player
+import com.eeos.rocatrun.ui.components.StrokedText
 
 
 @Composable

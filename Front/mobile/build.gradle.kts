@@ -100,6 +100,6 @@ dependencies {
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
 
     // composable에서 viewModel 이용
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")// 버전은 필요에 따라 변경할 수 있음
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
     implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
 }
