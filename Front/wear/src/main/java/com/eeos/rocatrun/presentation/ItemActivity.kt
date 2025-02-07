@@ -35,6 +35,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.activity.viewModels
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.getSystemService
 import com.eeos.rocatrun.viewmodel.GameViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -112,7 +113,9 @@ fun GameScreen() {
         modifier = Modifier.fillMaxSize().background(Color.Black)
     ) {
         if (feverTimeActive) {
-            FeverTime()
+            FeverTime(
+//                modifier = Modifier.fillMaxSize().zIndex(1f)
+            )
         } else {
             // 원형 게이지 표시
             CircularItemGauge(

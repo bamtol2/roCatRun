@@ -42,11 +42,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -74,7 +78,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
-
+import com.eeos.rocatrun.component.CircularItemGauge
 
 
 class RunningActivity : ComponentActivity(), SensorEventListener {
@@ -94,7 +98,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var speed by mutableStateOf(0.0)
     private var elapsedTime by mutableStateOf(0L)
     private var averagePace by mutableStateOf(0.0)
-    private var heartRate by mutableStateOf("--")
+    private var heartRate by mutableStateOf("---")
     private var averageHeartRate by mutableStateOf(0.0)
     private var heartRateSum = 0
     private var heartRateCount = 0
@@ -368,37 +372,36 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     @Composable
     fun CircularLayout() {
+
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            val iconSize = maxWidth * 0.12f  // 화면 크기에 따라 아이콘 크기 조정
             val spacing = maxWidth * 0.04f   // 요소 간 간격 조정
-
+            CircularItemGauge(30f,50f, Modifier.size(200.dp))
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 상단 페이스 정보
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                Column (
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.wear_icon_run),
-                        contentDescription = "페이스 아이콘",
-                        modifier = Modifier.size(iconSize),
-                        tint = Color.Unspecified
-                    )
-                    Spacer(modifier = Modifier.width(spacing))
                     Text(
-                        text = "페이스\n${formatPace(averagePace)}",
-                        color = Color(0xFF00FFFF),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        text = "페이스",
+                        color = Color(0xFF00FFCC),
+                        fontSize = 12.sp,
+//                        fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily(Font(R.font.neodgm)),
-
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = formatPace(averagePace),
+                        color = Color(0xFFFFFFFF),
+                        fontSize = 25.sp,
+//                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(R.font.neodgm)),
                     )
                 }
 
@@ -408,66 +411,71 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.wear_icon_time),
-                        contentDescription = "시간 아이콘",
-                        modifier = Modifier.size(iconSize * 1.5f),
-                        tint = Color.Unspecified
-                    )
-                    Spacer(modifier = Modifier.width(spacing))
                     Text(
                         text = formatTime(elapsedTime),
                         color = Color.White,
-                        fontSize = 35.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Medium,
                         fontFamily = FontFamily(Font(R.font.neodgm))
                     )
                 }
 
-                Spacer(modifier = Modifier.height(spacing * 1.5f))
+                Spacer(modifier = Modifier.height(spacing * 1f))
 
                 // 하단 거리와 심박수 정보
                 Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     // 거리 정보
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.wear_icon_distance),
-                            contentDescription = "거리 아이콘",
-                            modifier = Modifier.size(iconSize),
-                            tint = Color.Unspecified
-                        )
-                        Spacer(modifier = Modifier.width(spacing))
                         Text(
-                            text = "거리\n${"%.2f".format(totalDistance)} km",
-                            color = Color(0xFF00FF00),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
+                            text = "거리",
+                            color = Color(0xFF36DBEB),
+                            fontSize = 12.sp,
+//                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily(Font(R.font.neodgm)),
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = buildAnnotatedString {
+                                withStyle(style = SpanStyle(color = Color.White, fontSize = 20.sp)) {
+                                    append("%.2f".format(totalDistance))
+                                }
+                                withStyle(style = SpanStyle(color = Color.White, fontSize = 16.sp)) {
+                                    append("km")
+                                }
+                            },
                             fontFamily = FontFamily(Font(R.font.neodgm)),
                             textAlign = TextAlign.Center
                         )
                     }
 
+                    Spacer(Modifier.width(6.dp))
+
                     // 심박수 정보
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.wear_icon_heart),
-                            contentDescription = "심박수 아이콘",
-                            modifier = Modifier.size(iconSize),
-                            tint = Color.Unspecified
-                        )
-                        Spacer(modifier = Modifier.width(spacing))
                         Text(
-                            text = "심박수\n$heartRate bpm",
-                            color = Color.Red,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
+                            text = "심박수",
+                            color = Color(0xFFF20089),
+                            fontSize = 12.sp,
+//                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily(Font(R.font.neodgm)),
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = buildAnnotatedString {
+                                withStyle(style = SpanStyle(color = Color.White, fontSize = 20.sp)) {
+                                    append(heartRate)
+                                }
+                                withStyle(style = SpanStyle(color = Color.White, fontSize = 16.sp)) {
+                                    append("bpm")
+                                }
+                            },
                             fontFamily = FontFamily(Font(R.font.neodgm)),
                             textAlign = TextAlign.Center
                         )
