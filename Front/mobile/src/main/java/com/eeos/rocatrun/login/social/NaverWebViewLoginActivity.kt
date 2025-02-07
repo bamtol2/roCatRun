@@ -23,7 +23,7 @@ class NaverWebViewLoginActivity : Activity() {
     companion object {
         private const val NAVER_AUTH_URL = "https://nid.naver.com/oauth2.0/authorize"
         private const val CLIENT_ID = "a03_KcmGfXFxM8hvVoGL"
-        private const val REDIRECT_URI = "http://i12e205.p.ssafy.io:8080/api/auth/callback/naver"
+        private const val REDIRECT_URI = "https://i12e205.p.ssafy.io:8080/api/auth/callback/naver"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

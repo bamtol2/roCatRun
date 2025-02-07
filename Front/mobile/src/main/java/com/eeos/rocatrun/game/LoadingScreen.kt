@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.game
 
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
@@ -101,8 +102,33 @@ fun LoadingScreen(
             context.startActivity(intent)
 
             // 워치화면 띄우기
+            fun startWatchApp(context: Context) {
+                val messageClient: MessageClient = Wearable.getMessageClient(context)
+                val path = "/start_watch_app"
+                val messageData = "Start Game".toByteArray()
 
+                Wearable.getNodeClient(context).connectedNodes.addOnSuccessListener { nodes ->
+                    if (nodes.isNotEmpty()) {
+                        val nodeId = nodes.first().id
+                        Log.d("WearApp", "연결된 노드: ${nodes.first().displayName}")
+
+                        messageClient.sendMessage(nodeId, path, messageData).apply {
+                            addOnSuccessListener {
+                                Log.d("Wear APP", "메시지 전송 성공")
+                                Toast.makeText(context, "워치 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
+                            }
+                            addOnFailureListener {
+                                Toast.makeText(context, "워치 앱 전송 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        Log.d("WearApp", "연결된 노드가 없습니다.")
+                        Toast.makeText(context, "연결된 디바이스가 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
             // 메세지 보내기
+            startWatchApp(context)
 
         }
         SocketHandler.mSocket.on("gameStart") {
