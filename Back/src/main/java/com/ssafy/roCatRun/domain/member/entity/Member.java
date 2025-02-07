@@ -35,6 +35,17 @@ public class Member {
     @Column(nullable = false)
     private LocalDateTime lastLoginAt; // 마지막 로그인 시간
 
+    @Column(nullable = true)
+    private Integer height;
+
+    @Column(nullable = true)
+    private Integer weight;
+
+    @Column(nullable = true)
+    private Integer age;
+
+    @Column(nullable = true)
+    private String gender;
     // 회원과 캐릭터의 1:1 관계 설정
     // mappedBy는 Character 엔티티의 member 필드를 참조
     // CascadeType.ALL로 설정하여 회원 삭제 시 캐릭터도 함께 삭제

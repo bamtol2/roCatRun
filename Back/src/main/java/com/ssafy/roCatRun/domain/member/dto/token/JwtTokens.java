@@ -1,4 +1,3 @@
-// domain/member/dto/token/JwtTokens.java
 package com.ssafy.roCatRun.domain.member.dto.token;
 
 import lombok.Builder;

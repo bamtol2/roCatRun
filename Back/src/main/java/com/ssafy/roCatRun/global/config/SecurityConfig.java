@@ -44,7 +44,7 @@ public class SecurityConfig {
                         // "/api/auth/**" 경로는 누구나 접근 가능
                         .requestMatchers("/api/auth/**").permitAll()
                         // 닉네임 중복 체크도 누구나 가능
-                        .requestMatchers("/api/characters/check-nickname/**").permitAll()
+                        .requestMatchers("/domain/characters/**").permitAll()
                         // Swagger 관련 경로도 누구나 접근 가능
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // 서버 상태 체크는 누구나 가능

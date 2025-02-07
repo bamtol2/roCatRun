@@ -2,7 +2,7 @@ package com.ssafy.roCatRun.global.common;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
+//API 응답의 일관성을 유지하기 위한 wrapper 클래스
 @Getter
 @NoArgsConstructor
 public class ApiResponse<T> {
@@ -11,7 +11,7 @@ public class ApiResponse<T> {
     private T data;
 
     private ApiResponse(boolean success, String message, T data) {
-        this.success = success;
+        this.success = success; // 성공, 실패 나타내는
         this.message = message;
         this.data = data;
     }
