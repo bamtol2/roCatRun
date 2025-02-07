@@ -62,7 +62,10 @@
             android:name=".login.social.GoogleWebViewLoginActivity"
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
-
+        <activity
+            android:name=".login.LoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

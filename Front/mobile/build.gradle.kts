@@ -102,6 +102,6 @@ dependencies {
 
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
 
-    // socket.io
+    // socket.io -
     implementation ("io.socket:socket.io-client:2.0.0")
 }

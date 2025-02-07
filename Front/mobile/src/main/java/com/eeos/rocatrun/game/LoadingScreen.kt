@@ -45,6 +45,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.socket.SocketHandler
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
 
 @Composable
@@ -89,6 +91,22 @@ fun LoadingScreen(
                 currentUsers = json.optInt("currentPlayers", currentUsers)
                 maxUsers = json.optInt("maxPlayers", maxUsers)
             }
+        }
+        SocketHandler.mSocket.off("gameReady")
+        SocketHandler.mSocket.on("gameReady") {
+            Log.d("Socket", "On - gameReady")
+
+            // GameplayActivity로 이동
+            val intent = Intent(context, GamePlay::class.java)
+            context.startActivity(intent)
+
+            // 워치화면 띄우기
+
+            // 메세지 보내기
+
+        }
+        SocketHandler.mSocket.on("gameStart") {
+            Log.d("Socket", "On - gameStart")
         }
     }
 
