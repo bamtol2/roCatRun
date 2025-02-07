@@ -19,7 +19,7 @@ object SocketHandler {
 
     private var authValue = "Bearer $user1Token"
 
-    // 웹소켓 통신 베이스 주소
+    // 웹소켓 통신 베이스 주소 - 추후 https 로 바뀔 예정
     private var user1Port = "http://i12e205.p.ssafy.io:9092/"
 
     // 1. OkHttpClient에 헤더 인터셉터 추가
