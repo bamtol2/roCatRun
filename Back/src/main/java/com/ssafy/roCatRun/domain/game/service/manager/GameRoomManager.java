@@ -1,4 +1,4 @@
-package com.ssafy.roCatRun.domain.game.entity.manager;
+package com.ssafy.roCatRun.domain.game.service.manager;
 
 import com.ssafy.roCatRun.domain.game.entity.raid.BossLevel;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
@@ -81,4 +81,6 @@ public class GameRoomManager {
         }
         return Optional.empty();
     }
+
+
 }

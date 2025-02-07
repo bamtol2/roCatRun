@@ -6,9 +6,8 @@ import com.google.gson.JsonObject;
 import com.ssafy.roCatRun.domain.game.dto.request.*;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
-import com.ssafy.roCatRun.domain.game.entity.manager.GameRoomManager;
+import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
-import com.ssafy.roCatRun.domain.game.entity.raid.Player;
 import com.ssafy.roCatRun.domain.game.service.GameService;
 import com.ssafy.roCatRun.global.util.JwtUtil;
 import jakarta.annotation.PostConstruct;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component

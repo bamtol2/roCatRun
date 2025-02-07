@@ -7,15 +7,15 @@ import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
 import com.ssafy.roCatRun.domain.game.entity.raid.Player;
-import com.ssafy.roCatRun.domain.game.entity.manager.GameRoomManager;
+import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.entity.raid.RunningData;
+import com.ssafy.roCatRun.domain.game.service.manager.GameTimerManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +32,7 @@ public class GameService {
     private final SocketIOServer server;
 
     private final GameRoomManager gameRoomManager;
+    private final GameTimerManager gameTimerManager;
 
     /**
      * 랜덤 매칭 처리
@@ -69,16 +70,12 @@ public class GameService {
      * 게임방에서 해당 유저를 제거하고, 필요시 방 삭제
      * @param userId 유저 식별자
      */
-    public void handleUserDisconnect(String userId) {
-        Optional<GameRoom> room = gameRoomManager.findRoomByUserId(userId);
-        room.ifPresent(r -> {
-            r.removePlayer(userId);
-            if (r.getPlayers().isEmpty()) {
-                gameRoomManager.removeRoom(r.getId());
+    public void handleUserDisconnect(String userId, GameRoom room) {
+            if (room.getPlayers().isEmpty()) {
+                gameRoomManager.removeRoom(room.getId());
             } else {
-                gameRoomManager.updateRoom(r);
+                gameRoomManager.updateRoom(room);
             }
-        });
     }
 
     /**
@@ -189,18 +186,23 @@ public class GameService {
                 room.getPlayers()
         ));
 
-        // 5초 뒤 카운트다운
-        AtomicInteger count = new AtomicInteger(5);
-        ScheduledFuture<?> countdownTask = scheduler.scheduleAtFixedRate(()->{
-            if(count.get()>0){
-                //카운트다운 전송
-                server.getRoomOperations(room.getId()).sendEvent("countdown",
-                        new GameCountdownResponse(count.get(), room.getId()));
-                count.decrementAndGet();
-            }else{
+//        // 5초 뒤 카운트다운
+//        AtomicInteger count = new AtomicInteger(5);
+//        ScheduledFuture<?> countdownTask = scheduler.scheduleAtFixedRate(()->{
+//            if(count.get()>0){
+//                //카운트다운 전송
+//                server.getRoomOperations(room.getId()).sendEvent("countdown",
+//                        new GameCountdownResponse(count.get(), room.getId()));
+//                count.decrementAndGet();
+//            }else{
                 // 게임시작
                 room.setStatus(GameStatus.PLAYING);
+                room.startGame();
                 gameRoomManager.updateRoom(room);
+
+                //게임 타이머 시작
+                gameTimerManager.startGameTimer(room);
+
                 server.getRoomOperations(room.getId()).sendEvent("gameStart"
                         , GameStartResponse.of(
                         room.getId(),
@@ -209,13 +211,13 @@ public class GameService {
                         room.getPlayers()
                 ));
 
-                // 카운트다운 테스크 종료
-                throw new RuntimeException("Countdown completed");
-            }
-        }, 0, 1, TimeUnit.SECONDS);
+//                // 카운트다운 테스크 종료
+//                throw new RuntimeException("Countdown completed");
+//            }
+//        }, 0, 1, TimeUnit.SECONDS);
 
         // 에러 핸들링(카운트다운 완료 시 태스크 종료)
-        scheduler.schedule(()->countdownTask.cancel(true), 6, TimeUnit.SECONDS);
+//        scheduler.schedule(()->countdownTask.cancel(true), 6, TimeUnit.SECONDS);
     }
 
     /**
@@ -279,9 +281,11 @@ public class GameService {
 
             // 피버타임 종료 스케줄링
             scheduler.schedule(() -> {
-                room.endFeverTime();
-                gameRoomManager.updateRoom(room);
-                broadcastFeverTimeEnd(room);
+                if (room.getStatus() == GameStatus.PLAYING) {
+                    room.endFeverTime();
+                    gameRoomManager.updateRoom(room);
+                    broadcastFeverTimeEnd(room);
+                }
             }, GameRoom.FEVER_TIME_DURATION, TimeUnit.SECONDS);
         }
     }
@@ -296,7 +300,7 @@ public class GameService {
         server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
         // 방에서 제외 및 방 제거 처리
         for(Player player : room.getPlayers()){
-            handleUserDisconnect(player.getId());
+            handleUserDisconnect(player.getId(), room);
         }
     }
 
@@ -366,4 +370,6 @@ public class GameService {
         server.getRoomOperations(room.getId()).sendEvent("feverTimeEnded",
                 new FeverTimeEndedResponse("피버타임이 종료되었습니다"));
     }
+
+
 }
