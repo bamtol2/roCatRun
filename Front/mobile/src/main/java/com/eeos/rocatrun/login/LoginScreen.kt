@@ -2,6 +2,7 @@ package com.eeos.rocatrun.login
 
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -33,12 +35,17 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.gif.AnimatedImageDecoder
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import kotlinx.coroutines.launch
 import com.eeos.rocatrun.home.HomeActivity
 import androidx.compose.material3.AlertDialog
 import com.eeos.rocatrun.login.data.LoginResponse
+import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.login.social.KakaoWebViewLoginActivity
 import com.eeos.rocatrun.login.social.NaverWebViewLoginActivity
 import com.eeos.rocatrun.login.social.GoogleWebViewLoginActivity
+import com.eeos.rocatrun.login.util.NicknameCheckHelper
+import com.eeos.rocatrun.login.util.Register
+import com.eeos.rocatrun.login.util.MessageBox
 
 // loginRespons = 백엔드에서 받아온 응답
 @Composable
@@ -46,6 +53,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var userInfo by remember { mutableStateOf(loginResponse) }
+    var showMessageBox by remember { mutableStateOf(false) }
     // 응답이 업데이트되면 showDialog를 true로 설정
     LaunchedEffect(userInfo) {
         if (userInfo != null) {
@@ -148,12 +156,30 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
         UserInfoDialog(
             userInfo = userInfo,
             onDismiss = { showDialog = false },
+            onShowMessageBox = { showMessageBox = true },  // MessageBox 상태 업데이트
             profileImageResId = R.drawable.login_img_profile,  // 프로필 이미지 리소스
             borderImageResId = R.drawable.login_bg_greenmodal, // 모달 테두리 이미지 리소스
             okButtonImageResId = R.drawable.login_btn_ok,   // OK 버튼 이미지 리소스
 
         )
     }
+    // MessageBox 표시
+    // MessageBox 호출 부분
+    if (showMessageBox) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            MessageBox(
+                imageResId = R.drawable.login_img_check,
+                message = "회원가입에 성공하였습니다!",
+                modifier = Modifier
+                    .width(600.dp)
+                    .height(600.dp)
+            )
+        }
+    }
+
 
 }
 
@@ -161,6 +187,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
 fun UserInfoDialog(
     userInfo : LoginResponse?,
     onDismiss: () -> Unit,
+    onShowMessageBox : () -> Unit,
     profileImageResId: Int,
     borderImageResId: Int,
     okButtonImageResId: Int
@@ -169,8 +196,10 @@ fun UserInfoDialog(
     if (userInfo == null) return
     // 사용자 닉네임
     var nickname by remember { mutableStateOf("") }
+    var nicknameStatusMessage by remember { mutableStateOf("") }
     var showNicknameAlert by remember { mutableStateOf(false) } // 경고 알림 표시 여부
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
 
 
@@ -260,7 +289,18 @@ fun UserInfoDialog(
                             .padding(end = 10.dp)
                             .background(Color(0xFF00FFCC), shape = RoundedCornerShape(8.dp))
                             .padding(vertical = 8.dp, horizontal = 12.dp)
-                            .clickable { /* 중복 확인 로직 */ },
+                            .clickable {  coroutineScope.launch {
+                                val token = TokenStorage.getAccessToken(context)
+                                if (token != null){
+                                val isDuplicate = NicknameCheckHelper.checkNicknameAvailability(nickname, token)
+                                nicknameStatusMessage = when (isDuplicate) {
+                                    true -> "중복된 닉네임입니다."
+                                    false -> "사용 가능한 닉네임입니다."
+                                    else -> "닉네임 중복 확인에 실패했습니다."
+                                }
+                            }
+                        }
+                                       },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -275,7 +315,17 @@ fun UserInfoDialog(
                     }
                 }
 
+                // 중복 확인 상태 메시지 표시
+                // 상태 메시지 표시
+                Text(
+                    text = nicknameStatusMessage,
+                    color = if (nicknameStatusMessage.contains("중복")) Color.Red else Color.Green,
+                    style = TextStyle(fontSize = 12.sp)
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+
 
                 Image(
                     painter = painterResource(id = okButtonImageResId),
@@ -285,14 +335,35 @@ fun UserInfoDialog(
                         .height(70.dp)
                         .offset(y = 40.dp)
                         .clickable {
-                            val intent = Intent(context, HomeActivity::class.java)
-                            context.startActivity(intent)
-                            // 닉네임 테이블에 닉네임 저장하는 API 호출
+//                            val intent = Intent(context, HomeActivity::class.java)
+//                            context.startActivity(intent)
+                            onDismiss()
+                            onShowMessageBox()
+                            // 회원가입 API 호출
+//                            coroutineScope.launch {
+//                                val token = TokenStorage.getAccessToken(context)
+//                                if (token != null){
+//                                    val registerSuccess = Register.registerCharacter(nickname, token)
+//                                    if (registerSuccess){
+//                                        Log.i("회원가입 성공", "회원가입 성공")
+//
+//                                    }else{
+//                                        Toast.makeText(context, "닉네임을 다시 입력해주세요",Toast.LENGTH_SHORT).show()
+//                                    }
+//                                }
+//                            }
+
+
                         }
                 )
+
+
             }
         }
+
     }
+
+
 
     // 닉네임 경고 알림 다이얼로그
     if (showNicknameAlert) {
@@ -319,6 +390,7 @@ fun UserInfoDialog(
             }
         )
     }
+
 }
 
 
