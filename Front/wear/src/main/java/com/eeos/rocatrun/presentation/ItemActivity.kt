@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.presentation.theme.RoCatRunTheme
 import android.graphics.drawable.AnimatedImageDrawable
+import android.util.Log
 import android.widget.ImageView
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
@@ -26,10 +27,25 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.viewinterop.AndroidView
 import com.eeos.rocatrun.R
 import kotlinx.coroutines.delay
+import com.eeos.rocatrun.component.CircularItemGauge
+import com.eeos.rocatrun.component.FeverTime
+import android.content.Context
+import android.content.Context.VIBRATOR_SERVICE
+import android.os.VibrationEffect
+import android.os.Vibrator
+import androidx.activity.viewModels
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.core.content.ContextCompat.getSystemService
+import com.eeos.rocatrun.viewmodel.GameViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class ItemActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
+
         setContent {
             RoCatRunTheme {
                 GameScreen()
@@ -38,48 +54,7 @@ class ItemActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun CircularItemGaugeWithBoss(
-    itemProgress: Float,      // 아이템 게이지 (0.0f ~ 1.0f)
-    bossProgress: Float,      // 보스 게이지 (0.0f ~ 1.0f)
-    modifier: Modifier = Modifier.size(200.dp)
-) {
-    Canvas(modifier = modifier) {
-        val bossStrokeWidth = 4.dp.toPx()    // 보스 게이지 두께
-        val itemStrokeWidth = 4.dp.toPx()     // 아이템 게이지 두께
-        val gapBetweenGauges = 4.dp.toPx()     // 두 게이지 간의 간격을 좁게 설정
 
-        // 1. 보스 게이지 (바깥쪽 원형)
-        drawArc(
-            color = Color.Red,
-            startAngle = -90f,
-            sweepAngle = 360f * bossProgress,
-            useCenter = false,
-            style = androidx.compose.ui.graphics.drawscope.Stroke(
-                width = bossStrokeWidth,
-                cap = StrokeCap.Round
-            )
-        )
-
-        // 2. 아이템 게이지 (보스 게이지 바로 옆에 표시)
-        val itemInset = (bossStrokeWidth / 2) + (gapBetweenGauges / 2)
-        drawArc(
-            color = Color.Cyan,
-            startAngle = -90f,
-            sweepAngle = 360f * itemProgress,
-            useCenter = false,
-            topLeft = androidx.compose.ui.geometry.Offset(itemInset, itemInset),
-            size = size.copy(
-                width = size.width - 2 * itemInset,
-                height = size.height - 2 * itemInset
-            ),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(
-                width = itemStrokeWidth,
-                cap = StrokeCap.Round
-            )
-        )
-    }
-}
 @Composable
 fun AnimatedGifView(resourceId: Int) {
     val context = LocalContext.current
@@ -99,12 +74,29 @@ fun AnimatedGifView(resourceId: Int) {
     )
 }
 
+fun triggerVibration(context: Context) {
+    val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    val timings = longArrayOf(200,300,200,300,200,300,200,300,200,300,200,300)
+    val amplitudes = intArrayOf(100,100,100,100,100,100,100,100,100,100,100,100)
+    if (vibrator.hasVibrator()) {
+        val vibrationEffect = VibrationEffect.createWaveform(
+            timings,amplitudes,-1  // 진동 시간 (밀리초)
+        )
+        vibrator.vibrate(vibrationEffect)
+    }
+}
 @Composable
 fun GameScreen() {
+    var context = LocalContext.current
+    var coroutineScope = rememberCoroutineScope()
     var itemGaugeValue by remember { mutableIntStateOf(0) }
     var bossGaugeValue by remember { mutableIntStateOf(100) }
     var showItemGif by remember { mutableStateOf(false) }
     val maxGaugeValue = 100
+    var feverTimeActive by remember { mutableStateOf(false) } // 피버타임 플래그
+    var itemUsageCount by remember { mutableIntStateOf(0) } // 아이템 사용 횟수 추적
+
+
 
     val itemProgress by animateFloatAsState(
         targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
@@ -119,20 +111,29 @@ fun GameScreen() {
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize().background(Color.Black)
     ) {
-        // 원형 게이지 표시
-        CircularItemGaugeWithBoss(itemProgress = itemProgress, bossProgress = bossProgress)
+        if (feverTimeActive) {
+            FeverTime()
+        } else {
+            // 원형 게이지 표시
+            CircularItemGauge(
+                itemProgress = itemProgress,
+                bossProgress = bossProgress,
+                modifier = Modifier.size(200.dp)
+            )
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // 고양이 GIF
-            AnimatedGifView(resourceId = R.drawable.wear_gif_movewhitecat)
 
-            // 아이템 GIF (조건부 표시)
-            if (showItemGif) {
-                AnimatedGifView(resourceId = R.drawable.wear_gif_spincan)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // 고양이 GIF
+                AnimatedGifView(resourceId = R.drawable.wear_gif_movewhitecat)
+
+                // 아이템 GIF (조건부 표시)
+                if (showItemGif) {
+                    AnimatedGifView(resourceId = R.drawable.wear_gif_spincan)
+                }
             }
         }
     }
@@ -140,11 +141,28 @@ fun GameScreen() {
     // 아이템 게이지가 다 찼을 때 자동 공격 및 GIF 표시
     LaunchedEffect(itemGaugeValue) {
         if (itemGaugeValue == maxGaugeValue) {
+            itemUsageCount++
+            Log.i("아이템 횟수", "아이템 횟수 : $itemUsageCount")
             showItemGif = true
             delay(1000)  // 1초 동안 GIF 유지
             itemGaugeValue = 0
             bossGaugeValue = (bossGaugeValue - 20).coerceAtLeast(0)
             showItemGif = false
+
+
+            // 아이템 2번 사용 시 피버 타임 활성화
+            if(itemUsageCount == 2){
+                feverTimeActive = true
+                coroutineScope.launch {
+                    triggerVibration(context)
+                }
+                delay(5000)
+                feverTimeActive = false
+                itemUsageCount = 0
+                Log.d("아이템 사용수", "$itemUsageCount")
+
+                Log.d("피버타임 종료", "종료 : $feverTimeActive")
+            }
         }
     }
 

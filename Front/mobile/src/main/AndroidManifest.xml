@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
@@ -14,8 +15,8 @@
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET" />
     <application
+        android:name=".login.GlobalApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -36,9 +37,6 @@
             android:name=".game.Loading"
             android:exported="true" />
         <activity
-            android:name=".game.Joining"
-            android:exported="true" />
-        <activity
             android:name=".game.GamePlay"
             android:exported="true" />
         <activity
@@ -53,12 +51,26 @@
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
         <activity
+            android:name=".login.social.NaverWebViewLoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+        <activity
+            android:name=".login.social.KakaoWebViewLoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+        <activity
+            android:name=".login.social.GoogleWebViewLoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.RoCatRun">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

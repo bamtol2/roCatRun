@@ -55,9 +55,11 @@ dependencies {
     implementation("androidx.compose.foundation:foundation-layout:1.6.2")
     // Data Layer API
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    // GPX 파일 관련 의존성
+    implementation("androidx.wear:wear-ongoing:1.0.0")
+    implementation("com.google.code.gson:gson:2.9.0")
 
-
-
+    implementation(libs.androidx.lifecycle.livedata.core)
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -69,6 +71,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.runtime.livedata)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)

@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.view
+package com.eeos.rocatrun.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -21,7 +21,7 @@ fun CircularItemGauge(
 
         // 보스 게이지
         drawArc(
-            color = Color.Red,
+            color = Color(0xFFFF00CC),
             startAngle = -90f,
             sweepAngle = 360f * bossProgress,
             useCenter = false,

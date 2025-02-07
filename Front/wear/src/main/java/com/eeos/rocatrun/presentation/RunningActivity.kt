@@ -2,6 +2,7 @@ package com.eeos.rocatrun.presentation
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -52,6 +53,7 @@ import androidx.core.app.ActivityCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.service.LocationForegroundService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -60,8 +62,19 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.Asset
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import androidx.wear.ongoing.OngoingActivity
+import androidx.wear.ongoing.Status
+
 
 
 class RunningActivity : ComponentActivity(), SensorEventListener {
@@ -70,6 +83,11 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private lateinit var locationCallback: LocationCallback
     private lateinit var sensorManager: SensorManager
     private var heartRateSensor: Sensor? = null
+
+    // GPX 변수
+    private val locationList = mutableListOf<Location>()
+    private val heartRateList = mutableListOf<Int>()
+    private val paceList = mutableListOf<Double>()
 
     // 상태 변수들
     private var totalDistance by mutableStateOf(0.0)
@@ -99,7 +117,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 // 데이터 전송 추가
                 sendDataToPhone()
 
-                handler.postDelayed(this, 1000)
+                handler.postDelayed(this, 500)
             }
         }
     }
@@ -109,6 +127,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { RunningApp() }
+
+        // 포그라운드 서비스 시작
+        startForegroundService()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationCallback = object : LocationCallback() {
@@ -126,6 +147,12 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
         requestPermissions()
     }
+
+    private fun startForegroundService() {
+        val serviceIntent = Intent(this, LocationForegroundService::class.java)
+        startForegroundService(serviceIntent)  // Android 8.0 이상에서는 이 메서드 사용
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -159,13 +186,19 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     private fun updateLocation(location: Location) {
         lastLocation?.let {
+            Log.d("LastLocation", "위치 확인: $location")
             val distanceMoved = it.distanceTo(location) / 1000
-            if (distanceMoved > 0.003) {
+            if (distanceMoved > 0.003) { // 이동이 미미한 경우 제외(3M 이하)
                 totalDistance += distanceMoved
                 speed = location.speed * 3.6
+                Log.d("LastLocation", "위치 : $location")
+
             }
         }
         lastLocation = location
+        Log.d("LastLocation", "위치 : $location")
+        locationList.add(location)
+        paceList.add(averagePace)
     }
 
     private fun startTracking() {
@@ -209,6 +242,67 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
         Log.d("Stats", "Elapsed Time: ${formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
         showStats = true
+        createAndSendGpxFile()
+    }
+    private fun createAndSendGpxFile() {
+        val gpxString = createGpxString()
+        val gpxBytes = gpxString.toByteArray(Charsets.UTF_8)
+
+        val asset = Asset.createFromBytes(gpxBytes)
+
+        val putDataMapReq = PutDataMapRequest.create("/gpx_data").apply {
+            dataMap.putAsset("gpx_file", asset)
+            dataMap.putLong("timestamp", System.currentTimeMillis())
+        }
+
+        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
+
+        Wearable.getDataClient(this).putDataItem(putDataReq)
+            .addOnSuccessListener {
+                Log.d("RunningActivity", "GPX data sent successfully")
+            }
+            .addOnFailureListener { e ->
+                Log.e("RunningActivity", "Failed to send GPX data", e)
+            }
+    }
+    private fun createGpxString(): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
+        sdf.timeZone = TimeZone.getTimeZone("Asia/Seoul")
+
+        val gpxBuilder = StringBuilder()
+        gpxBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        gpxBuilder.append("<gpx version=\"1.1\" creator=\"RocatRun Wear App\">\n")
+        gpxBuilder.append("  <trk>\n")
+        gpxBuilder.append("    <name>RocatRun Activity</name>\n")
+        gpxBuilder.append("    <trkseg>\n")
+        val startTime = System.currentTimeMillis()
+        for (i in heartRateList.indices) {
+            Log.i("gg","인덱스 : $i")
+//            val location = locationList[i]
+            val heartRate = if (i < heartRateList.size) heartRateList[i] else 0
+            val pace = if (i < paceList.size) paceList[i] else 0.0
+            val time = startTime + (i * 1000)
+
+//            gpxBuilder.append("      <trkpt lat=\"${location.latitude}\" lon=\"${location.longitude}\">\n")
+//            gpxBuilder.append("        <ele>${location.altitude}</ele>\n")
+//            gpxBuilder.append("        <time>${sdf.format(Date(location.time))}</time>\n")
+            gpxBuilder.append("     <trkpt lat=\"0.0\" lon=\"0.0\">\n")
+            gpxBuilder.append("        <ele>0.0</ele>\n") // 더미 고도 데이터
+            gpxBuilder.append("        <time>${sdf.format(Date(time))}</time>\n")
+            gpxBuilder.append("        <extensions>\n")
+            gpxBuilder.append("          <gpxtpx:TrackPointExtension>\n")
+            gpxBuilder.append("            <gpxtpx:hr>$heartRate</gpxtpx:hr>\n")
+            gpxBuilder.append("            <gpxtpx:pace>$pace</gpxtpx:pace>\n")
+            gpxBuilder.append("          </gpxtpx:TrackPointExtension>\n")
+            gpxBuilder.append("        </extensions>\n")
+            gpxBuilder.append("      </trkpt>\n")
+        }
+
+        gpxBuilder.append("    </trkseg>\n")
+        gpxBuilder.append("  </trk>\n")
+        gpxBuilder.append("</gpx>")
+
+        return gpxBuilder.toString()
     }
 
     @Composable
@@ -416,7 +510,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             dataMap.putString("heartRate", heartRate)
             dataMap.putLong("timestamp", System.currentTimeMillis())
         }.asPutDataRequest()
-
+        Log.d("데이터 전송 함수", "데이터 형태 - Pace : $averagePace distance : $totalDistance, time : $elapsedTime, heartRate: $heartRate")
         dataMapRequest.setUrgent() // 즉시 전송하도록 설정
 
         Wearable.getDataClient(this).putDataItem(dataMapRequest)
@@ -485,10 +579,13 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
             val newHeartRate = event.values[0].toInt()
+            Log.d("심박수", "심박수: $newHeartRate")
             if (newHeartRate > 0) {
                 heartRate = newHeartRate.toString()
                 heartRateSum += newHeartRate
                 heartRateCount++
+                heartRateList.add(newHeartRate)
+                Log.d("추가", "심박수 추가")
             }
         }
     }

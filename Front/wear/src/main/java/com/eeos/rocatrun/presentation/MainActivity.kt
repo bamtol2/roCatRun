@@ -142,8 +142,10 @@ fun SplashScreen() {
             // 게임 시작 버튼
             Button(
                 onClick = {
+                    Log.i("확인", "ㅇㅇㅇ $context")
                     val intent = Intent(context, RunningActivity::class.java)
                     context.startActivity(intent)
+                    Log.i("로그인", "시도")
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFFA500)
