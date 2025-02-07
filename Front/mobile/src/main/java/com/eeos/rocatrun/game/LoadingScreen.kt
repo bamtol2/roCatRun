@@ -73,7 +73,21 @@ fun LoadingScreen(
                 // 갱신된 값을 상태에 반영
                 currentUsers = json.optInt("currentPlayers", currentUsers)
                 maxUsers = json.optInt("maxPlayers", maxUsers)
-
+            }
+        }
+        SocketHandler.mSocket.on("playerLeft") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val json = args[0] as JSONObject
+                val userId = json.optString("userId", "")
+                val currentPlayers = json.optInt("currentPlayers", 0)
+                val maxPlayers = json.optInt("maxPlayers", 0)
+                Log.d(
+                    "Socket",
+                    "On - playerLeft: userId: $userId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                )
+                // 갱신된 값을 상태에 반영
+                currentUsers = json.optInt("currentPlayers", currentUsers)
+                maxUsers = json.optInt("maxPlayers", maxUsers)
             }
         }
     }
@@ -310,6 +324,10 @@ fun LoadingScreen(
             // 취소 버튼 -> 누르면 게임선택 창으로 돌아가게
             Box(
                 modifier = Modifier.clickable {
+
+                    // 매칭취소 이벤트 발생
+                    SocketHandler.mSocket.emit("cancelMatch")
+
                     val intent = Intent(context, GameRoom::class.java)
                     context.startActivity(intent)
                 }
@@ -344,24 +362,6 @@ fun LoadingScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-
-fun PlayerJoinedSocket() {
-    SocketHandler.mSocket.on("playerJoined") { args ->
-        if (args.isNotEmpty() && args[0] is JSONObject) {
-            val json = args[0] as JSONObject
-            val userId = json.optString("userId", "")
-            val currentPlayers = json.optInt("currentPlayers", 0)
-            val maxPlayers = json.optInt("maxPlayers", 0)
-
-            // JSON 데이터 로그 출력
-            Log.d(
-                "Socket",
-                "On - playerJoined : roomId: $userId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
-            )
         }
     }
 }

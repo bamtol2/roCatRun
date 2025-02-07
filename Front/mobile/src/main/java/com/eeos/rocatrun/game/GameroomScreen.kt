@@ -361,7 +361,6 @@ fun CreateRoomContent(onBack: () -> Unit) {
                             intent.putExtra("maxPlayers", maxPlayers)
                             context.startActivity(intent)
                         }
-
                     }
                 )
             }
@@ -579,6 +578,9 @@ fun RandomContent(onBack: () -> Unit) {
     var randomDifficulty by remember { mutableStateOf("") }
     var randomPeople by remember { mutableStateOf("") }
 
+    // 두 항목 모두 선택되어야 생성 버튼이 활성화됨
+    val isRandomMatchEnabled = randomDifficulty.isNotBlank() && randomPeople.isNotBlank()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -714,29 +716,81 @@ fun RandomContent(onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .border(
-                        width = 2.dp,
-                        color = Color(0xFF6A00F4),
-                        shape = RoundedCornerShape(10.dp)
-                    )
-                    // 입장 클릭하면 대기중 화면 띄우기
-                    .clickable {
-                        // Matching으로 이동
-                        val intent = Intent(context, Matching::class.java)
-                        context.startActivity(intent)
+                    .padding(bottom = 20.dp)
+            ){
+                RandomMatchSection(
+                    enabled = isRandomMatchEnabled,
+                    onRandomMatchClick = {
+
+                        // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
+                        val bossLevel = when (randomDifficulty) {
+                            "상" -> "HARD"
+                            "중" -> "MEDIUM"
+                            "하" -> "EASY"
+                            else -> "EASY" // 기본값 설정 - 2가지 선택 안되면 생성 버튼 비활성화 시켜야 될 듯
+                        }
+
+                        // 인원 수 변환: "1인" -> 1, "2인" -> 2, …
+                        val roomPlayers = when (randomPeople) {
+                            "1인" -> 1
+                            "2인" -> 2
+                            "3인" -> 3
+                            "4인" -> 4
+                            else -> 2 // 기본값 설정
+                        }
+
+                        RandomMatchSocket(bossLevel, roomPlayers) { currentPlayers, maxPlayers ->
+                            // Matching으로 이동
+                            val intent = Intent(context, Matching::class.java)
+                            intent.putExtra("currentPlayers", currentPlayers)
+                            intent.putExtra("maxPlayers", maxPlayers)
+                            context.startActivity(intent)
+                        }
                     }
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    "입장",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 20.sp
-                    )
                 )
             }
 
             Spacer(modifier = Modifier.height(15.dp))
+        }
+    }
+}
+
+// 랜덤 찾기 버튼
+@Composable
+fun RandomMatchSection(
+    enabled: Boolean,
+    onRandomMatchClick: () -> Unit
+) {
+    val borderColor = if (enabled) Color(0xFF6A00F4) else Color.Gray // 활성/비활성 보더 색상
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 방 생성 버튼
+        Box(
+            modifier = Modifier
+                .border(
+                    width = 2.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(10.dp)
+                )
+                // 버튼이 활성화되었을 때만 클릭 이벤트 반응
+                .then(if (enabled) Modifier
+                    .clickable {
+                        onRandomMatchClick()
+                    } else Modifier)
+
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Text(
+                "방 생성",
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp)
+            )
         }
     }
 }
@@ -939,6 +993,43 @@ fun JoinRoomSocket(
             }
         } else {
            Log.d("Socket", "Error - roomJoined : 잘못된 응답")
+        }
+    }
+}
+
+// 랜덤매칭 이벤트
+fun RandomMatchSocket(
+    bossLevel: String,
+    roomPlayers: Int,
+    matchCreated: (currentPlayers: Int,
+                    maxPlayers: Int) -> Unit)
+{
+    // 전송할 JSON 생성
+    val randomMatchJson = JSONObject().apply {
+        put("bossLevel", bossLevel)    // or "MEDIUM", "HARD"
+        put("maxPlayers", roomPlayers)        // 1-4 사이의 숫자
+    }
+    Log.d("Socket", "Emit - randomMatch")
+
+    // 방 생성 전송
+    SocketHandler.mSocket.emit("randomMatch", randomMatchJson)
+
+    // 방 생성 응답 이벤트 리스너 등록
+    SocketHandler.mSocket.on("matchStatus") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+            val roomId = json.optString("userId", "")
+            val currentPlayers = json.optInt("currentPlayers", 0)
+            val maxPlayers = json.optInt("maxPlayers", 0)
+
+            // JSON 데이터 로그 출력
+            Log.d(
+                "Socket",
+                "On - matchStatus: roomId: $roomId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+            )
+
+            // 콜백으로 초대코드, 현재수, 정원수 전달
+            matchCreated(currentPlayers, maxPlayers)
         }
     }
 }
