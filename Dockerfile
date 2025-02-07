@@ -24,5 +24,6 @@ ENV SERVER_SSL_KEY_STORE=/app/cert.p12
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD curl -f https://localhost:8081/actuator/health || exit 1
 
+
 # 애플리케이션 실행
 CMD java -jar app.jar
