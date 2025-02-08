@@ -23,7 +23,7 @@ class GoogleWebViewLoginActivity : Activity() {
     companion object {
         private const val GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
         private const val CLIENT_ID = "38473355620-38hgd5mqor7ruv519urhtf9c59qedtcd.apps.googleusercontent.com"
-        private const val REDIRECT_URI = "http://i12e205.p.ssafy.io:8080/api/auth/callback/google"
+        private const val REDIRECT_URI = "https://i12e205.p.ssafy.io:8080/api/auth/callback/google"
         private const val SCOPE = "email profile"
     }
 

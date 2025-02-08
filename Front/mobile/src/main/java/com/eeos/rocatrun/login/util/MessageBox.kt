@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.login.util
 
+import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,11 +29,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -40,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.home.HomeActivity
 
 
 @Composable
@@ -48,6 +52,8 @@ fun MessageBox(
     message: String,
     modifier: Modifier = Modifier
 ) {
+
+    val context = LocalContext.current
     Box(
         contentAlignment = Alignment.Center,  // 박스를 중앙에 정렬
         modifier = modifier
@@ -83,7 +89,9 @@ fun MessageBox(
                         textAlign = TextAlign.Center,
                         fontFamily = FontFamily(Font(R.font.neodgm))
                     ),
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .offset(y = 30.dp)
                 )
 
                 // 터치 가능한 텍스트 (확인 버튼 역할)
@@ -98,8 +106,12 @@ fun MessageBox(
                         textDecoration = TextDecoration.Underline  // 밑줄 추가
                     ),
                     modifier = Modifier
-                         // 클릭 동작 추가
                         .padding(vertical = 4.dp, horizontal = 16.dp)
+                        .offset(y = 50.dp)
+                        .clickable {
+                            val intent = Intent(context, HomeActivity::class.java)
+                            context.startActivity(intent)
+                        }
                 )
             }
         }

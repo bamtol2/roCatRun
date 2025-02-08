@@ -12,26 +12,26 @@ import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 import android.content.Intent
 import com.eeos.rocatrun.login.data.LoginResponse
 import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 
 class LoginActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        // 네비게이션 바 색상 설정
+        window.navigationBarColor = Color(0xFF051330).toArgb()
+        window.statusBarColor = Color(0xFF051330).toArgb()
         // 인텐트로부터 loginResponse 추출
         val loginResponse = intent.getParcelableExtra<LoginResponse>("login_response")
         Log.i("로그인", "onCreate에서 로그인 리스폰스 받음 $loginResponse")
-
-        enableEdgeToEdge()
         setContent {
             RoCatRunTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     // 추출한 loginResponse를 LoginScreen에 전달
                     LoginScreen(
-                        modifier = Modifier.padding(innerPadding),
                         loginResponse = loginResponse
                     )
-                }
+
             }
         }
     }
