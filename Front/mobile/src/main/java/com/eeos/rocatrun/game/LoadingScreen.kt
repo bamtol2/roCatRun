@@ -93,42 +93,17 @@ fun LoadingScreen(
                 maxUsers = json.optInt("maxPlayers", maxUsers)
             }
         }
-        SocketHandler.mSocket.off("gameReady")
-        SocketHandler.mSocket.on("gameReady") {
-            Log.d("Socket", "On - gameReady")
+        SocketHandler.mSocket.on("gameReady") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val json = args[0] as JSONObject
+                val message = json.optString("message", "")
 
-            // GameplayActivity로 이동
-            val intent = Intent(context, GamePlay::class.java)
-            context.startActivity(intent)
+                Log.d("Socket", "On - gameReady $message")
 
-            // 워치화면 띄우기
-            fun startWatchApp(context: Context) {
-                val messageClient: MessageClient = Wearable.getMessageClient(context)
-                val path = "/start_watch_app"
-                val messageData = "Start Game".toByteArray()
-
-                Wearable.getNodeClient(context).connectedNodes.addOnSuccessListener { nodes ->
-                    if (nodes.isNotEmpty()) {
-                        val nodeId = nodes.first().id
-                        Log.d("WearApp", "연결된 노드: ${nodes.first().displayName}")
-
-                        messageClient.sendMessage(nodeId, path, messageData).apply {
-                            addOnSuccessListener {
-                                Log.d("Wear APP", "메시지 전송 성공")
-                                Toast.makeText(context, "워치 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
-                            }
-                            addOnFailureListener {
-                                Toast.makeText(context, "워치 앱 전송 실패: ${it.message}", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    } else {
-                        Log.d("WearApp", "연결된 노드가 없습니다.")
-                        Toast.makeText(context, "연결된 디바이스가 없습니다.", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                // GameplayActivity로 이동
+                val intent = Intent(context, GamePlay::class.java)
+                context.startActivity(intent)
             }
-            // 메세지 보내기
-            startWatchApp(context)
 
         }
         SocketHandler.mSocket.on("gameStart") {
@@ -144,7 +119,6 @@ fun LoadingScreen(
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.matchParentSize()
         )
-
 
         // Content
         Column(

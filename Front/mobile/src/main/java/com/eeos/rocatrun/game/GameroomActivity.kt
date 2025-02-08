@@ -19,10 +19,6 @@ class GameRoom : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 소켓 초기화, 연결
-        SocketHandler.initialize()
-        SocketHandler.connect()
-
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
                 Color.Transparent.toArgb()
