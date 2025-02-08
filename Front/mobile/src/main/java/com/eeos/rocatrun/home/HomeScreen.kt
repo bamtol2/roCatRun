@@ -3,9 +3,11 @@ package com.eeos.rocatrun.home
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontVariation.width
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,6 +47,7 @@ import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.ranking.RankingDialog
 import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.theme.MyFontFamily
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 
 @Composable
@@ -84,7 +89,7 @@ fun HomeScreen() {
                 Image(
                     painter = painterResource(id = R.drawable.home_icon_ranking),
                     contentDescription = "Ranking Icon",
-                    modifier = Modifier.size(70.dp)
+                    modifier = Modifier.size(60.dp)
                 )
             }
 
@@ -102,7 +107,7 @@ fun HomeScreen() {
                     Image(
                         painter = painterResource(id = R.drawable.home_icon_profile),
                         contentDescription = "Profile Icon",
-                        modifier = Modifier.size(70.dp)
+                        modifier = Modifier.size(60.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -115,7 +120,7 @@ fun HomeScreen() {
                     Image(
                         painter = painterResource(id = R.drawable.home_icon_stats),
                         contentDescription = "Statistics Icon",
-                        modifier = Modifier.size(70.dp)
+                        modifier = Modifier.size(60.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -128,7 +133,7 @@ fun HomeScreen() {
                     Image(
                         painter = painterResource(id = R.drawable.home_icon_closet),
                         contentDescription = "Closet Icon",
-                        modifier = Modifier.size(70.dp)
+                        modifier = Modifier.size(60.dp)
                     )
                 }
             }
@@ -137,42 +142,166 @@ fun HomeScreen() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset(x = 0.dp, y = 290.dp),
+                .offset(x = 0.dp, y = 200.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // 닉네임
+            StrokedText(
+                text = "과즙가람",
+                fontSize = 40,
+                strokeColor = Color(0xFF701F3D),
+                strokeWidth = 25f
+            )
+
             // 캐릭터 이미지
             Image(
                 painter = painterResource(id = R.drawable.all_img_whitecat),
                 contentDescription = "Cat Character",
-                modifier = Modifier.size(250.dp)
+                modifier = Modifier
+                    .size(230.dp)
+                    .offset(x = 20.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 레벨 표시
-            Text(
-                text = "Lv. 1",
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Yellow
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 레벨 게이지
+            // 정보
             Box(
                 modifier = Modifier
-                    .width(200.dp)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.White)
+                    .width(350.dp)
+                    .height(185.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xD70D1314)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.4f) // 현재 40% 진행
-                        .height(8.dp)
-                        .background(Color.Green)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // 레벨 표시
+                        Text(
+                            text = "Lv.5",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFFDA0A)
+                        )
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        // 레벨 게이지
+                        Box(
+                            modifier = Modifier
+                                .width(170.dp)
+                                .height(14.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFC4C4C4))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.49f) // 현재 49% 진행
+                                    .height(14.dp)
+                                    .background(Color(0xFFFFDA0A))
+                            )
+                            Text(
+                                text = "490/1000",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF414141),
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    Row() {
+                        // 코인 표시
+                        Box(
+                            modifier = Modifier
+                                .width(150.dp)
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0x9E2A4042)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column (
+                                modifier = Modifier.padding(top = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "213500",
+                                    fontSize = 40.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                )
+
+                                Row (
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "캔코인",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+
+                                    Image(
+                                        painter = painterResource(id = R.drawable.home_img_cancoin),
+                                        contentDescription = "cancoin img",
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.size(50.dp)
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // 게임 횟수 표시
+                        Box(
+                            modifier = Modifier
+                                .width(150.dp)
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0x9E2A4042)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column (
+                                modifier = Modifier.padding(top = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "11승 3패",
+                                    fontSize = 30.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                )
+
+                                Row (
+                                    modifier = Modifier.offset(y = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "14판",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+
+                                    Image(
+                                        painter = painterResource(id = R.drawable.home_img_game),
+                                        contentDescription = "cancoin img",
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.size(50.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            Spacer(modifier = Modifier.height(55.dp))
+
+            Spacer(modifier = Modifier.height(35.dp))
 
             // START 버튼
             Button(
@@ -184,8 +313,9 @@ fun HomeScreen() {
                     .width(216.dp)
                     .height(72.dp)
             ) {
-                Box() {
-                    // 배경 이미지
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
                     Image(
                         painter = painterResource(id = R.drawable.home_btn_start),
                         contentDescription = "Start Button",
@@ -193,34 +323,14 @@ fun HomeScreen() {
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    //Filled Text
-                    Text(
+                    StrokedText(
                         text = "START",
                         color = Color(0xFFFFFFFF),
-                        fontSize = 42.86.sp,
-                        fontFamily = MyFontFamily,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .align(Alignment.Center)
+                        fontSize = 42,
+                        strokeColor = Color(0xff36DBEB),
+                        strokeWidth = 20f,
+                        letterSpacing = 7f
                     )
-                    //Text with stroke border
-                    Text(
-                        text = "START",
-                        color = Color(0xff36DBEB),
-                        style = TextStyle.Default.copy(
-                            fontSize = 42.86.sp,
-                            drawStyle = Stroke(
-                                miter = 10f,
-                                width = 5f,
-                                join = StrokeJoin.Round
-                            )
-                        ),
-                        fontFamily = MyFontFamily,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
-
                 }
             }
         }
@@ -238,3 +348,42 @@ fun HomeScreen() {
 
     }
 }
+
+
+// 스트로크 글씨 함수
+@Composable
+fun StrokedText(
+    text: String,
+    fontSize: Int,
+    strokeWidth: Float = 10f,
+    color: Color = Color.White,
+    strokeColor: Color = Color.Black,
+    letterSpacing: Float = 0f
+) {
+    Box {
+        // Stroke 텍스트
+        Text(
+            text = text,
+            color = strokeColor,
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = fontSize.sp,
+                drawStyle = Stroke(
+                    width = strokeWidth,
+                    join = StrokeJoin.Round
+                ),
+                letterSpacing = letterSpacing.sp,
+            ),
+        )
+        // 일반 텍스트
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleLarge.copy(
+                color = color,
+                fontSize = fontSize.sp,
+                letterSpacing = letterSpacing.sp,
+            )
+        )
+    }
+}
+
+
