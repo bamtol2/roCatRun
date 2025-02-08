@@ -76,6 +76,11 @@
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/start_mobile_app" />
             </intent-filter>
         </service>
+        <receiver
+            android:name=".receiver.SensorUpdateReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>

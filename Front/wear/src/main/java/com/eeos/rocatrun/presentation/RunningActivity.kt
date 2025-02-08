@@ -1,6 +1,8 @@
 package com.eeos.rocatrun.presentation
 
 import android.Manifest
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,6 +17,9 @@ import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,10 +36,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
@@ -67,26 +70,33 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.Asset
-import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
+//import com.google.gson.Gson
+//import kotlinx.coroutines.Dispatchers
+//import kotlinx.coroutines.launch
+//import kotlinx.coroutines.withContext
+//import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
-import androidx.wear.ongoing.OngoingActivity
-import androidx.wear.ongoing.Status
 import com.eeos.rocatrun.component.CircularItemGauge
-
+import com.eeos.rocatrun.viewmodel.GameViewModel
+import com.eeos.rocatrun.util.FormatUtils
+import android.os.PowerManager
+import android.os.SystemClock
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.ui.platform.LocalContext
+import com.eeos.rocatrun.receiver.SensorUpdateReceiver
 
 class RunningActivity : ComponentActivity(), SensorEventListener {
-
+    private val gameViewModel: GameViewModel by viewModels()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var sensorManager: SensorManager
     private var heartRateSensor: Sensor? = null
+    private var formatUtils = FormatUtils()
 
     // GPX 변수
     private val locationList = mutableListOf<Location>()
@@ -94,14 +104,21 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private val paceList = mutableListOf<Double>()
 
     // 상태 변수들
-    private var totalDistance by mutableStateOf(0.0)
-    private var speed by mutableStateOf(0.0)
-    private var elapsedTime by mutableStateOf(0L)
-    private var averagePace by mutableStateOf(0.0)
+    private var totalDistance by mutableDoubleStateOf(0.0)
+    private var speed by mutableDoubleStateOf(0.0)
+    private var elapsedTime by mutableLongStateOf(0L)
+    private var averagePace by mutableDoubleStateOf(0.0)
     private var heartRate by mutableStateOf("---")
-    private var averageHeartRate by mutableStateOf(0.0)
+    private var averageHeartRate by mutableDoubleStateOf(0.0)
     private var heartRateSum = 0
     private var heartRateCount = 0
+
+    // 발걸음수
+    private var stepCount = 0  // 누적 걸음 수
+    private val stepTimes = mutableListOf<Long>()  // 걸음 이벤트 발생 시간 기록
+
+    // 절전 모드
+    private lateinit var wakeLock: PowerManager.WakeLock
 
     private var startTime = 0L
     private var isRunning = false
@@ -130,11 +147,18 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { RunningApp() }
+        setContent {
+            val gameViewModel: GameViewModel by viewModels()
 
+            RunningApp(gameViewModel) }
+        // 절전모드 방지를 위한 WakeLock 초기화 및 활성화
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RunningApp::Wakelock")
+        wakeLock.acquire(10*60*1000L /*10 minutes*/)
         // 포그라운드 서비스 시작
         startForegroundService()
-
+        // 센서 업데이트 알람 설정 추가
+        scheduleSensorUpdates()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -148,9 +172,15 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+        val stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
+        stepDetectorSensor?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+            Log.d("StepDetector", "Step detector sensor registered successfully.")
+        } ?: Log.w("StepDetector", "No step detector sensor available.")
 
         requestPermissions()
     }
+
 
     private fun startForegroundService() {
         val serviceIntent = Intent(this, LocationForegroundService::class.java)
@@ -165,6 +195,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     override fun onPause() {
         super.onPause()
+        if (wakeLock.isHeld) {
+            Log.e("WakeLock", "WakeLock 확인")
+            wakeLock.release()
+        }
         sensorManager.unregisterListener(this)
     }
 
@@ -188,22 +222,30 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
+    private var lastDistanceUpdate = 0.0  // 마지막으로 게이지가 업데이트된 거리
+
     private fun updateLocation(location: Location) {
         lastLocation?.let {
-            Log.d("LastLocation", "위치 확인: $location")
-            val distanceMoved = it.distanceTo(location) / 1000
-            if (distanceMoved > 0.003) { // 이동이 미미한 경우 제외(3M 이하)
+            val distanceMoved = it.distanceTo(location) / 1000  // 이동 거리를 km 단위로 계산
+            if (distanceMoved > 0.003) {  // 이동이 미미한 경우 제외 (3m 이하)
                 totalDistance += distanceMoved
                 speed = location.speed * 3.6
-                Log.d("LastLocation", "위치 : $location")
 
+                // 게이지 증가 로직: 50m 마다 증가
+                if (totalDistance - lastDistanceUpdate >= 0.01) {  // 0.05km = 50m
+                    gameViewModel.increaseItemGauge()
+                    lastDistanceUpdate = totalDistance
+                    if (gameViewModel.itemGaugeValue.value == 100) {
+                      gameViewModel.handleGaugeFull(this)
+               }
+                }
             }
         }
         lastLocation = location
-        Log.d("LastLocation", "위치 : $location")
         locationList.add(location)
         paceList.add(averagePace)
     }
+
 
     private fun startTracking() {
         if (isRunning) return
@@ -244,7 +286,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             averageHeartRate = heartRateSum.toDouble() / heartRateCount
         }
 
-        Log.d("Stats", "Elapsed Time: ${formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
+        Log.d("Stats", "Elapsed Time: ${formatUtils.formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
         showStats = true
         createAndSendGpxFile()
     }
@@ -310,9 +352,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun RunningApp() {
+    fun RunningApp(gameViewModel: GameViewModel) {
+
         var isCountdownFinished by remember { mutableStateOf(false) }
-        var countdownValue by remember { mutableStateOf(5) }
+        var countdownValue by remember { mutableIntStateOf(5) }
 
         // 카운트다운 실행
         LaunchedEffect(Unit) {
@@ -324,7 +367,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
 
         if (isCountdownFinished) {
-            WatchAppUI()
+            WatchAppUI(gameViewModel)
         } else {
             CountdownScreen(countdownValue)
         }
@@ -350,7 +393,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun WatchAppUI() {
+    fun WatchAppUI(gameViewModel: GameViewModel) {
         val pagerState = rememberPagerState(pageCount = {3})
 
         if (showStats) {
@@ -360,10 +403,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 state = pagerState,
             ) { page ->
                 when (page) {
-                    0 -> CircularLayout()
+                    0 -> CircularLayout(gameViewModel)
                     1 -> ControlButtons { stopTracking() }
                     2 -> Box(modifier = Modifier.fillMaxSize()) {
-                        GameScreen() // Modifier.fillMaxSize() 적용된 상태로 화면 전체에 표시
+                        GameScreen(gameViewModel) // Modifier.fillMaxSize() 적용된 상태로 화면 전체에 표시
                     }
                 }
             }
@@ -371,7 +414,20 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun CircularLayout() {
+    fun CircularLayout(gameViewModel: GameViewModel) {
+        val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
+        val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
+
+
+        val itemProgress by animateFloatAsState(
+            targetValue = itemGaugeValue.toFloat() / 100,
+            animationSpec = tween(durationMillis = 500)
+        )
+        val bossProgress by animateFloatAsState(
+            targetValue = bossGaugeValue.toFloat() / 100,
+            animationSpec = tween(durationMillis = 500)
+        )
+
 
         BoxWithConstraints(
             modifier = Modifier
@@ -380,7 +436,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             contentAlignment = Alignment.Center
         ) {
             val spacing = maxWidth * 0.04f   // 요소 간 간격 조정
-            CircularItemGauge(30f,50f, Modifier.size(200.dp))
+            CircularItemGauge(itemProgress = itemProgress,bossProgress = bossProgress, Modifier.size(200.dp))
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -397,7 +453,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = formatPace(averagePace),
+                        text = formatUtils.formatPace(averagePace),
                         color = Color(0xFFFFFFFF),
                         fontSize = 25.sp,
 //                        fontWeight = FontWeight.Bold,
@@ -412,7 +468,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = formatTime(elapsedTime),
+                        text = formatUtils.formatTime(elapsedTime),
                         color = Color.White,
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Medium,
@@ -486,7 +542,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun ControlButtons(onStopTracking: () -> Unit) {
+    fun ControlButtons(stopTracking: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -501,7 +557,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             }
 
             Button(onClick = {
-                onStopTracking()
+                stopTracking()
             }) {
                 Text("종료",
                     fontFamily = FontFamily(Font(R.font.neodgm)),)
@@ -532,11 +588,13 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     @Composable
     fun ShowStatsScreen() {
+        val averageCadence = calculateAverageCadence()
         val statsData = listOf(
-            "Total Time: ${formatTime(elapsedTime)}",
-            "Total Distance: ${"%.2f".format(totalDistance)} km",
-            "Average Pace: ${"%.2f".format(averagePace)} min/km",
-            "Average Heart Rate: ${"%.1f".format(averageHeartRate)} bpm"
+            "총 시간: ${formatUtils.formatTime(elapsedTime)}",
+            "총 거리: ${"%.2f".format(totalDistance)} km",
+            "평균 페이스: ${"%.2f".format(averagePace)} min/km",
+            "평균 심박수: ${"%.1f".format(averageHeartRate)} bpm",
+            "평균 케이던스: $averageCadence spm"
         )
 
         ScalingLazyColumn(
@@ -570,32 +628,62 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-    private fun formatPace(pace: Double): String {
-        val minutes = pace.toInt()
-        val seconds = ((pace - minutes) * 60).roundToInt()
-        return String.format("%d'%02d\"", minutes, seconds)
-    }
-
-    private fun formatTime(milliseconds: Long): String {
-        val seconds = (milliseconds / 1000) % 60
-        val minutes = (milliseconds / (1000 * 60)) % 60
-        val hours = (milliseconds / (1000 * 60 * 60))
-
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
-            val newHeartRate = event.values[0].toInt()
-            Log.d("심박수", "심박수: $newHeartRate")
-            if (newHeartRate > 0) {
-                heartRate = newHeartRate.toString()
-                heartRateSum += newHeartRate
-                heartRateCount++
-                heartRateList.add(newHeartRate)
-                Log.d("추가", "심박수 추가")
+        when (event?.sensor?.type) {
+            Sensor.TYPE_HEART_RATE -> {
+                val newHeartRate = event.values[0].toInt()
+                Log.d("심박수", "심박수: $newHeartRate")
+                if (newHeartRate > 0) {
+                    heartRate = newHeartRate.toString()
+                    heartRateSum += newHeartRate
+                    heartRateCount++
+                    heartRateList.add(newHeartRate)
+                    Log.d("추가", "심박수 추가")
+                }
+            }
+            Sensor.TYPE_STEP_DETECTOR -> {
+                stepCount++
+                val currentTime = System.currentTimeMillis()
+                stepTimes.add(currentTime)
+                Log.d("걸음수", "걸음시간 :$stepTimes" )
+
+                Log.d("StepTimes", "Step times: $stepTimes")
+                Log.d("CadenceCalculation", "Elapsed time in minutes: ${(stepTimes.last() - stepTimes.first()) / 60000.0}")
+
+                Log.d("StepDetector", "Step detected. Total steps: $stepCount")
             }
         }
+    }
+    private fun calculateAverageCadence(): Int {
+        if (stepTimes.size <= 1) return 0
+        val elapsedTimeInMinutes = (stepTimes.last() - stepTimes.first()) / 60000.0
+        return if (elapsedTimeInMinutes > 0) {
+            (stepTimes.size / elapsedTimeInMinutes).roundToInt()
+        } else {
+            0
+        }
+    }
+
+    // 알람 설정 메서드
+    private fun scheduleSensorUpdates() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, SensorUpdateReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        alarmManager.setRepeating(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            SystemClock.elapsedRealtime() + 60000,  // 첫 시작 시간
+            60000,  // 1분 반복 주기
+            pendingIntent
+        )
+
+        Log.d("AlarmManager", "Alarm scheduled for sensor updates.")
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}

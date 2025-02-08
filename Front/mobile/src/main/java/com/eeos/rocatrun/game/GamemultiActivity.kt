@@ -1,5 +1,7 @@
 package com.eeos.rocatrun.game
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -15,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.FileProvider
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 import com.google.android.gms.wearable.*
 import kotlinx.coroutines.Dispatchers
@@ -53,10 +56,15 @@ class GameMulti : ComponentActivity(), DataClient.OnDataChangedListener {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    GamemultiScreen(runningData, gpxFileReceived)
+                    GamemultiScreen(
+                        runningData = runningData,
+                        gpxFileReceived = gpxFileReceived,
+                        onShareClick = { shareLatestGpxFile() }
+                    )
                 }
             }
         }
+
     }
 
     override fun onResume() {
@@ -119,5 +127,31 @@ class GameMulti : ComponentActivity(), DataClient.OnDataChangedListener {
         } catch (e: IOException) {
             Log.e("GameMulti", "Error saving GPX file", e)
         }
+    }
+
+    private fun shareLatestGpxFile() {
+        val directory = getExternalFilesDir(null)
+        val gpxFiles = directory?.listFiles { file -> file.name.endsWith(".gpx") }
+
+        gpxFiles?.maxByOrNull { it.lastModified() }?.let { latestFile ->
+            shareGpxFile(this, latestFile.name)
+        } ?: run {
+            // GPX 파일이 없을 경우 처리
+            Log.e("GameMulti", "No GPX files found to share")
+        }
+    }
+
+    private fun shareGpxFile(context: Context, fileName: String) {
+        val file = File(context.getExternalFilesDir(null), fileName)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = "application/gpx+xml"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(Intent.createChooser(shareIntent, "GPX 파일 공유"))
     }
 }
