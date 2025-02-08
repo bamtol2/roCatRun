@@ -61,7 +61,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // URL에 특수문자 허용 설정
+    // URL에  특수문자 허용 설정
     @Bean
     public HttpFirewall allowUrlEncodedSlashHttpFirewall() {
         StrictHttpFirewall firewall = new StrictHttpFirewall();
