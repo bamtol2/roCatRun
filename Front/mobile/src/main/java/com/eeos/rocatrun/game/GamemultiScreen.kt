@@ -31,9 +31,10 @@ import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import androidx.compose.material3.Button
 
 @Composable
-fun GamemultiScreen(runningData: GameMulti.RunningData?, gpxFileReceived: Boolean) {
+fun GamemultiScreen(runningData: GameMulti.RunningData?, gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
     // 타이머 상태 관리
     var seconds by remember { mutableStateOf(0) }
@@ -59,19 +60,6 @@ fun GamemultiScreen(runningData: GameMulti.RunningData?, gpxFileReceived: Boolea
 
     Box(modifier = Modifier.fillMaxSize()
     ) {
-
-        // GPX 파일 수신 상태 표시
-        if (gpxFileReceived) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .background(Color.Green)
-                    .padding(8.dp)
-            ) {
-                Text("GPX 파일 수신 완료", color = Color.White)
-            }
-        }
         // Background Image
         Image(
             painter = painterResource(id = R.drawable.game_bg_gameroom),
@@ -200,6 +188,27 @@ fun GamemultiScreen(runningData: GameMulti.RunningData?, gpxFileReceived: Boolea
             // 현재 상태 정보
             CurrentInfo(runningData)
         }
+        // GPX 파일 수신 상태 표시
+        if (gpxFileReceived) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(Color.Green)
+                    .padding(8.dp)
+            ) {
+                Text("GPX 파일 수신 완료", color = Color.White)
+            }
+
+            Button(
+                onClick = onShareClick,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            ) {
+                Text("GPX 파일 공유")
+            }
+        }
     }
 }
 
@@ -278,6 +287,3 @@ private fun ResultItem(label: String, value: String) {
         }
     }
 }
-
-
-

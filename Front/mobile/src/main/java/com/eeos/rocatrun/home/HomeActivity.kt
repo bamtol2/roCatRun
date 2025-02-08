@@ -4,13 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.eeos.rocatrun.socket.SocketHandler
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
+
+            // 소켓 초기화, 연결
+            SocketHandler.initialize()
+            SocketHandler.connect()
+
             RoCatRunTheme {
                 HomeScreen()
             }

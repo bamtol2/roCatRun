@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.game
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,14 +35,52 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.socket.SocketHandler
+import org.json.JSONObject
 
 @Composable
 fun MatchingScreen(
-    // 임시로 넣어둠. 연동할 때 바꿀 예정
-    currentUsers: Int = 3,   // 현재 접속한 사용자 수
-    maxUsers: Int = 4        // 방 정원
+    initialCurrentUsers: Int = 0,   // 현재 접속한 사용자 수
+    initialMaxUsers: Int = 0       // 방 정원
 ) {
     val context = LocalContext.current
+    var currentUsers by remember { mutableStateOf(initialCurrentUsers) }
+    var maxUsers by remember { mutableStateOf(initialMaxUsers) }
+
+    LaunchedEffect(Unit) {
+        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
+        SocketHandler.mSocket.on("playerJoined") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val json = args[0] as JSONObject
+                val userId = json.optString("userId", "")
+                val currentPlayers = json.optInt("currentPlayers", 0)
+                val maxPlayers = json.optInt("maxPlayers", 0)
+                Log.d(
+                    "Socket",
+                    "On - playerJoined: userId: $userId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                )
+                // 갱신된 값을 상태에 반영
+                currentUsers = json.optInt("currentPlayers", currentUsers)
+                maxUsers = json.optInt("maxPlayers", maxUsers)
+
+            }
+        }
+        SocketHandler.mSocket.on("playerLeft") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val json = args[0] as JSONObject
+                val userId = json.optString("userId", "")
+                val currentPlayers = json.optInt("currentPlayers", 0)
+                val maxPlayers = json.optInt("maxPlayers", 0)
+                Log.d(
+                    "Socket",
+                    "On - playerLeft: userId: $userId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                )
+                // 갱신된 값을 상태에 반영
+                currentUsers = json.optInt("currentPlayers", currentUsers)
+                maxUsers = json.optInt("maxPlayers", maxUsers)
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -135,6 +179,11 @@ fun MatchingScreen(
             // 취소 버튼 -> 누르면 게임선택 창으로 돌아가게
             Box(
                 modifier = Modifier.clickable {
+
+                    // 매칭취소 이벤트 발생
+                    SocketHandler.mSocket.emit("cancelMatch")
+
+                    // 방페이지로 이동
                     val intent = Intent(context, GameRoom::class.java)
                     context.startActivity(intent)
                 }

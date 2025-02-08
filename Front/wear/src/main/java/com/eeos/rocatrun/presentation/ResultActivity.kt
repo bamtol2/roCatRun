@@ -41,7 +41,7 @@ class ResultActivity : ComponentActivity() {
         }
     }
 
-    // 모바일 앱 실행 요청 함수
+    // 모바일 앱 실행 요청 함수(모바일 게임 종료 화면으로 이동하게)
     fun startMobileApp() {
         val messageClient: MessageClient = Wearable.getMessageClient(this)
         val path = "/start_mobile_app"
