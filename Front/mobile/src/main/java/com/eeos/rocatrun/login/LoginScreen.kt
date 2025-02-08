@@ -52,6 +52,9 @@ import com.eeos.rocatrun.login.util.Register
 import com.eeos.rocatrun.login.util.MessageBox
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import com.eeos.rocatrun.login.data.RetrofitClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 import okhttp3.internal.wait
@@ -65,14 +68,33 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
     var userInfo by remember { mutableStateOf(loginResponse) }
     var showMessageBox by remember { mutableStateOf(false) }
     // 응답이 업데이트되면 showDialog를 true로 설정
-    LaunchedEffect(userInfo) {
-        if (userInfo != null) {
-            showDialog = true
-            Log.i("로그인 스크린", "유저 정보 모달 표시: $userInfo")
+    LaunchedEffect(Unit) {
+        val token = TokenStorage.getAccessToken(context)
+        if (token != null) {
+            // 캐릭터 정보 조회 API 호출
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.apiService.checkMember("Bearer $token")
+                }
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    // 회원 정보가 있을 경우 바로 HomeActivity로 이동
+                    val intent = Intent(context, HomeActivity::class.java)
+                    context.startActivity(intent)
+                } else {
+                    // 회원 정보가 없으면 회원가입 모달 띄우기
+                    showDialog = true
+                }
+            } catch (e: Exception) {
+                Log.e("LoginScreen", "회원 정보 조회 중 오류 발생", e)
+                showDialog = true
+            }
         } else {
-            Log.e("로그인 스크린", "리스폰스 null")
+            // 토큰이 없으면 회원가입 모달 띄우기
+            showDialog = true
         }
     }
+
 
     Column(
         modifier = modifier
