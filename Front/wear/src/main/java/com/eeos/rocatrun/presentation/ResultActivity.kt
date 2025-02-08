@@ -42,7 +42,7 @@ class ResultActivity : ComponentActivity() {
     }
 
     // 모바일 앱 실행 요청 함수(모바일 게임 종료 화면으로 이동하게)
-    fun startMobileApp() {
+    fun goMobileApp() {
         val messageClient: MessageClient = Wearable.getMessageClient(this)
         val path = "/start_mobile_app"
         val messageData = "Start Game".toByteArray()
@@ -70,7 +70,7 @@ class ResultActivity : ComponentActivity() {
 @Composable
 fun SplashScreen2() {
     val context = LocalContext.current
-    val mainActivity = context as MainActivity  // MainActivity의 메서드 호출을 위해 캐스팅
+    val resultActivity = context as ResultActivity  // MainActivity의 메서드 호출을 위해 캐스팅
 
     Column(
         modifier = Modifier
@@ -104,7 +104,7 @@ fun SplashScreen2() {
         // 확인 버튼
         Button(
             onClick = {
-                mainActivity.startMobileApp()  // MainActivity의 메서드 호출
+                resultActivity.goMobileApp()
             },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF00FFCC)
