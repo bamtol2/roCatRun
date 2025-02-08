@@ -14,13 +14,13 @@ import java.net.URISyntaxException
 object SocketHandler {
     lateinit var mSocket: Socket
 
-    // 유저 1 생성 토큰
-    private var user1Token: String = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTczOTAwMjY4MywiZXhwIjoxNzM5MDg5MDgzfQ.BP7nOa5rhdlgbjd5qsu0CGrF654G4_cM7Dm7umiRIFef7uwhQbsUQtrkj1R3TZCfp3lRYEA2tZPuyN4utSUMMw"
+    // 유저 2 생성 토큰
+    private var user1Token: String = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMiIsImlhdCI6MTczOTAwMzI2NSwiZXhwIjoxNzM5MDg5NjY1fQ.d6QeDrcHG08QLR51OLV32Wu7NaILlSUktrVglhyKDCS_UrCJSvUdDH1VsFq_kBFx5VNh7anMb7Cm0amoug26yw"
 
     private var authValue = "Bearer $user1Token"
 
     // 웹소켓 통신 베이스 주소 - 추후 https 로 바뀔 예정
-    private var user1Port = "https://i12e205.p.ssafy.io:9092/"
+    private var user1Port = "http://i12e205.p.ssafy.io:9092/"
 
     // 1. OkHttpClient에 헤더 인터셉터 추가
     private val httpClient = OkHttpClient.Builder()

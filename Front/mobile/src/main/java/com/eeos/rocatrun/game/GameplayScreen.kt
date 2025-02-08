@@ -1,5 +1,9 @@
 package com.eeos.rocatrun.game
 
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,10 +35,13 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.result.MultiLoseScreen
 import com.eeos.rocatrun.result.MultiWinScreen
 import com.eeos.rocatrun.result.SingleLoseScreen
 import com.eeos.rocatrun.result.SingleWinScreen
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
 
 
 @Composable
@@ -45,6 +52,43 @@ fun GameplayScreen() {
     var showMultiLoseDialog by remember { mutableStateOf(false) }
     var showSingleWinDialog by remember { mutableStateOf(false) }
     var showSingleLoseDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    // 워치화면 띄우기
+    fun startWatchApp(context: Context) {
+        val messageClient: MessageClient = Wearable.getMessageClient(context)
+        val path = "/start_watch_app"
+        val messageData = "Start Game".toByteArray()
+
+        Wearable.getNodeClient(context).connectedNodes.addOnSuccessListener { nodes ->
+            if (nodes.isNotEmpty()) {
+                val nodeId = nodes.first().id
+                Log.d("WearApp", "연결된 노드: ${nodes.first().displayName}")
+
+                messageClient.sendMessage(nodeId, path, messageData).apply {
+                    addOnSuccessListener {
+                        Log.d("Wear APP", "메시지 전송 성공")
+                        Toast.makeText(context, "워치 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                    addOnFailureListener {
+                        Toast.makeText(
+                            context,
+                            "워치 앱 전송 실패: ${it.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } else {
+                Log.d("WearApp", "연결된 노드가 없습니다.")
+                Toast.makeText(context, "연결된 디바이스가 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // 메세지 보내기
+    startWatchApp(context)
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -85,6 +129,21 @@ fun GameplayScreen() {
                 ),
                 textAlign = TextAlign.Center
             )
+
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "홈으로 이동",
+                    color = Color.White,
+                    fontSize = 30.sp,
+                    modifier = Modifier.clickable {
+                        val intent = Intent(context, HomeActivity::class.java)
+                        context.startActivity(intent)
+                    }
+                )
+            }
 
             // 임시 테스트용 버튼
             LazyVerticalGrid(
