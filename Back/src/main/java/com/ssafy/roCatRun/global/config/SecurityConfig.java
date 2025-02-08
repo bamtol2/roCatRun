@@ -79,6 +79,8 @@ public class SecurityConfig {
         // 접근 허용할 프론트엔드 주소들
         configuration.addAllowedOrigin("http://i12e205.p.ssafy.io:8080");
         configuration.addAllowedOrigin("http://localhost:8080");
+        configuration.addAllowedOrigin("https://i12e205.p.ssafy.io:8080");
+        configuration.addAllowedOrigin("https://localhost:8080");
         // 모든 HTTP 메서드 허용 (GET, POST 등)
         configuration.addAllowedMethod("*");
         // 모든 헤더 허용
