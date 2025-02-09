@@ -45,36 +45,57 @@ public class GameDisconnectionManager {
         private long disconnectionTime;
     }
 
-    public void handlePlayerDisconnection(GameRoom room, String userId) {
-        Player player = room.getPlayerById(userId);
-        if (player == null) return;
+    public void handlePlayerDisconnection(GameRoom room, String userId){
+       room.getPlayers().removeIf(player -> player.getId().equals(userId));
 
-        // Redis에 연결 끊긴 플레이어 정보 저장
-        DisconnectedPlayerData disconnectedData = new DisconnectedPlayerData(
-                room.getId(),
-                userId,
-                player.getRunningData(),
-                player.getUsedItemCount(),
-                System.currentTimeMillis()
-        );
-
-        String redisKey = "disconnected:" + userId;
-        redisTemplate.opsForValue().set(redisKey, disconnectedData);
-        redisTemplate.expire(redisKey, RECONNECT_TIMEOUT, TimeUnit.SECONDS);
-
+        if (room.getPlayers().isEmpty()) {
+            gameRoomManager.removeRoom(room.getId());
+        } else {
+            gameRoomManager.updateRoom(room);
+            // 남은 플레이어들에게 알림
+            server.getRoomOperations(room.getId()).sendEvent("playerDisconnected",
+                    new PlayerLeftResponse(
+                            userId,
+                            room.getPlayers().size(),
+                            room.getMaxPlayers()
+                    )
+            );
+        }
         // 남은 플레이어들에게 알림
-        server.getRoomOperations(room.getId()).sendEvent("playerDisconnected",
-                new PlayerDisconnectedResponse(userId, RECONNECT_TIMEOUT));
-
-        // 3분 후 투표 시작 - Redis 데이터 체크 없이 바로 투표 시작
-        scheduler.schedule(() -> {
-            // 방이 아직 존재하고 게임 중인지 확인
-            GameRoom currentRoom = gameRoomManager.getRoom(room.getId()).orElse(null);
-            if (currentRoom != null && currentRoom.getStatus() == GameStatus.PLAYING) {
-                initiateGameEndVote(currentRoom);
-            }
-        }, RECONNECT_TIMEOUT, TimeUnit.SECONDS);
+//        server.getRoomOperations(room.getId()).sendEvent("playerDisconnected",
+//                new PlayerDisconnectedResponse(userId, RECONNECT_TIMEOUT));
     }
+
+//    public void handlePlayerDisconnection(GameRoom room, String userId) {
+//        Player player = room.getPlayerById(userId);
+//        if (player == null) return;
+//
+//        // Redis에 연결 끊긴 플레이어 정보 저장
+//        DisconnectedPlayerData disconnectedData = new DisconnectedPlayerData(
+//                room.getId(),
+//                userId,
+//                player.getRunningData(),
+//                player.getUsedItemCount(),
+//                System.currentTimeMillis()
+//        );
+//
+//        String redisKey = "disconnected:" + userId;
+//        redisTemplate.opsForValue().set(redisKey, disconnectedData);
+//        redisTemplate.expire(redisKey, RECONNECT_TIMEOUT, TimeUnit.SECONDS);
+//
+//        // 남은 플레이어들에게 알림
+//        server.getRoomOperations(room.getId()).sendEvent("playerDisconnected",
+//                new PlayerDisconnectedResponse(userId, RECONNECT_TIMEOUT));
+//
+//        // 3분 후 투표 시작 - Redis 데이터 체크 없이 바로 투표 시작
+//        scheduler.schedule(() -> {
+//            // 방이 아직 존재하고 게임 중인지 확인
+//            GameRoom currentRoom = gameRoomManager.getRoom(room.getId()).orElse(null);
+//            if (currentRoom != null && currentRoom.getStatus() == GameStatus.PLAYING) {
+//                initiateGameEndVote(currentRoom);
+//            }
+//        }, RECONNECT_TIMEOUT, TimeUnit.SECONDS);
+//    }
 
     public boolean handlePlayerReconnection(String userId, SocketIOClient client) {
         String redisKey = "disconnected:" + userId;
