@@ -14,6 +14,4 @@ import java.io.Serializable;
 public class RunningData implements Serializable {
     private double distance = 0.0;
     private double currentSpeed = 0.0;
-    private double pace = 0.0;
-    private int calories = 0;
 }

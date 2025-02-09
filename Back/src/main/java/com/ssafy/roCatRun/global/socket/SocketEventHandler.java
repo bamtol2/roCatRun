@@ -67,11 +67,29 @@ public class SocketEventHandler {
         server.addEventListener("useItem", JsonObject.class,
                 (client, data, ack) -> handleItemUse(client));
 
+        // 유저의 러닝 결과 데이터 수신 이벤트
+        server.addEventListener("submitRunningResult", PlayerRunningResultRequest.class,
+                (client, data, ack) -> handleRunningResult(client, data));
+
         // 연결 상태 확인 이벤트
         server.addEventListener("ping", JsonObject.class,
                 (client, data, ack) -> handlePing(client));
 
         server.start();
+    }
+
+    private void handleRunningResult(SocketIOClient client, PlayerRunningResultRequest data) {
+        String userId = client.get("userId");
+        if (userId == null) {
+            client.sendEvent("error", "Not authenticated");
+            return;
+        }
+
+        try {
+            gameService.handleRunningResult(userId, data);
+        } catch (Exception e) {
+            client.sendEvent("error", e.getMessage());
+        }
     }
 
     private void handleRunningDataUpdate(SocketIOClient client, RunningDataUpdateRequest data) {
@@ -101,27 +119,6 @@ public class SocketEventHandler {
             client.sendEvent("error", e.getMessage());
         }
     }
-
-    private void handleGameOver(GameRoom room) {
-        GameResultResponse result = new GameResultResponse(
-                room.isGameFinished() && room.getBossHealth() <= 0,
-                room.getPlayers().stream()
-                        .map(p -> new GameResultResponse.PlayerResult(
-                                p.getId(),
-                                p.getRunningData().getDistance(),
-                                p.getRunningData().getPace(),
-                                p.getRunningData().getCalories(),
-                                p.getUsedItemCount()
-                        ))
-                        .sorted((p1, p2) -> Double.compare(p2.getDistance(), p1.getDistance()))
-                        .collect(Collectors.toList())
-        );
-
-        server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
-        room.setStatus(GameStatus.FINISHED);
-        gameRoomManager.updateRoom(room);
-    }
-
 
     private void handleJoinRoom(SocketIOClient client, JoinRoomRequest request) {
         String userId = client.get("userId");

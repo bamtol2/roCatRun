@@ -1,4 +1,4 @@
-package com.ssafy.roCatRun.domain.game.dto.response;
+package com.ssafy.roCatRun.domain.game.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

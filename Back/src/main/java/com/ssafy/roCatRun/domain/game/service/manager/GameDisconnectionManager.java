@@ -2,6 +2,7 @@ package com.ssafy.roCatRun.domain.game.service.manager;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.ssafy.roCatRun.domain.game.dto.request.GameEndVoteRequest;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;

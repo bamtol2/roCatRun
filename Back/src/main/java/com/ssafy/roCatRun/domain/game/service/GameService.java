@@ -3,6 +3,7 @@ package com.ssafy.roCatRun.domain.game.service;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.ssafy.roCatRun.domain.game.dto.request.CreateRoomRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.MatchRequest;
+import com.ssafy.roCatRun.domain.game.dto.request.PlayerRunningResultRequest;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
@@ -33,6 +34,9 @@ public class GameService {
 
     private final GameRoomManager gameRoomManager;
     private final GameTimerManager gameTimerManager;
+
+    // 게임 종료 후 결과 데이터를 임시 저장할 Map
+    private final Map<String, Map<String, PlayerRunningResultRequest>> gameResults = new ConcurrentHashMap<>();
 
     /**
      * 랜덤 매칭 처리
@@ -71,6 +75,8 @@ public class GameService {
      * @param userId 유저 식별자
      */
     public void handleUserDisconnect(String userId, GameRoom room) {
+            // 방에서 유저 제거
+            room.getPlayers().removeIf(player -> player.getId().equals(userId));
             if (room.getPlayers().isEmpty()) {
                 gameRoomManager.removeRoom(room.getId());
             } else {
@@ -186,16 +192,6 @@ public class GameService {
                 room.getPlayers()
         ));
 
-//        // 5초 뒤 카운트다운
-//        AtomicInteger count = new AtomicInteger(5);
-//        ScheduledFuture<?> countdownTask = scheduler.scheduleAtFixedRate(()->{
-//            if(count.get()>0){
-//                //카운트다운 전송
-//                server.getRoomOperations(room.getId()).sendEvent("countdown",
-//                        new GameCountdownResponse(count.get(), room.getId()));
-//                count.decrementAndGet();
-//            }else{
-                // 게임시작
                 room.setStatus(GameStatus.PLAYING);
                 room.startGame();
                 gameRoomManager.updateRoom(room);
@@ -210,14 +206,6 @@ public class GameService {
                         room.getBossHealth(),
                         room.getPlayers()
                 ));
-
-//                // 카운트다운 테스크 종료
-//                throw new RuntimeException("Countdown completed");
-//            }
-//        }, 0, 1, TimeUnit.SECONDS);
-
-        // 에러 핸들링(카운트다운 완료 시 태스크 종료)
-//        scheduler.schedule(()->countdownTask.cancel(true), 6, TimeUnit.SECONDS);
     }
 
     /**
@@ -289,39 +277,108 @@ public class GameService {
             }, GameRoom.FEVER_TIME_DURATION, TimeUnit.SECONDS);
         }
     }
-
     /**
      * 게임 종료 처리
      * @param room 방 정보
      */
     public void handleGameOver(GameRoom room) {
+        log.info("[Game Over] Room: {}, Players: {}, Boss Health: {}, Clear Status: {}",
+                room.getId(),
+                room.getPlayers().size(),
+                room.getBossHealth(),
+                room.getBossHealth() <= 0 ? "Success" : "Failed"
+        );
+
         room.setStatus(GameStatus.FINISHED);
-        GameResultResponse result = createGameResult(room);
-        server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
-        // 방에서 제외 및 방 제거 처리
-        for(Player player : room.getPlayers()){
-            handleUserDisconnect(player.getId(), room);
+        gameRoomManager.updateRoom(room);
+
+        gameResults.put(room.getId(), new ConcurrentHashMap<>());
+
+        // 게임 종료 알림만 전송
+        server.getRoomOperations(room.getId()).sendEvent("gameOver",
+                new GameOverResponse(true, "게임이 종료되었습니다."));
+    }
+
+
+//    /**
+//     * 게임 종료 처리
+//     * @param room 방 정보
+//     */
+//    public void handleGameOver(GameRoom room) {
+//        room.setStatus(GameStatus.FINISHED);
+//        GameResultResponse result = createGameResult(room);
+//        server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
+//        // 방에서 제외 및 방 제거 처리
+//        for(Player player : room.getPlayers()){
+//            handleUserDisconnect(player.getId(), room);
+//        }
+//    }
+
+    /**
+     * 유저에게서 받은 러닝 결과 처리
+     * @param userId 유저식별자
+     * @param resultData 러닝 결과 데이터
+     */
+    public void handleRunningResult(String userId, PlayerRunningResultRequest resultData) {
+        GameRoom room = gameRoomManager.findRoomByUserId(userId)
+                .orElseThrow(() -> new IllegalStateException("Room not found"));
+
+        if (room.getStatus() != GameStatus.FINISHED) {
+            log.warn("[Running Result] Invalid request - Game not finished. Room: {}, User: {}",
+                    room.getId(), userId);
+            throw new IllegalStateException("게임이 아직 끝나지 않았습니다.");
+        }
+
+        // 결과 데이터 저장
+        Map<String, PlayerRunningResultRequest> roomResults = gameResults.get(room.getId());
+        roomResults.put(userId, resultData);
+
+        log.info("[Running Result] Received data from User: {}, Room: {}, Current submissions: {}/{}",
+                userId, room.getId(), roomResults.size(), room.getPlayers().size());
+
+        // 모든 플레이어의 결과가 수집되었는지 확인
+        if (roomResults.size() == room.getPlayers().size()) {
+            // 최종 결과 생성 및 전송
+            broadcastFinalResult(room, roomResults);
+
+            // 임시 저장된 결과 데이터 삭제
+            gameResults.remove(room.getId());
+
+            // 방 정리
+            cleanupRoom(room);
         }
     }
 
-    /**
-     * 게임 결과 생성
-     * @param room 방 정보를 바탕으로 유저들의 달린 거리를 기준으로 순위 출력
-     * @return 레이드에 참여한 유저들의 러닝정보(러닝거리 내림차순)
-     */
-    private GameResultResponse createGameResult(GameRoom room) {
+    private void broadcastFinalResult(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
         List<GameResultResponse.PlayerResult> playerResults = room.getPlayers().stream()
-                .map(p -> new GameResultResponse.PlayerResult(
-                        p.getId(),
-                        p.getRunningData().getDistance(),
-                        p.getRunningData().getPace(),
-                        p.getRunningData().getCalories(),
-                        p.getUsedItemCount()
-                ))
-                .sorted((p1, p2) -> Double.compare(p2.getDistance(), p1.getDistance()))
+                .map(player -> {
+                    PlayerRunningResultRequest result = results.get(player.getId());
+                    return new GameResultResponse.PlayerResult(
+                            player.getId(),
+                            result.getRunningTime(),
+                            result.getTotalDistance(),
+                            result.getPaceAvg(),
+                            result.getHeartRateAvg(),
+                            result.getCadenceAvg(),
+                            0,
+                            player.getUsedItemCount()
+                    );
+                })
+                .sorted((p1, p2) -> Double.compare(p2.getTotalDistance(), p1.getTotalDistance()))
                 .collect(Collectors.toList());
 
-        return new GameResultResponse(room.getBossHealth() <= 0, playerResults);
+        GameResultResponse finalResult = new GameResultResponse(
+                room.getBossHealth() <= 0,
+                playerResults
+        );
+
+        server.getRoomOperations(room.getId()).sendEvent("gameResult", finalResult);
+    }
+
+    private void cleanupRoom(GameRoom room) {
+        for (Player player : room.getPlayers()) {
+            handleUserDisconnect(player.getId(), room);
+        }
     }
 
     /**

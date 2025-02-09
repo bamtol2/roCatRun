@@ -26,6 +26,11 @@ public class GameRoomManager {
      */
     public void addRoom(GameRoom room) {
         rooms.put(room.getId(), room);
+        log.info("[Room Created] ID: {}, Boss Level: {}, Max Players: {}, Type: {}",
+                room.getId(),
+                room.getBossLevel(),
+                room.getMaxPlayers(),
+                room.isRandomMatch() ? "Random" : "Private");
     }
 
     /**
@@ -40,13 +45,22 @@ public class GameRoomManager {
      */
     public void updateRoom(GameRoom room) {
         rooms.put(room.getId(), room);
+        log.debug("[Room Updated] ID: {}, Status: {}, Players: {}, Boss Health: {}",
+                room.getId(),
+                room.getStatus(),
+                room.getPlayers().size(),
+                room.getBossHealth());
     }
 
     /**
      * 게임방 삭제
      */
     public void removeRoom(String roomId) {
-        rooms.remove(roomId);
+        GameRoom room = rooms.remove(roomId);
+        if (room != null) {
+            log.info("[Room Removed] ID: {}, Final Status: {}, Player Count: {}",
+                    roomId, room.getStatus(), room.getPlayers().size());
+        }
     }
 
     /**

@@ -3,6 +3,7 @@ package com.ssafy.roCatRun.domain.game.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.Duration;
 import java.util.List;
 
 @Getter
@@ -15,8 +16,11 @@ public class GameResultResponse {
     @AllArgsConstructor
     public static class PlayerResult {
         private String userId;
-        private double distance;
-        private double pace;
+        private Duration runningTime;
+        private double totalDistance;
+        private double paceAvg;
+        private double heartRateAvg;
+        private double cadenceAvg;
         private int calories;
         private int itemUseCount;
     }
