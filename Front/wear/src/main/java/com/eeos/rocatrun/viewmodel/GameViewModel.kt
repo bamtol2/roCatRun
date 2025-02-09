@@ -1,14 +1,19 @@
 package com.eeos.rocatrun.viewmodel
 
 import android.content.Context
+import android.content.Intent
 import android.os.VibrationEffect
+import android.media.MediaPlayer
 import android.os.Vibrator
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eeos.rocatrun.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.eeos.rocatrun.presentation.ResultActivity
 
 /**
  * 게임의 상태 관리하는 ViewModel 클래스
@@ -17,7 +22,8 @@ import kotlinx.coroutines.launch
 
 
 class GameViewModel : ViewModel() {
-
+    // 중복 실행 방지 플래그
+    private var isHandlingGauge = false
     private val _itemGaugeValue = MutableStateFlow(0)
     private val _bossGaugeValue = MutableStateFlow(100)
     private val _feverTimeActive = MutableStateFlow(false)
@@ -30,10 +36,10 @@ class GameViewModel : ViewModel() {
     val feverTimeActive = _feverTimeActive.asStateFlow()
     val showItemGif = _showItemGif.asStateFlow()
 
-
     // 아이템 게이지 증가
     fun increaseItemGauge() {
         _itemGaugeValue.value = (_itemGaugeValue.value + 20).coerceAtMost(100)
+        Log.i("아이템 사용 횟수 ", "횟수 : ${_itemUsageCount.value}")
     }
 
     /**
@@ -42,6 +48,9 @@ class GameViewModel : ViewModel() {
      * - 두 번 사용 시 피버 타임을 시작함.
      */
     fun handleGaugeFull(context: Context) {
+        if (isHandlingGauge) return
+
+        isHandlingGauge = true
         viewModelScope.launch {
             _itemUsageCount.value++
             _showItemGif.value = true
@@ -51,36 +60,68 @@ class GameViewModel : ViewModel() {
             _itemGaugeValue.value = 0
             _bossGaugeValue.value = (_bossGaugeValue.value - 20).coerceAtLeast(0)
 
+            if (_bossGaugeValue.value == 0) {
+                stopFeverTimeEffects()  // 효과 중지
+                navigateToResultActivity(context)  // 결과 액티비티로 이동
+                return@launch
+            }
 
             if (_itemUsageCount.value == 2) {
                 startFeverTime(context)
+                _itemUsageCount.value = 0
             }
+
+            isHandlingGauge = false
         }
     }
 
     /**
-     * 피버 타임을 시작하는 함수.
-     * - 5초 동안 피버 타임이 유지됨.
-     * - 진동 효과를 트리거함.
+     * 피버 타임 시작
      */
+    private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: Vibrator? = null
+
     private fun startFeverTime(context: Context) {
         _feverTimeActive.value = true
-        triggerVibration(context)
+
+        // 진동과 소리 재생
+        vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(3000, 2000), intArrayOf(100, 0), 0)
+        vibrator?.vibrate(vibrationEffect)
+
+        mediaPlayer = MediaPlayer.create(context, R.raw.fever_time_sound).apply {
+            start()
+        }
 
         viewModelScope.launch {
-            delay(5000)
-            _feverTimeActive.value = false
+            delay(30000)
+            stopFeverTimeEffects()
             _itemUsageCount.value = 0
         }
     }
 
-    private fun triggerVibration(context: Context) {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        val timings = longArrayOf(200, 300, 200, 300, 200, 300)
-        val amplitudes = intArrayOf(100, 100, 100, 100, 100, 100)
-        if (vibrator.hasVibrator()) {
-            val vibrationEffect = VibrationEffect.createWaveform(timings, amplitudes, -1)
-            vibrator.vibrate(vibrationEffect)
+    /**
+     * 피버 타임 효과 중지
+     */
+    private fun stopFeverTimeEffects() {
+        _feverTimeActive.value = false
+        vibrator?.cancel()
+        vibrator = null
+
+        mediaPlayer?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.release()
+            }
         }
+        mediaPlayer = null
     }
+
+    // 결과 창으로 가는 함수
+    private fun navigateToResultActivity(context: Context) {
+        val intent = Intent(context, ResultActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        context.startActivity(intent)
+    }
+
 }

@@ -34,21 +34,31 @@ interface ApiService {
         @Body request : JwtTokenRequest
     ): Call<LoginResponse>
 
-    @GET("/api/characters/check-nickname/{nickname}")
+    @GET("/domain/characters/check-nickname/{nickname}")
     suspend fun checkNickname(
         @Header("Authorization") authorization: String,
         @Path("nickname") nickname: String
     ): Response<NicknameCheckResponse>
 
-    @POST("/api/characters")
+    @POST("/domain/characters")
     suspend fun createCharacter(
         @Header("Authorization") authorization: String,
         @Body request: CreateCharacterRequest
     ): Response<CreateCharacterResponse>
+
+    @GET("/domain/characters/me")
+    suspend fun checkMember(
+        @Header("Authorization") authorization: String
+    ) :Response<MemberResponse>
 }
 
 data class JwtTokenRequest(
     val refreshToken: String
 )
 data class CreateCharacterRequest(
-    val nickname: String)
+    val nickname: String,
+    val age : Int,
+    val gender : String,
+    val height : Int,
+    val weight : Int
+)

@@ -28,6 +28,9 @@ public class Character {
     @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'default.png'")
     private String characterImage = "default.png";  // 캐릭터 이미지 경로 (기본값 설정)
 
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private Integer coin = 0; // 코인 (기본값0)
+
     // Member와의 일대일 관계 설정
     // FetchType.LAZY로 설정하여 필요할 때만 Member 정보를 조회
     // member_id를 외래키로 사용

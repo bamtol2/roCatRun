@@ -10,6 +10,7 @@ public class CharacterResponse {
     private final Integer level;
     private final Integer experience;
     private final String characterImage;
+    private final Integer coin;
 
     public CharacterResponse(com.ssafy.roCatRun.domain.character.entity.Character character) {  // 패키지 경로 명시
         this.id = character.getId();
@@ -17,5 +18,6 @@ public class CharacterResponse {
         this.level = character.getLevel();
         this.experience = character.getExperience();
         this.characterImage = character.getCharacterImage();
+        this.coin = character.getCoin();
     }
 }

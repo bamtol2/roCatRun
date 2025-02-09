@@ -1,6 +1,8 @@
 package com.ssafy.roCatRun.domain.member.service;
 
 import com.ssafy.roCatRun.domain.character.repository.CharacterRepository;
+import com.ssafy.roCatRun.domain.member.dto.request.MemberProfileUpdateRequest;
+import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.domain.member.repository.RefreshTokenRedisRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +36,32 @@ public class MemberService {
 
         // 회원 삭제
         memberRepository.deleteById(memberId);
+    }
+
+    @Transactional
+    public void logout(Long memberId){
+        // redis에서 refreshToken 삭제
+        refreshTokenRedisRepository.deleteByKey(memberId.toString());
+    }
+
+
+    @Transactional
+    public void updateMemberProfile(Long memberId, MemberProfileUpdateRequest request) {
+        Member member = memberRepository.findByIdWithCharacter(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+        // null이 아닌 필드만 업데이트
+        if (request.getHeight() != null) {
+            member.setHeight(request.getHeight());
+        }
+        if (request.getWeight() != null) {
+            member.setWeight(request.getWeight());
+        }
+        if (request.getAge() != null) {
+            member.setAge(request.getAge());
+        }
+        if (request.getGender() != null) {
+            member.setGender(request.getGender());
+        }
     }
 }

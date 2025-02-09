@@ -44,7 +44,7 @@ public class SecurityConfig {
                         // "/api/auth/**" 경로는 누구나 접근 가능
                         .requestMatchers("/api/auth/**").permitAll()
                         // 닉네임 중복 체크도 누구나 가능
-                        .requestMatchers("/api/characters/check-nickname/**").permitAll()
+                        .requestMatchers("/domain/characters/**").permitAll()
                         // Swagger 관련 경로도 누구나 접근 가능
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // 서버 상태 체크는 누구나 가능
@@ -61,7 +61,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // URL에 특수문자 허용 설정
+    // URL에  특수문자 허용 설정
     @Bean
     public HttpFirewall allowUrlEncodedSlashHttpFirewall() {
         StrictHttpFirewall firewall = new StrictHttpFirewall();
@@ -79,6 +79,8 @@ public class SecurityConfig {
         // 접근 허용할 프론트엔드 주소들
         configuration.addAllowedOrigin("http://i12e205.p.ssafy.io:8080");
         configuration.addAllowedOrigin("http://localhost:8080");
+        configuration.addAllowedOrigin("https://i12e205.p.ssafy.io:8080");
+        configuration.addAllowedOrigin("https://localhost:8080");
         // 모든 HTTP 메서드 허용 (GET, POST 등)
         configuration.addAllowedMethod("*");
         // 모든 헤더 허용
