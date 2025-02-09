@@ -7,7 +7,7 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-02-08T08:24:34.606165800Z">
+        <DropdownSelection timestamp="2025-02-09T08:51:21.034860300Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=R39M200TFHK" />
@@ -18,7 +18,7 @@
       </SelectionState>
       <SelectionState runConfigName="HomeActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-02-08T08:24:38.837035Z">
+        <DropdownSelection timestamp="2025-02-09T08:51:26.074351700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=R39M200TFHK" />

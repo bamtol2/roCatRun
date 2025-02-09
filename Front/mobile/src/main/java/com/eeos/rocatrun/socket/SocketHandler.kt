@@ -15,7 +15,7 @@ object SocketHandler {
     lateinit var mSocket: Socket
 
     // 유저 2 생성 토큰
-    private var user1Token: String = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMiIsImlhdCI6MTczOTAwMzI2NSwiZXhwIjoxNzM5MDg5NjY1fQ.d6QeDrcHG08QLR51OLV32Wu7NaILlSUktrVglhyKDCS_UrCJSvUdDH1VsFq_kBFx5VNh7anMb7Cm0amoug26yw"
+    private var user1Token: String = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTczOTEwNzQ4NCwiZXhwIjoxNzM5MTkzODg0fQ.MyCIUGu_kxOMSdFVpHzMFbOtpxx5DZNV2Ho9Tb2NZCL6-IIIw5MJuHuKUHhXnKdaNqI0vCoOLhEEKSDBnVoBKg"
 
     private var authValue = "Bearer $user1Token"
 
