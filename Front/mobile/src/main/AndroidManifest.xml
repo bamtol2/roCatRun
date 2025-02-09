@@ -36,7 +36,10 @@
             android:name=".login.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
-
+        <activity
+            android:name=".closet.ClosetActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
         <activity
             android:name=".game.GameRoom"
             android:exported="true" />
