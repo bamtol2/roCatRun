@@ -9,6 +9,9 @@ jwt:
   expiration: 86400000 # 24시간
 
 spring:
+  redis:
+    host: localhost
+    port: 6379
   data:
     mongodb:
       uri: mongodb://localhost:27017/raid_game

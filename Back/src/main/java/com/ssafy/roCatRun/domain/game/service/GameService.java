@@ -294,7 +294,7 @@ public class GameService {
      * 게임 종료 처리
      * @param room 방 정보
      */
-    private void handleGameOver(GameRoom room) {
+    public void handleGameOver(GameRoom room) {
         room.setStatus(GameStatus.FINISHED);
         GameResultResponse result = createGameResult(room);
         server.getRoomOperations(room.getId()).sendEvent("gameOver", result);

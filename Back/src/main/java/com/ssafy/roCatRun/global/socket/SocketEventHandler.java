@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.ssafy.roCatRun.domain.game.dto.request.*;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
+import com.ssafy.roCatRun.domain.game.service.manager.GameDisconnectionManager;
 import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
 import com.ssafy.roCatRun.domain.game.service.GameService;
@@ -28,6 +29,7 @@ public class SocketEventHandler {
     private final SessionManager sessionManager;
     private final GameService gameService;
     private final GameRoomManager gameRoomManager;
+    private final GameDisconnectionManager disconnectionManager;
     private final JwtUtil jwtUtil;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -186,22 +188,16 @@ public class SocketEventHandler {
 
     private void handleAuthentication(SocketIOClient client, AuthenticateRequest data) {
         try {
-            // JWT 토큰 검증
             String userId = validateAndGetUserId(data.getToken());
 
-            // 기존 세션이 있다면 제거
-            sessionManager.getSessionByUserId(userId).ifPresent(oldSession -> {
-                SocketIOClient oldClient = server.getClient(UUID.fromString(oldSession.getSocketId()));
-                if (oldClient != null) {
-                    oldClient.disconnect();
-                }
-            });
+            // 재접속 시도
+            boolean reconnected = disconnectionManager.handlePlayerReconnection(userId, client);
 
-            // 새 세션 생성
-            sessionManager.createSession(userId, client.getSessionId().toString());
-            client.set("userId", userId);
+            if (!reconnected) {
+                // 일반적인 새 연결 처리
+                handleNormalAuthentication(client, userId);
+            }
 
-            // 인증 성공 응답
             client.sendEvent("authenticated", new AuthResponse(true, null));
 
         } catch (Exception e) {
@@ -289,33 +285,59 @@ public class SocketEventHandler {
         return userId;
     }
 
+    // SocketEventHandler.java의 handleDisconnect 메소드 수정
     private void handleDisconnect(SocketIOClient client) {
         String socketId = client.getSessionId().toString();
-        sessionManager.getSession(socketId).ifPresent(session -> {
-            String userId = session.getUserId();
+        String userId = client.get("userId"); // 직접 client에서 userId를 가져옴
 
+        if (userId != null) {  // userId가 있는 경우에만 처리
             gameRoomManager.findRoomByUserId(userId).ifPresent(room -> {
-                String roomId = room.getId();
-                room.getPlayers().removeIf(player -> player.getId().equals(userId));
-
-                if (room.getPlayers().isEmpty()) {
-                    gameRoomManager.removeRoom(roomId);
+                if (room.getStatus() == GameStatus.PLAYING) {
+                    // 게임 중일 때는 연결 끊김 특수 처리
+                    disconnectionManager.handlePlayerDisconnection(room, userId);
                 } else {
-                    gameRoomManager.updateRoom(room);
-
-                    // 남은 플레이어들에게 알림
-                    server.getRoomOperations(roomId).sendEvent("playerLeft",
-                            new PlayerLeftResponse(
-                                    userId,
-                                    room.getPlayers().size(),
-                                    room.getMaxPlayers()
-                            )
-                    );
+                    // 게임 중이 아닐 때는 기존 로직대로 처리
+                    handleNormalDisconnection(room, userId, socketId);
                 }
             });
 
             sessionManager.removeSession(socketId);
-        });
+        }
         log.info("Client disconnected: {}", socketId);
+    }
+
+    private void handleNormalAuthentication(SocketIOClient client, String userId) {
+        // 기존 세션이 있다면 제거
+        sessionManager.getSessionByUserId(userId).ifPresent(oldSession -> {
+            SocketIOClient oldClient = server.getClient(UUID.fromString(oldSession.getSocketId()));
+            if (oldClient != null) {
+                oldClient.disconnect();
+            }
+        });
+
+        // 새 세션 생성
+        sessionManager.createSession(userId, client.getSessionId().toString());
+        client.set("userId", userId);
+    }
+
+    private void handleNormalDisconnection(GameRoom room, String userId, String socketId) {
+        String roomId = room.getId();
+        room.getPlayers().removeIf(player -> player.getId().equals(userId));
+
+        if (room.getPlayers().isEmpty()) {
+            gameRoomManager.removeRoom(roomId);
+        } else {
+            gameRoomManager.updateRoom(room);
+            // 남은 플레이어들에게 알림
+            server.getRoomOperations(roomId).sendEvent("playerLeft",
+                    new PlayerLeftResponse(
+                            userId,
+                            room.getPlayers().size(),
+                            room.getMaxPlayers()
+                    )
+            );
+        }
+
+        sessionManager.removeSession(socketId);
     }
 }
