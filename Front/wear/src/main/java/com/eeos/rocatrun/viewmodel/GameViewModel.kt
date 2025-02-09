@@ -6,6 +6,7 @@ import android.os.VibrationEffect
 import android.media.MediaPlayer
 import android.os.Vibrator
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eeos.rocatrun.R
@@ -24,17 +25,47 @@ import com.eeos.rocatrun.presentation.ResultActivity
 class GameViewModel : ViewModel() {
     // 중복 실행 방지 플래그
     private var isHandlingGauge = false
+
     private val _itemGaugeValue = MutableStateFlow(0)
     private val _bossGaugeValue = MutableStateFlow(100)
     private val _feverTimeActive = MutableStateFlow(false)
     private val _showItemGif = MutableStateFlow(false)
     private val _itemUsageCount = MutableStateFlow(0)
 
+    // 아이템 사용 신호 변수
+    private var _itemUsedSignal = MutableStateFlow(false)
+
+    // 총 아이템 사용 횟수
+    private var _totalItemUsageCount = MutableStateFlow(0)
+
     // 외부에서 읽기 전용으로 사용할 수 있는 상태 흐름 (StateFlow).
     val itemGaugeValue = _itemGaugeValue.asStateFlow()
     val bossGaugeValue = _bossGaugeValue.asStateFlow()
     val feverTimeActive = _feverTimeActive.asStateFlow()
     val showItemGif = _showItemGif.asStateFlow()
+    val itemUsedSignal = _itemUsedSignal.asStateFlow()
+    val totalItemUsageCount = _totalItemUsageCount.asStateFlow()
+
+    // 총 아이템 사용 횟수 증가 함수
+    private fun incrementTotalItemUsageCount() {
+        _totalItemUsageCount.value++
+        Log.d("GameViewModel", "총 아이템 사용 횟수 증가: ${_totalItemUsageCount.value}")
+    }
+    // 총 아이템 사용 횟수 초기화 함수
+    fun resetTotalItemUsageCount() {
+        _totalItemUsageCount.value = 0
+        Log.d("GameViewModel", "총 아이템 사용 횟수 초기화")
+    }
+
+    // 아이템 사용 시 호출하는함수
+    fun notifyItemUsage(){
+        _itemUsedSignal.value = true
+        incrementTotalItemUsageCount()
+        viewModelScope.launch {
+            delay(500) // 중복 전송 방지하기 위한 딜레이
+            _itemUsedSignal.value = false
+        }
+    }
 
     // 아이템 게이지 증가
     fun increaseItemGauge() {
@@ -52,6 +83,7 @@ class GameViewModel : ViewModel() {
 
         isHandlingGauge = true
         viewModelScope.launch {
+            notifyItemUsage()
             _itemUsageCount.value++
             _showItemGif.value = true
             delay(1000)
@@ -75,9 +107,7 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    /**
-     * 피버 타임 시작
-     */
+    // 피버타임 시작
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
 
@@ -100,9 +130,7 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    /**
-     * 피버 타임 효과 중지
-     */
+    // 피버타임 효과 중지
     private fun stopFeverTimeEffects() {
         _feverTimeActive.value = false
         vibrator?.cancel()
@@ -119,6 +147,7 @@ class GameViewModel : ViewModel() {
 
     // 결과 창으로 가는 함수
     private fun navigateToResultActivity(context: Context) {
+        resetTotalItemUsageCount()
         val intent = Intent(context, ResultActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         context.startActivity(intent)
