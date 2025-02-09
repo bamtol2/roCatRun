@@ -1,6 +1,9 @@
 package com.eeos.rocatrun.home
 
 import android.content.Intent
+import android.graphics.BlurMaskFilter
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,9 +33,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -39,6 +51,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontVariation.width
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
@@ -220,7 +233,17 @@ fun HomeScreen() {
                                 .width(150.dp)
                                 .height(100.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0x9E2A4042)),
+                                .background(Color(0x9E2A4042))
+                                // Glare effect
+                                .innerShadow(
+                                    shape = RectangleShape, color = Color.White.copy(0.56f),
+                                    offsetY = (-2).dp, offsetX = (-2).dp
+                                )
+                                // Shadow effect
+                                .innerShadow(
+                                    shape = RectangleShape, color = Color.Black.copy(0.56f),
+                                    offsetY = 2.dp, offsetX = 2.dp
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Column (
@@ -262,7 +285,17 @@ fun HomeScreen() {
                                 .width(150.dp)
                                 .height(100.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0x9E2A4042)),
+                                .background(Color(0x9E2A4042))
+                                // Glare effect
+                                .innerShadow(
+                                    shape = RectangleShape, color = Color.White.copy(0.56f),
+                                    offsetY = (-2).dp, offsetX = (-2).dp
+                                )
+                                // Shadow effect
+                                .innerShadow(
+                                    shape = RectangleShape, color = Color.Black.copy(0.56f),
+                                    offsetY = 2.dp, offsetX = 2.dp
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Column (
@@ -301,7 +334,7 @@ fun HomeScreen() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(35.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             // START 버튼
             Button(
@@ -383,6 +416,44 @@ fun StrokedText(
                 letterSpacing = letterSpacing.sp,
             )
         )
+    }
+}
+
+
+fun Modifier.innerShadow(
+    shape: Shape,
+    color: Color = Color.Black,
+    blur: Dp = 4.dp,
+    offsetY: Dp = 2.dp,
+    offsetX: Dp = 2.dp,
+    spread: Dp = 0.dp
+) = this.drawWithContent {
+
+    drawContent()
+
+    drawIntoCanvas { canvas ->
+
+        val shadowSize = Size(size.width + spread.toPx(), size.height + spread.toPx())
+        val shadowOutline = shape.createOutline(shadowSize, layoutDirection, this)
+
+        val paint = Paint()
+        paint.color = color
+
+        canvas.saveLayer(size.toRect(), paint)
+        canvas.drawOutline(shadowOutline, paint)
+
+        paint.asFrameworkPaint().apply {
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            if (blur.toPx() > 0) {
+                maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
+            }
+        }
+
+        paint.color = Color.Black
+
+        canvas.translate(offsetX.toPx(), offsetY.toPx())
+        canvas.drawOutline(shadowOutline, paint)
+        canvas.restore()
     }
 }
 

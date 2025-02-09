@@ -101,4 +101,5 @@ dependencies {
     implementation(libs.accompanist.pager.indicators)
 
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
+    implementation(libs.ui.graphics.android)
 }
