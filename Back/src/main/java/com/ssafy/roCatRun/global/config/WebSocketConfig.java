@@ -67,7 +67,7 @@ public class WebSocketConfig {
                 String token = authHeader.substring(7);
 
                 // 토큰 유효성 검증
-                if (!jwtTokenProvider.validateToken(token)) {
+                if (!jwtTokenProvider.validateToken(token)) {//
                     log.error("Invalid token");
                     return AuthorizationResult.FAILED_AUTHORIZATION;
                 }
