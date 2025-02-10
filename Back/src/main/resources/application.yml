@@ -1,0 +1,68 @@
+# 서버 설정
+server:
+  port: 8080 # 애플리케이션이 실행 포트 번호
+socket-server:
+  host: 0.0.0.0
+  port: 9092
+
+spring:
+  # 데이터베이스 연결 설정
+  datasource:
+    url: jdbc:mysql://localhost:3306/ro_cat_run?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: ssafy
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA 설정
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect # MySQL 문법 사용 설정
+    hibernate:
+      ddl-auto: update # 테이블이 없을 때만 생성, 있으면 스키마 변경사항만 반영
+    show-sql: false # SQL 쿼리를 콘솔에 출력
+    properties:
+      hibernate:
+        format_sql: true # SQL 쿼리를 보기 좋게 포맷팅
+        dialect: org.hibernate.dialect.MySQLDialect # MySQL 문법 사용 설정
+
+  # Redis 설정 (세션 또는 캐시 저장소)
+  redis:
+    host: localhost # Redis 서버 호스트
+    port: 6379 # Redis 서버 포트
+
+  # MongoDB 설정
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/raid_game
+
+# OAuth2 소셜 로그인 설정
+oauth2:
+  kakao:
+    client_id: 08554835b2f79b10c4673f267862ac7f
+    redirect_uri: http://localhost:8080/api/auth/callback/kakao
+  naver:
+    client_id: a03_KcmGfXFxM8hvVoGL
+    client_secret: Q0H4ueCd5Z
+    redirect_uri: http://localhost:8080/api/auth/callback/naver
+  google:
+    client_id: 38473355620-38hgd5mqor7ruv519urhtf9c59qedtcd.apps.googleusercontent.com
+    client_secret: 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
+    redirect_uri: http://localhost:8080/api/auth/callback/google
+
+# JWT 토큰 설정
+jwt:
+  secret: c3ByaW5nLWJvb3Qtc2VjdXJpdHktand0LXR1dG9yaWFsLWppd29vbi1zcHJpbmctYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWwK
+  access-token-validity: 3600000 # 액세스 토큰 유효 기간 (1시간)
+  expiration: 86400000 # JWT 토큰 만료 시간 (24시간)
+  refresh-token-validity: 604800000 # 리프레시 토큰 유효 기간 (7일)
+
+# 애플리케이션 상태 체크 설정
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: NEVER
+  health:
+    defaults:
+      enabled: false
+    simple:
+      enabled: true

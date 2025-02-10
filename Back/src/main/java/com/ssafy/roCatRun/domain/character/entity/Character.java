@@ -6,18 +6,31 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * 게임 캐릭터 정보를 저장하는 엔티티
+ * 사용자의 게임 캐릭터 정보와 관련된 속성들을 관리
+ */
 @Entity
-@Table(name = "characters")
+@Table(
+        name = "characters",
+        indexes = {
+                @Index(
+                        name = "idx_character_level_exp",
+                        columnList = "level DESC, experience DESC"  // 랭킹 시스템을 위한 복합 인덱스
+                )
+        }
+)
 @Getter @Setter
 @NoArgsConstructor
 public class Character {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "character_id")  // PK 컬럼명 명시
-    private Long id;
+    @Column(name = "character_id")
+    private Long id;                // 캐릭터의 고유 식별자
 
-    @Column(nullable = false, unique = true, length = 10)  // 닉네임 최대 길이 10자로 제한
-    private String nickname;        // 캐릭터 닉네임 (중복 불가)
+    @Column(nullable = false, unique = true, length = 10)
+    private String nickname;        // 캐릭터 닉네임 (최대 10자, 중복 불가)
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
     private Integer level = 1;      // 캐릭터 레벨 (기본값 1)
@@ -26,24 +39,81 @@ public class Character {
     private Integer experience = 0; // 경험치 (기본값 0)
 
     @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'default.png'")
-    private String characterImage = "default.png";  // 캐릭터 이미지 경로 (기본값 설정)
+    private String characterImage = "default.png";  // 캐릭터 이미지 경로
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private Integer coin = 0; // 코인 (기본값0)
+    private Integer coin = 0;       // 보유 코인 수 (기본값 0)
 
-    // Member와의 일대일 관계 설정
-    // FetchType.LAZY로 설정하여 필요할 때만 Member 정보를 조회
-    // member_id를 외래키로 사용
+    /**
+     * Member 엔티티와의 일대일 관계 설정
+     * - FetchType.LAZY: 성능 최적화를 위해 필요할 때만 Member 정보를 조회
+     * - JoinColumn: member_id를 외래키로 사용하며, unique 제약조건으로 1:1 관계 보장
+     */
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", referencedColumnName = "member_id", unique = true)  // unique 제약조건으로 1:1 관계 보장
+    @JoinColumn(
+            name = "member_id",            // 외래키 컬럼명
+            referencedColumnName = "member_id",  // 참조하는 Member 엔티티의 PK 컬럼명
+            unique = true                  // 1:1 관계 보장을 위한 unique 제약조건
+    )
     private Member member;
 
-    // 캐릭터 생성 메서드
+    /**
+     * 새로운 캐릭터를 생성하는 팩토리 메서드
+     * 캐릭터 생성과 Member와의 연관관계 설정을 한 번에 처리
+     *
+     * @param nickname 캐릭터 닉네임
+     * @param member 연결할 Member 엔티티
+     * @return 생성된 Character 엔티티
+     */
     public static Character createCharacter(String nickname, Member member) {
         Character character = new Character();
         character.setNickname(nickname);
         character.setMember(member);        // 멤버 연결
         member.setCharacter(character);     // 양방향 관계 설정
         return character;
+    }
+
+    /**
+     * 경험치를 추가하고 레벨업 조건을 확인하는 메서드
+     *
+     * @param exp 추가할 경험치량
+     */
+    public void addExperience(int exp) {
+        this.experience += exp;
+        checkLevelUp();             // 경험치 추가 후 레벨업 조건 확인
+    }
+
+    /**
+     * 레벨업 조건을 확인하고 필요한 경우 레벨을 증가시키는 private 메서드
+     * 현재는 간단한 레벨업 로직만 구현 (100 경험치당 1레벨)
+     */
+    private void checkLevelUp() {
+        int experienceForLevel = 100;  // 레벨당 필요 경험치
+        while (this.experience >= experienceForLevel) {
+            this.level += 1;
+            this.experience -= experienceForLevel;
+        }
+    }
+
+    /**
+     * 코인을 추가하는 메서드
+     *
+     * @param amount 추가할 코인 수량
+     */
+    public void addCoin(int amount) {
+        this.coin += amount;
+    }
+
+    /**
+     * 코인을 사용하는 메서드
+     *
+     * @param amount 사용할 코인 수량
+     * @throws IllegalArgumentException 보유 코인이 부족한 경우
+     */
+    public void useCoin(int amount) {
+        if (this.coin < amount) {
+            throw new IllegalArgumentException("코인이 부족합니다.");
+        }
+        this.coin -= amount;
     }
 }

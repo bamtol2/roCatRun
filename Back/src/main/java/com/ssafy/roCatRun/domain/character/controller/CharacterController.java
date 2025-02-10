@@ -4,7 +4,12 @@ import com.ssafy.roCatRun.domain.character.dto.request.CharacterCreateRequest;
 import com.ssafy.roCatRun.domain.character.dto.request.NicknameUpdateRequest;
 import com.ssafy.roCatRun.domain.character.dto.response.CharacterResponse;
 import com.ssafy.roCatRun.domain.character.service.CharacterService;
+import org.springframework.security.core.userdetails.UserDetails;
 import com.ssafy.roCatRun.domain.character.entity.Character;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import com.ssafy.roCatRun.domain.character.dto.response.RankingListResponse;
 import com.ssafy.roCatRun.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -100,5 +105,16 @@ public class CharacterController {
 
         characterService.updateNickname(Long.parseLong(memberId), request.getNewNickname());
         return ApiResponse.success(null);
+    }
+
+    @GetMapping("/rankings")
+    public ApiResponse<RankingListResponse> getRankings(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "7") int size
+    ) {
+        Long memberId = Long.parseLong(userDetails.getUsername());
+        RankingListResponse response = characterService.getRankings(memberId, page, size);
+        return ApiResponse.success(response);
     }
 }
