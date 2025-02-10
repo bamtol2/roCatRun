@@ -109,30 +109,6 @@ fun LoadingScreen(
 
         }
 
-        // 게임 스타트 이벤트 시작
-        SocketHandler.mSocket.on("gameStart") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val json = args[0] as JSONObject
-                val firstBossHealth = json.optInt("bossHp", 10000)
-
-                Log.d("Socket", "On - gameStart")
-
-                // 워치에 초기 boss health 보내기
-                val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
-                putDataMapRequest.dataMap.apply {
-                    putInt("firstBossHealth",firstBossHealth)
-                }
-                val request = putDataMapRequest.asPutDataRequest().setUrgent()
-                dataClient.putDataItem(request)
-                    .addOnSuccessListener { _ ->
-                        Log.d("Wear", "보스 초기 체력 송신")
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("Wear", "보스 초기 체력 송신 실패", exception)
-                    }
-
-            }
-        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

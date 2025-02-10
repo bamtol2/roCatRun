@@ -10,10 +10,13 @@ import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
+        // 소켓 초기화, 연결
+        SocketHandler.initialize(this)
+        SocketHandler.connect()
+
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            
             RoCatRunTheme {
                 HomeScreen()
             }

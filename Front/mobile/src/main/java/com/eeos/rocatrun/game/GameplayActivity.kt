@@ -1,8 +1,10 @@
 package com.eeos.rocatrun.game
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.security.identity.ResultData
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -11,13 +13,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
+import com.eeos.rocatrun.result.SingleWinScreen
 import com.eeos.rocatrun.socket.SocketHandler
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 import com.google.android.gms.wearable.DataClient
@@ -46,17 +51,7 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
     // 실시간 러닝 데이터
     data class RunningData(
         val totalDistance: Double,
-        val elapsedTime: Long,
-        val itemUsed: Boolean,
-    )
-    
-    // 결과 데이터
-    data class ResultData(
-        val totalDistance: Double,
-        val elapsedTime: Long,
-        val averagePace: Double,
-        val averageHeartRate: Double,
-        val totalItemUsage: Int,
+        val elapsedTime: Long
     )
 
     // 실시간 팀원들 데이터
@@ -66,10 +61,33 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         val totalItemUsage: Int,
     )
 
+    // 본인 결과 데이터
+    data class ResultData(
+        val totalDistance: Double,
+        val elapsedTime: Long,
+        val averagePace: Double,
+        val averageHeartRate: Double,
+//        val averageCadence?? - 케이던스 어케할건징
+//        val totalItemUsage: Int,
+    )
+
+    // 유저들 게임 결과 데이터
+    data class PlayersResultData(
+        val userId: String,
+        val runningTime: Long,
+        val totalDistance: Double,
+        val paceAvg: Double,
+        val heartRateAvg: Double,
+        val cadenceAvg: Double,
+        val calories: Int,
+        val itemUseCount: Int
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         dataClient = Wearable.getDataClient(this)
+        gameStartSocket()
         playerDataUpdatedSocket()
 
         enableEdgeToEdge(
@@ -127,8 +145,7 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
             runningData = RunningData(
                 totalDistance = getDouble("distance"),
-                elapsedTime = getLong("time"),
-                itemUsed = getBoolean("itemUsed")
+                elapsedTime = getLong("time")
             )
         }
 
@@ -147,15 +164,23 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
                 totalDistance = getDouble("distance"),
                 elapsedTime = getLong("time"),
                 averagePace = getDouble("averagePace"),
-                averageHeartRate = getDouble("averageHeartRate"),
-                totalItemUsage = getInt("totalItemUsage")
+                averageHeartRate = getDouble("averageHeartRate")
+//                totalItemUsage = getInt("totalItemUsage")
             )
         }
 
-        Log.d("Wear","게임 최종 결과 받음 - $resultData")
+        Log.d("Wear", "게임 결과 데이터 수신 완료! - $resultData")
 
-        // rest api 송신 보낼거임
-        // 결과 모달에도 나타내줘야됨
+        // 웹소켓으로 전송
+        resultData?.let { data ->
+            submitRunningResultSocket(
+                data.elapsedTime, 
+                data.totalDistance, 
+                data.averagePace,
+                data.averageHeartRate,
+                0.0              // 케이던스...
+            )
+        }
     }
 
     // 워치에서 아이템 사용여부 받아오는 함수
@@ -172,8 +197,6 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         // 웹소켓 이벤트 송신 - useItem
         SocketHandler.mSocket.emit("useItem")
     }
-
-
 
     private fun processGpxData(dataItem: DataItem) {
         val asset = DataMapItem.fromDataItem(dataItem).dataMap.getAsset("gpx_file")
@@ -228,6 +251,33 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         }
 
         context.startActivity(Intent.createChooser(shareIntent, "GPX 파일 공유"))
+    }
+
+    // 웹소켓 - 게임 스타트 수신
+    private fun gameStartSocket(){
+        // 게임 스타트 이벤트 시작
+        SocketHandler.mSocket.on("gameStart") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val json = args[0] as JSONObject
+                val firstBossHealth = json.optInt("bossHp", 10000)
+
+                Log.d("Socket", "On - gameStart")
+
+                // 워치에 초기 boss health 보내기
+                val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
+                putDataMapRequest.dataMap.apply {
+                    putInt("firstBossHealth",firstBossHealth)
+                }
+                val request = putDataMapRequest.asPutDataRequest().setUrgent()
+                dataClient.putDataItem(request)
+                    .addOnSuccessListener { _ ->
+                        Log.d("Wear", "보스 초기 체력 송신")
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("Wear", "보스 초기 체력 송신 실패", exception)
+                    }
+            }
+        }
     }
 
     // 웹소켓 - 실시간 러닝데이터 송신
@@ -288,6 +338,63 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
                         Log.e("Wear", "플레이어들 데이터 전송 실패", exception)
                     }
 
+            }
+        }
+    }
+
+    // 웹소켓 - 게임 결과 데이터 송신
+    private fun submitRunningResultSocket(
+        runningTime: Long,
+        totalDistance: Double,
+        paceAvg: Double,
+        heartRateAvg: Double,
+        cadenceAvg: Double
+    ){
+        val runningResultJson = JSONObject().apply {
+            put("runningTime", runningTime)
+            put("totalDistance", totalDistance)
+            put("paceAvg", paceAvg)
+            put("heartRateAvg", heartRateAvg)
+            put("cadenceAvg", cadenceAvg)
+        }
+        Log.d("Socket", "Emit - submitRunningResult: $runningResultJson")
+
+        // updateRunningData 실시간 러닝 데이터 전송
+        SocketHandler.mSocket.emit("submitRunningResult", runningResultJson)
+
+        // 플레이어들 결과 공유 데이터 수신
+        SocketHandler.mSocket.on("gameResult") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val responseJson = args[0] as JSONObject
+                // 클리어/페일
+                val cleared = responseJson.optBoolean("cleared", false)
+                // 플레이어 결과 배열에 저장
+                val playerResultsArray = responseJson.optJSONArray("playerResults")
+                val playerResults = mutableListOf<PlayersResultData>()
+
+                if (playerResultsArray != null) {
+                    for (i in 0 until playerResultsArray.length()) {
+                        val playerObj = playerResultsArray.optJSONObject(i)
+                        playerObj?.let {
+                            val result = PlayersResultData(
+                                userId = it.optString("userId", "unknown"),
+                                runningTime = it.optLong("runningTime", 0),
+                                totalDistance = it.optDouble("totalDistance", 0.0),
+                                paceAvg = it.optDouble("paceAvg", 0.0),
+                                heartRateAvg = it.optDouble("heartRateAvg", 0.0),
+                                cadenceAvg = it.optDouble("cadenceAvg", 0.0),
+                                calories = it.optInt("calories", 0),
+                                itemUseCount = it.optInt("itemUseCount", 0)
+                            )
+                            playerResults.add(result)
+                        }
+                    }
+                }
+
+                Log.d(
+                    "Socket",
+                    "On - gameResult: cleared: $cleared, playerResults: $playerResults"
+                )
             }
         }
     }

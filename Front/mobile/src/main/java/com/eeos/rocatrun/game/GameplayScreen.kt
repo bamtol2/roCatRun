@@ -44,6 +44,8 @@ import com.eeos.rocatrun.result.MultiWinScreen
 import com.eeos.rocatrun.result.SingleLoseScreen
 import com.eeos.rocatrun.result.SingleWinScreen
 import com.eeos.rocatrun.socket.SocketHandler
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
@@ -60,7 +62,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
     var showSingleLoseDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-
     val dataClient = Wearable.getDataClient(context)
 
     LaunchedEffect(Unit) {
@@ -94,7 +95,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
         }
 
         // 웹소켓 - 피버시작 이벤트 수신
-        // 서버에서 gameStatusUpdated 응답 받기
         SocketHandler.mSocket.on("feverTimeStarted") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val responseJson = args[0] as JSONObject
@@ -124,7 +124,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
         }
 
         // 웹소켓 - 피버종료 이벤트 수신
-        // 서버에서 gameStatusUpdated 응답 받기
         SocketHandler.mSocket.on("feverTimeEnded") {
             Log.d("Socket", "On - feverTimeEnded")
 
@@ -144,24 +143,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 }
         }
 
-        // 웹소켓 - 게임 종료 이벤트 수신
-        SocketHandler.mSocket.on("gameOver") {
-            Log.d("Socket", "On - gameOver")
-
-            // 워치에 게임종료 메세지 보내기
-            val putDataMapRequest = PutDataMapRequest.create("/game_end")
-            putDataMapRequest.dataMap.apply {
-                putBoolean("gameEnd", true)
-            }
-            val request = putDataMapRequest.asPutDataRequest().setUrgent()
-            dataClient.putDataItem(request)
-                .addOnSuccessListener { _ ->
-                    Log.d("Wear", "게임 종료")
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("Wear", "게임 종료 실패", exception)
-                }
-        }
     }
 
     // 워치화면 띄우기

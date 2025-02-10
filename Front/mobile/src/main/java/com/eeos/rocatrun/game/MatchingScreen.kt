@@ -92,10 +92,6 @@ fun MatchingScreen(
                 val intent = Intent(context, GamePlay::class.java)
                 context.startActivity(intent)
             }
-
-        }
-        SocketHandler.mSocket.on("gameStart") {
-            Log.d("Socket", "On - gameStart")
         }
     }
 
