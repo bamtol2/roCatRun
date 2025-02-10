@@ -24,6 +24,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -50,16 +51,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
+import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.profile.ProfileDialog
+import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.ranking.RankingDialog
 import com.eeos.rocatrun.stats.StatsActivity
 
 
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel) {
+fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel = viewModel()) {
     val context = LocalContext.current
 
     // ViewModel에서 가져온 데이터
@@ -68,8 +72,17 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     // 랭킹 모달 변수
     var showRanking by remember { mutableStateOf(false) }
 
-    // 프로필 모달 변수
+    // 프로필 관련 변수
     var showProfile by remember { mutableStateOf(false) }
+    val profileData by profileViewModel.profileData.observeAsState()
+
+    // 프로필 데이터가 없을 때만 호출
+    LaunchedEffect(profileData) {
+        if (profileData == null) {
+            val token = TokenStorage.getAccessToken(context)
+            profileViewModel.fetchProfileInfo(token)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 배경 이미지
@@ -150,7 +163,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
             }
         }
 
-        homeInfoData.value?.data?.let { userData ->
+        homeInfoData.value?.data?.let { characterData ->
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -159,7 +172,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
             ) {
                 // 닉네임
                 StrokedText(
-                    text = userData.nickname,
+                    text = characterData.nickname,
                     fontSize = 40,
                     strokeColor = Color(0xFF701F3D),
                     strokeWidth = 25f
@@ -192,7 +205,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         ) {
                             // 레벨 표시
                             Text(
-                                text = "Lv.${userData.level}",
+                                text = "Lv.${characterData.level}",
                                 fontSize = 30.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFFFDA0A)
@@ -200,7 +213,8 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                             Spacer(modifier = Modifier.width(14.dp))
 
                             // 레벨 게이지
-                            val progress = (userData.experience.toFloat() / 1000f).coerceIn(0f, 1f)
+                            val progress =
+                                (characterData.experience.toFloat() / 1000f).coerceIn(0f, 1f)
                             Box(
                                 modifier = Modifier
                                     .width(170.dp)
@@ -215,7 +229,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                                         .background(Color(0xFFFFDA0A))
                                 )
                                 Text(
-                                    text = "${userData.experience}/1000",
+                                    text = "${characterData.experience}/1000",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF414141),
@@ -229,7 +243,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         Row() {
                             // 코인 표시
                             ReusableInfoBox(
-                                value = userData.coin.toString(),
+                                value = characterData.coin.toString(),
                                 label = "캔코인",
                                 iconResId = R.drawable.home_img_cancoin
                             )
@@ -237,8 +251,8 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
                             // 게임 횟수 표시
                             ReusableInfoBox(
-                                value = "${userData.wins}승 ${userData.losses}패",
-                                label = "${userData.totalGames}판",
+                                value = "${characterData.wins}승 ${characterData.losses}패",
+                                label = "${characterData.totalGames}판",
                                 iconResId = R.drawable.home_img_game,
                                 mainFontSize = 30,
                                 modifier = Modifier.offset(y = 4.dp)
@@ -289,7 +303,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
         // 프로필 모달 표시
         if (showProfile) {
-            ProfileDialog(onDismiss = { showProfile = false })
+            ProfileDialog(
+                onDismiss = { showProfile = false },
+                profileData = profileData
+            )
         }
 
     }

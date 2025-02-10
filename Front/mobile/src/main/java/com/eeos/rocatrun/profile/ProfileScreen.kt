@@ -37,26 +37,27 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.profile.api.ProfileResponse
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
-fun ProfileDialog(onDismiss: () -> Unit) {
+fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?) {
     var isEditing by remember { mutableStateOf(false) } // 수정 모드 여부
 
     // 닉네임 관련 변수들
-    var nickname by remember { mutableStateOf("벤츠남") }
-    val previousNickname by remember { mutableStateOf("벤츠남") }
+    var nickname by remember { mutableStateOf(profileData?.data?.nickname ?: "") }
+    val previousNickname by remember { mutableStateOf(nickname) }
     var isDuplicateChecked by remember { mutableStateOf(false) } // 중복 확인 여부
     var isNicknameValid by remember { mutableStateOf(true) } // 닉네임 유효성
     val maxLength = 8
 
     // 정보 수정 텍스트 필드 변수들
-    val age = rememberTextFieldState("25")
-    val height = rememberTextFieldState("180")
-    val weight = rememberTextFieldState("70")
+    val age = rememberTextFieldState(profileData?.data?.age.toString() ?: "")
+    val height = rememberTextFieldState(profileData?.data?.height.toString() ?: "")
+    val weight = rememberTextFieldState(profileData?.data?.weight.toString() ?: "")
     val genderOptions = listOf("Male", "Female")
-    val (selectedOption, onOptionSelected) = remember { mutableStateOf(genderOptions[0]) }
+    val (selectedOption, onOptionSelected) = remember { mutableStateOf(profileData?.data?.gender ?: "Male") }
     val maleImage = painterResource(id = R.drawable.profile_icon_male)
     val femaleImage = painterResource(id = R.drawable.profile_icon_female)
 
@@ -230,7 +231,7 @@ fun ProfileDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(10.dp))
 
                 TextField(
-                    value = "카카오 로그인",
+                    value = profileData?.data?.socialType ?: "",
                     onValueChange = {},
                     modifier = Modifier
                         .fillMaxWidth()

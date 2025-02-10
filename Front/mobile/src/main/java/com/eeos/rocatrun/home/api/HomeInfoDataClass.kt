@@ -4,10 +4,10 @@ package com.eeos.rocatrun.home.api
 data class HomeInfoResponse(
     val status: Boolean,
     val message: String,
-    val data: UserData
+    val data: CharacterData
 )
 
-data class UserData(
+data class CharacterData(
     val id: Int,
     val nickname: String,
     val level: Int,
