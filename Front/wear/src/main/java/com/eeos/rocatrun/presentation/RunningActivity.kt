@@ -105,6 +105,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private val locationList = mutableListOf<Location>()
     private val heartRateList = mutableListOf<Int>()
     private val paceList = mutableListOf<Double>()
+    private val cadenceList = mutableListOf<Int>()
+    private var currentCadence by mutableIntStateOf(0)
 
     // 상태 변수들
     private var totalDistance by mutableDoubleStateOf(0.0)
@@ -264,6 +266,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         isRunning = true
         startTime = System.currentTimeMillis()
         handler.post(updateRunnable)
+        cadenceHandler.post(updateCadenceRunnable)
 
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY, 1000
@@ -286,6 +289,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         averageHeartRate = 0.0
         heartRate = "--"
         lastLocation = null
+        currentCadence = 0
     }
 
     private fun stopTracking() {
@@ -299,6 +303,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         if (heartRateCount > 0) {
             averageHeartRate = heartRateSum.toDouble() / heartRateCount
         }
+        cadenceHandler.removeCallbacks(updateCadenceRunnable)
 
         Log.d("Stats",
             "Elapsed Time: ${formatUtils.formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
@@ -364,26 +369,34 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         gpxBuilder.append("  <trk>\n")
         gpxBuilder.append("    <name>RocatRun Activity</name>\n")
         gpxBuilder.append("    <trkseg>\n")
+
         val startTime = System.currentTimeMillis()
+        var locationIndex = 0
+        var lastHeartRate = 0
+
         for (i in heartRateList.indices) {
-            Log.i("gg","인덱스 : $i")
-//            val location = locationList[i]
-            val heartRate = if (i < heartRateList.size) heartRateList[i] else 0
+            val heartRate = if (i < heartRateList.size) heartRateList[i] else lastHeartRate
+            lastHeartRate = heartRate
             val pace = if (i < paceList.size) paceList[i] else 0.0
             val time = startTime + (i * 1000)
+            if (locationIndex < locationList.size && locationList[locationIndex].time <= time) {
+                val location = locationList[locationIndex]
+                gpxBuilder.append("      <trkpt lat=\"${location.latitude}\" lon=\"${location.longitude}\">\n")
+                gpxBuilder.append("        <ele>${location.altitude}</ele>\n")
+                locationIndex++
+            } else {
+                gpxBuilder.append("      <trkpt>\n")
+                gpxBuilder.append("        <ele></ele>\n")
+            }
 
-//            gpxBuilder.append("      <trkpt lat=\"${location.latitude}\" lon=\"${location.longitude}\">\n")
-//            gpxBuilder.append("        <ele>${location.altitude}</ele>\n")
-//            gpxBuilder.append("        <time>${sdf.format(Date(location.time))}</time>\n")
-            gpxBuilder.append("     <trkpt lat=\"0.0\" lon=\"0.0\">\n")
-            gpxBuilder.append("        <ele>0.0</ele>\n") // 더미 고도 데이터
-            gpxBuilder.append("        <time>${sdf.format(Date(time))}</time>\n")
             gpxBuilder.append("        <extensions>\n")
             gpxBuilder.append("          <gpxtpx:TrackPointExtension>\n")
             gpxBuilder.append("            <gpxtpx:hr>$heartRate</gpxtpx:hr>\n")
             gpxBuilder.append("            <gpxtpx:pace>$pace</gpxtpx:pace>\n")
+            gpxBuilder.append("            <gpxtpx:cad>${cadenceList.lastOrNull() ?: 0}</gpxtpx:cad>\n")
             gpxBuilder.append("          </gpxtpx:TrackPointExtension>\n")
             gpxBuilder.append("        </extensions>\n")
+            gpxBuilder.append("        <time>${sdf.format(Date(time))}</time>\n")
             gpxBuilder.append("      </trkpt>\n")
         }
 
@@ -721,9 +734,49 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 Log.d("CadenceCalculation", "Elapsed time in minutes: ${(stepTimes.last() - stepTimes.first()) / 60000.0}")
 
                 Log.d("StepDetector", "Step detected. Total steps: $stepCount")
+                updateCadence()
             }
         }
     }
+
+    private fun calculateCurrentCadence(): Int {
+        val now = System.currentTimeMillis()
+        val timeWindow = 30000 // 최근 30초 데이터 사용
+
+        // 최근 30초 내 걸음 수 계산
+        val recentSteps = stepTimes.count { it > now - timeWindow }
+
+        // 분당 걸음 수로 변환 (recentSteps * 2)
+        return recentSteps * 2
+    }
+
+    // 주기적 업데이트를 위한 핸들러
+    private val cadenceHandler = Handler(Looper.getMainLooper())
+    private val updateCadenceRunnable = object : Runnable {
+        override fun run() {
+            updateCadence()
+            cadenceHandler.postDelayed(this, 5000) // 5초 간격 업데이트
+        }
+    }
+
+    private fun updateCadence() {
+        val now = System.currentTimeMillis()
+        val oneMinuteAgo = now - 60000
+
+        // 최근 1분간 걸음 수 계산
+        val recentSteps = stepTimes.count { it > oneMinuteAgo }
+        currentCadence = recentSteps
+
+        cadenceList.add(recentSteps)
+    }
+
+    // 오래된 데이터 정리
+    private fun cleanOldSteps() {
+        val now = System.currentTimeMillis()
+        stepTimes.removeAll { it < now - 60000 } // 1분 이전 데이터 삭제
+    }
+
+
     private fun calculateAverageCadence(): Int {
         if (stepTimes.size <= 1) return 0
         val elapsedTimeInMinutes = (stepTimes.last() - stepTimes.first()) / 60000.0
