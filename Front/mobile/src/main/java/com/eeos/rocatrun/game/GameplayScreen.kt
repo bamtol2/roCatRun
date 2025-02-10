@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,7 +47,7 @@ import com.google.android.gms.wearable.Wearable
 
 
 @Composable
-fun GameplayScreen() {
+fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
     // 임시 테스트용 버튼
     var showMultiWinDialog by remember { mutableStateOf(false) }
@@ -145,6 +147,7 @@ fun GameplayScreen() {
                 )
             }
 
+
             // 임시 테스트용 버튼
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -204,6 +207,27 @@ fun GameplayScreen() {
                         )
                     }
                 }
+            }
+        }
+
+        if (gpxFileReceived) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(Color.Green)
+                    .padding(8.dp)
+            ) {
+                Text("GPX 파일 수신 완료", color = Color.White)
+            }
+
+            Button(
+                onClick = onShareClick,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            ) {
+                Text("GPX 파일 공유")
             }
         }
 
