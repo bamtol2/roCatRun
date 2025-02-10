@@ -89,9 +89,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.platform.LocalContext
 import com.eeos.rocatrun.receiver.SensorUpdateReceiver
+import com.eeos.rocatrun.viewmodel.MultiUserScreen
+import com.eeos.rocatrun.viewmodel.MultiUserViewModel
 
 class RunningActivity : ComponentActivity(), SensorEventListener {
     private val gameViewModel: GameViewModel by viewModels()
+    private val multiUserViewModel: MultiUserViewModel by viewModels()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var sensorManager: SensorManager
@@ -143,7 +146,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     sendDataToPhone()
                 }
 
-                handler.postDelayed(this, 500)
+                handler.postDelayed(this, 1000)
             }
         }
     }
@@ -154,8 +157,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         super.onCreate(savedInstanceState)
         setContent {
             val gameViewModel: GameViewModel by viewModels()
-
-            RunningApp(gameViewModel) }
+            val multiUserViewModel: MultiUserViewModel by viewModels()
+            RunningApp(gameViewModel, multiUserViewModel) }
         // 절전모드 방지를 위한 WakeLock 초기화 및 활성화
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RunningApp::Wakelock")
@@ -392,7 +395,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun RunningApp(gameViewModel: GameViewModel) {
+    fun RunningApp(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
 
         var isCountdownFinished by remember { mutableStateOf(false) }
         var countdownValue by remember { mutableIntStateOf(5) }
@@ -407,7 +410,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
 
         if (isCountdownFinished) {
-            WatchAppUI(gameViewModel)
+            WatchAppUI(gameViewModel, multiUserViewModel)
         } else {
             CountdownScreen(countdownValue)
         }
@@ -433,8 +436,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun WatchAppUI(gameViewModel: GameViewModel) {
-        val pagerState = rememberPagerState(pageCount = {3})
+    fun WatchAppUI(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
+        val pagerState = rememberPagerState(pageCount = {4})
         if (showStats) {
             ShowStatsScreen(gameViewModel)
         } else {
@@ -446,6 +449,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     1 -> ControlButtons { stopTracking() }
                     2 -> Box(modifier = Modifier.fillMaxSize()) {
                         GameScreen(gameViewModel) // Modifier.fillMaxSize() 적용된 상태로 화면 전체에 표시
+                    }
+                    3 -> Box(modifier = Modifier.fillMaxSize()) {
+                        MultiUserScreen(multiUserViewModel)
                     }
                 }
             }
@@ -609,26 +615,43 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     // 폰에 데이터 전송
     private fun sendDataToPhone(itemUsed: Boolean = false) {
-        val dataMapRequest = PutDataMapRequest.create("/running_data").apply {
-            dataMap.putDouble("pace", averagePace)
-            dataMap.putDouble("distance", totalDistance)
-            dataMap.putLong("time", elapsedTime)
-            dataMap.putString("heartRate", heartRate)
-            dataMap.putLong("timestamp", System.currentTimeMillis())
-            dataMap.putBoolean("itemUsed", itemUsed)
-        }.asPutDataRequest()
-        Log.d("데이터 전송 함수", "데이터 형태 - Pace : $averagePace distance : $totalDistance, time : $elapsedTime, heartRate: $heartRate, itemUsed: $itemUsed")
-        dataMapRequest.setUrgent() // 즉시 전송하도록 설정
+        // 아이템 사용했을 때 데이터 보내는 경로
+        if (itemUsed) {
+            val itemUsedRequest = PutDataMapRequest.create("/use_item").apply {
+                dataMap.putBoolean("itemUsed", true)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }.asPutDataRequest()
+            Wearable.getDataClient(this).putDataItem(itemUsedRequest)
+                .addOnSuccessListener {
+                    Log.d("RunningActivity", "아이템 사용 신호 성공적으로 보냄: $itemUsed")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("RunningActivity", "아이템 사용 신호 보내지 못하였음", e)
+                }
+        } else {
 
-        Wearable.getDataClient(this).putDataItem(dataMapRequest)
-            .addOnSuccessListener {
-                Log.d("RunningActivity", "Data sent successfully")
-            }
-            .addOnFailureListener { e ->
-                Log.e("RunningActivity", "Failed to send data", e)
-            }
+            val dataMapRequest = PutDataMapRequest.create("/running_data").apply {
+                dataMap.putDouble("pace", averagePace)
+                dataMap.putDouble("distance", totalDistance)
+                dataMap.putLong("time", elapsedTime)
+                dataMap.putString("heartRate", heartRate)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }.asPutDataRequest()
+            Log.d(
+                "데이터 전송 함수",
+                "데이터 형태 - Pace : $averagePace distance : $totalDistance, time : $elapsedTime, heartRate: $heartRate"
+            )
+            dataMapRequest.setUrgent() // 즉시 전송하도록 설정
+
+            Wearable.getDataClient(this).putDataItem(dataMapRequest)
+                .addOnSuccessListener {
+                    Log.d("RunningActivity", "Data sent successfully")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("RunningActivity", "Failed to send data", e)
+                }
+        }
     }
-
     @Composable
     fun ShowStatsScreen(gameViewModel: GameViewModel) {
         // 아이템 총 사용 횟수
