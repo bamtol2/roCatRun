@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.eeos.rocatrun.home.api.RetrofitInstance
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -19,12 +18,16 @@ class ProfileViewModel : ViewModel() {
 
     fun fetchProfileInfo(auth: String?) {
         if (auth != null) {
+            Log.d("api", auth)
+            Log.d("api", "호출 시작")
             retrofitInstance.getProfileInfo(auth).enqueue(object : Callback<ProfileResponse> {
                 override fun onResponse(call: Call<ProfileResponse>, response: Response<ProfileResponse>) {
                     if (response.isSuccessful) {
                         _profileData.value = response.body()
+                        Log.d("api", _profileData.value?.data?.nickname ?: "")
                     } else {
                         println("Error: ${response.errorBody()}")
+                        Log.d("api", response.toString())
                     }
                 }
 

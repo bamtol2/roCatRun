@@ -11,13 +11,16 @@ import com.eeos.rocatrun.socket.SocketHandler
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 
 class HomeActivity : ComponentActivity() {
-    private val token = TokenStorage.getAccessToken(this)
+//    private lateinit var token: String
+
     private val homeViewModel: HomeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+//        token = TokenStorage.getAccessToken(applicationContext) ?: ""
 
 //        homeViewModel.fetchHomeInfo(token)
         homeViewModel.fetchHomeInfo()
