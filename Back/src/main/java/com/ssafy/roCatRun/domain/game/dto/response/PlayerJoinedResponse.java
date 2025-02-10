@@ -9,6 +9,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PlayerJoinedResponse {
     private String userId;
+    private String nickName;
     private int currentPlayers;
     private int maxPlayers;
 }

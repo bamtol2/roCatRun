@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PlayerLeftResponse {
     private String userId;
+    private String nickName;
     private int remainingPlayers;
     private int maxPlayers;
 }

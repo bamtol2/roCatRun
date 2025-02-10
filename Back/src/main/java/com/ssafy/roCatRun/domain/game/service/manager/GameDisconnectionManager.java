@@ -45,7 +45,7 @@ public class GameDisconnectionManager {
         private long disconnectionTime;
     }
 
-    public void handlePlayerDisconnection(GameRoom room, String userId){
+    public void handlePlayerDisconnection(GameRoom room, String userId, String nickName){
        room.getPlayers().removeIf(player -> player.getId().equals(userId));
 
         if (room.getPlayers().isEmpty()) {
@@ -56,6 +56,7 @@ public class GameDisconnectionManager {
             server.getRoomOperations(room.getId()).sendEvent("playerDisconnected",
                     new PlayerLeftResponse(
                             userId,
+                            nickName,
                             room.getPlayers().size(),
                             room.getMaxPlayers()
                     )
@@ -132,7 +133,7 @@ public class GameDisconnectionManager {
 
         // 다른 플레이어들에게 알림
         server.getRoomOperations(room.getId()).sendEvent("playerReconnected",
-                new PlayerReconnectedResponse(userId));
+                new PlayerReconnectedResponse(userId, player.getNickname()));
 
         return true;
     }

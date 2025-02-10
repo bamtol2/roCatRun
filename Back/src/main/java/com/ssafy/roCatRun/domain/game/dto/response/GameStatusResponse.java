@@ -9,5 +9,6 @@ public class GameStatusResponse {
     private int bossHealth;
     private boolean isFeverTimeActive;
     private String userId;
+    private String nickName;
     private int itemUseCount;
 }
