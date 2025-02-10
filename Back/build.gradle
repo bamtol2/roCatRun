@@ -1,15 +1,11 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.2.2'
+	id 'org.springframework.boot' version '3.4.2'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.ssafy'
 version = '0.0.1-SNAPSHOT'
-
-jar {
-	enabled = false
-}
 
 java {
 	toolchain {
@@ -28,43 +24,61 @@ repositories {
 }
 
 dependencies {
-	// Spring Boot Starters
+	// === Spring Boot 핵심 스타터 패키지 ===
+	// JPA: 데이터베이스 ORM 기능
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// OAuth2: 소셜 로그인 기능
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	// Validation: 데이터 유효성 검증
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Web: 웹 애플리케이션 기능
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-
+	// Socket.io
+	implementation 'com.corundumstudio.socketio:netty-socketio:2.0.9'
+	// Json Mapper
+	implementation 'com.google.code.gson:gson:2.10.1'
+	// Actuator: 애플리케이션 모니터링
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-	//security
+	// WebClient 사용을 위해 필요
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// === 보안 관련 ===
+	// Spring Security: 보안 기능
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// Thymeleaf Security: 템플릿 엔진 보안 확장
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
-	// JWT
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+	// === JWT 관련 ===
+	// JWT: 토큰 기반 인증
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 
-	// Swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
-
-	// Lombok
+	// == Lombok ==
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	// Database
+	// === 데이터베이스 ===
+	// MySQL: 데이터베이스 드라이버
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	// Redis: 인메모리 데이터 저장소
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// MongoDB
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
-	// Dev Tools
+	// === 개발 편의성 ===
+	// DevTools: 자동 리로드 등 개발 편의 기능
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-	// Test Dependencies
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
+	// 보안 테스트
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+jar {
+	enabled = false
 }
 
 tasks.named('test') {
