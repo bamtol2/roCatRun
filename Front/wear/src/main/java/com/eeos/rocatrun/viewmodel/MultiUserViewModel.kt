@@ -48,6 +48,8 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private var bossHealthData by mutableStateOf<BossHealthData?>(null)
     private var feverEndData by mutableStateOf<FeverEndData?>(null)
     private var feverStartData by mutableStateOf<FeverStartData?>(null)
+    private var firstBossHealthData by mutableStateOf<FirstBossHealthData?>(null)
+    private var gameEndData by mutableStateOf<GameEndData?>(null)
     // 실시간으로 받아올 사용자들의 러닝 데이터
 
 
@@ -59,7 +61,6 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         val distance: Double,
         val itemCount: Int
     )
-
     // 피버 시작 데이터
     data class FeverStartData(
         val feverstart : Boolean
@@ -72,7 +73,14 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     data class BossHealthData(
         val bossHealth: Int
     )
-
+    // 난이도 별 보스 데이터
+    data class FirstBossHealthData(
+        val firstBossHealth: Int
+    )
+    // 게임 종료 데이터
+    data class GameEndData(
+        val gameEnd: Boolean
+    )
 
     private val context = application.applicationContext
 
@@ -107,7 +115,8 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                     "/boss_health" -> processBossHealthData(dataItem)
                     "/fever_start" -> processFeverStartData(dataItem)
                     "/fever_end" -> processFeverEndData(dataItem)
-
+                    "/first_boss_health" -> processFirstBossHealthData(dataItem)
+                    "/game_end" -> processGameEndData(dataItem)
                 }
             }
 
@@ -134,7 +143,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         }
         Log.d("Multi", "보스 체력 데이터 받는중 : $bossHealthData" )
     }
-
+    // 피버 시작 데이터
     private fun processFeverStartData(dataItem: DataItem){
         DataMapItem.fromDataItem(dataItem).dataMap.apply{
             feverStartData = FeverStartData(
@@ -143,7 +152,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         }
         Log.d("Multi", "피버 시작 데이터 받는중 : $feverStartData")
     }
-
+    // 피버 종료 데이터
     private fun processFeverEndData(dataItem: DataItem){
         DataMapItem.fromDataItem(dataItem).dataMap.apply{
             feverEndData = FeverEndData(
@@ -153,6 +162,22 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         Log.d("Multi", "피버 종료 데이터 받는중 : $feverEndData")
     }
 
+    // 난이도 별 보스 데이터
+    private fun processFirstBossHealthData(dataItem: DataItem){
+        DataMapItem.fromDataItem(dataItem).dataMap.apply {
+            firstBossHealthData = FirstBossHealthData(
+                firstBossHealth = getInt("firstBossHealth")
+            )
+        }
+    }
+    // 게임 종료 데이터
+    private fun processGameEndData(datItem: DataItem){
+        DataMapItem.fromDataItem(datItem).dataMap.apply {
+            gameEndData = GameEndData(
+                gameEnd = getBoolean("gameEnd")
+            )
+        }
+    }
 
     private fun generateMockData(): List<UserData> {
         val users = listOf("마이애미", "과즙가람", "타노스")
