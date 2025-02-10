@@ -6,8 +6,6 @@ import com.ssafy.roCatRun.domain.member.service.auth.KakaoService;
 import com.ssafy.roCatRun.domain.member.dto.response.LoginResponse;
 import com.ssafy.roCatRun.domain.member.service.auth.NaverService;
 import com.ssafy.roCatRun.global.common.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,33 +20,32 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
-@Tag(name = "소셜 로그인 API", description = "소셜 로그인 관련 API")
 public class SocialLoginController {
 
     private final KakaoService kakaoService;
     private final NaverService naverService;
     private final GoogleService googleService;
 
+    // 카카오 로그인 콜백 처리
     @GetMapping("/callback/kakao")
-    @Operation(summary = "카카오 로그인 콜백", description = "카카오 소셜 로그인 콜백을 처리합니다.")
     public ApiResponse<LoginResponse> kakaoCallback(
-            @RequestParam String code, // code 카카오로부터 받은 인가 코드
+            @RequestParam String code, // URL 파라미터로 전달되는 인가 코드
             HttpServletRequest request // 현재 도메인 정보를 얻기 위한 HTTP 요청 객체
     ) {
         String currentDomain = request.getServerName();
         return ApiResponse.success(kakaoService.kakaoLogin(code, currentDomain));
     }
 
+    // 카카오 토큰 리프레시 처리
     @PostMapping("/refresh/kakao")
-    @Operation(summary = "카카오 토큰 재발급", description = "만료된 액세스 토큰을 리프레시 토큰으로 재발급합니다.")
     public ApiResponse<JwtTokens> refreshKakaoToken(
-            @RequestHeader("Refresh-Token") String refreshToken
+            @RequestHeader("Refresh-Token") String refreshToken // HTTP 헤더에서 리프레시 토큰을 추출
     ) {
         return ApiResponse.success(kakaoService.refreshKakaoToken(refreshToken));
     }
 
+    // 네이버 로그인 콜백 처리
     @GetMapping("/callback/naver")
-    @Operation(summary = "네이버 로그인 콜백", description = "네이버 소셜 로그인 콜백을 처리합니다.")
     public ApiResponse<LoginResponse> naverCallback(
             @RequestParam String code,
             @RequestParam String state,
@@ -58,16 +55,16 @@ public class SocialLoginController {
         return ApiResponse.success(naverService.naverLogin(code, state, currentDomain));
     }
 
+    // 네이버 토큰 리프레시 처리
     @PostMapping("/refresh/naver")
-    @Operation(summary = "네이버 토큰 재발급", description = "만료된 액세스 토큰을 리프레시 토큰으로 재발급합니다.")
     public ApiResponse<JwtTokens> refreshNaverToken(
             @RequestHeader("Refresh-Token") String refreshToken
     ) {
         return ApiResponse.success(naverService.refreshNaverToken(refreshToken));
     }
 
+    // 구글 로그인 콜백 처리
     @GetMapping("/callback/google")
-    @Operation(summary = "구글 로그인 콜백", description = "구글 소셜 로그인 콜백을 처리합니다.")
     public ApiResponse<LoginResponse> googleCallback(
             @RequestParam String code,
             HttpServletRequest request
@@ -87,8 +84,8 @@ public class SocialLoginController {
         }
     }
 
+    // 구글 토큰 리프레시 처리
     @PostMapping("/refresh/google")
-    @Operation(summary = "구글 토큰 재발급", description = "만료된 액세스 토큰을 리프레시 토큰으로 재발급합니다.")
     public ApiResponse<JwtTokens> refreshGoogleToken(
             @RequestHeader("Refresh-Token") String refreshToken
     ) {
