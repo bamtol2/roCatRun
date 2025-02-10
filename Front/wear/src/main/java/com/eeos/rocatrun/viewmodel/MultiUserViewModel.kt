@@ -31,6 +31,8 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import androidx.lifecycle.AndroidViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 
 
 data class UserData(
@@ -50,7 +52,6 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private var feverStartData by mutableStateOf<FeverStartData?>(null)
     private var firstBossHealthData by mutableStateOf<FirstBossHealthData?>(null)
     private var gameEndData by mutableStateOf<GameEndData?>(null)
-    // 실시간으로 받아올 사용자들의 러닝 데이터
 
 
     // 데이터 클래스 정의
@@ -81,6 +82,10 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     data class GameEndData(
         val gameEnd: Boolean
     )
+
+    // 피버 이벤트 플로우
+    private val _feverEventFlow = MutableSharedFlow<Boolean>()
+    val feverEventFlow: SharedFlow<Boolean> get() = _feverEventFlow
 
     private val context = application.applicationContext
 
@@ -151,6 +156,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         Log.d("Multi", "피버 시작 데이터 받는중 : $feverStartData")
+        viewModelScope.launch { _feverEventFlow.emit(true) }  // 시작 이벤트 전송
     }
     // 피버 종료 데이터
     private fun processFeverEndData(dataItem: DataItem){
@@ -160,6 +166,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         Log.d("Multi", "피버 종료 데이터 받는중 : $feverEndData")
+        viewModelScope.launch { _feverEventFlow.emit(false) }  // 종료 이벤트 전송
     }
 
     // 난이도 별 보스 데이터

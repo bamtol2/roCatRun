@@ -68,9 +68,11 @@ class GameViewModel : ViewModel() {
     }
 
     // 아이템 게이지 증가
-    fun increaseItemGauge() {
-        _itemGaugeValue.value = (_itemGaugeValue.value + 20).coerceAtMost(100)
-        Log.i("아이템 사용 횟수 ", "횟수 : ${_itemUsageCount.value}")
+    fun increaseItemGauge(amount : Int) {
+        // 현재 게이지 값에 양을 추가하며, 최대 100을 넘지 않도록 제한
+        _itemGaugeValue.value = (_itemGaugeValue.value + amount).coerceAtMost(100)
+        Log.d("아이템 게이지", "현재 게이지 값: ${_itemGaugeValue.value}, 증가량: $amount")
+//        Log.i("아이템 사용 횟수 ", "횟수 : ${_itemUsageCount.value}")
     }
 
     /**
@@ -92,16 +94,12 @@ class GameViewModel : ViewModel() {
             _itemGaugeValue.value = 0
             _bossGaugeValue.value = (_bossGaugeValue.value - 20).coerceAtLeast(0)
 
-            if (_bossGaugeValue.value == 0) {
-                stopFeverTimeEffects()  // 효과 중지
-                navigateToResultActivity(context)  // 결과 액티비티로 이동
-                return@launch
-            }
+//            if (_bossGaugeValue.value == 0) {
+//                stopFeverTimeEffects()  // 효과 중지
+//                navigateToResultActivity(context)  // 결과 액티비티로 이동
+//                return@launch
+//            }
 
-            if (_itemUsageCount.value == 2) {
-                startFeverTime(context)
-                _itemUsageCount.value = 0
-            }
 
             isHandlingGauge = false
         }
@@ -146,11 +144,22 @@ class GameViewModel : ViewModel() {
     }
 
     // 결과 창으로 가는 함수
-    private fun navigateToResultActivity(context: Context) {
-        resetTotalItemUsageCount()
-        val intent = Intent(context, ResultActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        context.startActivity(intent)
-    }
+//    private fun navigateToResultActivity(context: Context) {
+//        resetTotalItemUsageCount()
+//        val intent = Intent(context, ResultActivity::class.java)
+//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+//        context.startActivity(intent)
+//    }
 
+    fun observeFeverEvents(viewModel: MultiUserViewModel, context: Context) {
+        viewModelScope.launch {
+            viewModel.feverEventFlow.collect { isFeverStart ->
+                if (isFeverStart) {
+                    startFeverTime(context)  // 피버 타임 시작
+                } else {
+                    stopFeverTimeEffects()  // 피버 타임 종료
+                }
+            }
+        }
+    }
 }

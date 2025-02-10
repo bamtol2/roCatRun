@@ -131,6 +131,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     private val handler = Handler(Looper.getMainLooper())
 
+    // LaunchedEffect에서 데이터 측정 함수 실행하기 위한 변수
+    private var startTrackingRequested by mutableStateOf(false)
+
+
     private val updateRunnable = object : Runnable {
         override fun run() {
             if (isRunning) {
@@ -162,6 +166,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             val gameViewModel: GameViewModel by viewModels()
             val multiUserViewModel: MultiUserViewModel by viewModels()
             RunningApp(gameViewModel, multiUserViewModel) }
+        // 데이터 측정 변수 상태 관찰하여 자동 실행
+        observeStartTrackingState()
         // 절전모드 방지를 위한 WakeLock 초기화 및 활성화
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RunningApp::Wakelock")
@@ -190,6 +196,20 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         } ?: Log.w("StepDetector", "No step detector sensor available.")
 
         requestPermissions()
+    }
+
+
+    private fun observeStartTrackingState() {
+        // 상태가 true로 변경되면 `startTracking()` 실행
+        handler.post(object : Runnable {
+            override fun run() {
+                if (startTrackingRequested && !isRunning) {
+                    startTracking()
+                    startTrackingRequested = false  // 실행 후 초기화
+                }
+                handler.postDelayed(this, 500)  // 주기적으로 상태 확인
+            }
+        })
     }
 
     // 포그라운드서비스 시작
@@ -245,9 +265,11 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 totalDistance += distanceMoved
                 speed = location.speed * 3.6
 
-                // 게이지 증가 로직: 10m 마다 증가
+                // 게이지 증가 로직: 1m마다 증가(나중에 7.5m마다 증가되게 수정할 예정)
                 if (totalDistance - lastDistanceUpdate >= 0.01) {
-                    gameViewModel.increaseItemGauge()
+                    val isFeverTime = gameViewModel.feverTimeActive.value
+                    val gaugeIncrement = if (isFeverTime) 2 else 1  // 피버타임일 경우 2배로 증가
+                    gameViewModel.increaseItemGauge(gaugeIncrement)
                     lastDistanceUpdate = totalDistance
                     if (gameViewModel.itemGaugeValue.value == 100) {
                       gameViewModel.handleGaugeFull(this)
@@ -410,7 +432,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     @Composable
     fun RunningApp(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
-
+        val activity = LocalContext.current as? RunningActivity
         var isCountdownFinished by remember { mutableStateOf(false) }
         var countdownValue by remember { mutableIntStateOf(5) }
 
@@ -421,6 +443,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 countdownValue -= 1
             }
             isCountdownFinished = true
+
+            // 카운트다운 완료 후 트래킹 상태 변경
+            activity?.startTrackingRequested = true
+
         }
 
         if (isCountdownFinished) {
@@ -462,7 +488,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     0 -> CircularLayout(gameViewModel)
                     1 -> ControlButtons { stopTracking() }
                     2 -> Box(modifier = Modifier.fillMaxSize()) {
-                        GameScreen(gameViewModel) // Modifier.fillMaxSize() 적용된 상태로 화면 전체에 표시
+                        GameScreen(gameViewModel,multiUserViewModel) // Modifier.fillMaxSize() 적용된 상태로 화면 전체에 표시
                     }
                     3 -> Box(modifier = Modifier.fillMaxSize()) {
                         MultiUserScreen(multiUserViewModel)

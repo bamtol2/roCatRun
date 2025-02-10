@@ -79,6 +79,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     // 회원 정보가 있을 경우 바로 HomeActivity로 이동
+                    Log.d("회원 체크" , "1. $response, 2. ${response.body()}")
                     val intent = Intent(context, HomeActivity::class.java)
                     context.startActivity(intent)
                 } else {

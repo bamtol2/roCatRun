@@ -30,16 +30,18 @@ import com.eeos.rocatrun.component.FeverTime
 //import android.os.Vibrator
 import androidx.activity.viewModels
 import com.eeos.rocatrun.viewmodel.GameViewModel
+import com.eeos.rocatrun.viewmodel.MultiUserViewModel
 
 
 class ItemActivity : ComponentActivity() {
     private val gameViewModel: GameViewModel by viewModels()
+    private val multiUserViewModel: MultiUserViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             RoCatRunTheme {
-                GameScreen(gameViewModel)
+                GameScreen(gameViewModel, multiUserViewModel)
             }
         }
     }
@@ -66,7 +68,7 @@ fun AnimatedGifView(resourceId: Int, modifier: Modifier) {
 }
 
 @Composable
-fun GameScreen(gameViewModel: GameViewModel) {
+fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
     val context = LocalContext.current
     val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
     val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
@@ -76,7 +78,10 @@ fun GameScreen(gameViewModel: GameViewModel) {
 
     var itemUsageCount by remember { mutableIntStateOf(0) } // 아이템 사용 횟수 추적
 
-
+    // 피버 이벤트 관찰 시작
+    LaunchedEffect(Unit) {
+        gameViewModel.observeFeverEvents(multiUserViewModel, context)
+    }
 
     val itemProgress by animateFloatAsState(
         targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
@@ -166,7 +171,7 @@ fun GameScreen(gameViewModel: GameViewModel) {
     ) {
         Button(
             onClick = {
-                gameViewModel.increaseItemGauge()
+                gameViewModel.increaseItemGauge(1)
                 if (gameViewModel.itemGaugeValue.value == 100) {
                     gameViewModel.handleGaugeFull(context)
                 }
