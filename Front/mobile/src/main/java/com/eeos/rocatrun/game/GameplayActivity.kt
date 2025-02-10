@@ -161,8 +161,10 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
     // 워치에서 아이템 사용여부 받아오는 함수
     private fun processUseItem(dataItem: DataItem) {
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
+
             // 공격 여부 워치에서 받기
-            //itemUsed = getBoolean("itemUsed")
+            val itemUsed = getBoolean("itemUsed")
+            Log.d("Wear", "아이템 사용 여부 받음: $itemUsed")
         }
 
         Log.d("Wear","공격")
