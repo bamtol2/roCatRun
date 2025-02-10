@@ -11,6 +11,7 @@ import com.ssafy.roCatRun.domain.game.entity.raid.Player;
 import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.entity.raid.RunningData;
 import com.ssafy.roCatRun.domain.game.service.manager.GameTimerManager;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GameService {
+public class GameService implements GameTimerManager.GameTimeoutListener  {
     private static final int INVITE_CODE_LENGTH = 6;
     private final Map<String, String> inviteCodes = new ConcurrentHashMap<>(); // 초대코드 - 방코드 매칭
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -38,6 +39,15 @@ public class GameService {
     // 게임 종료 후 결과 데이터를 임시 저장할 Map
     private final Map<String, Map<String, PlayerRunningResultRequest>> gameResults = new ConcurrentHashMap<>();
 
+    @PostConstruct
+    public void init() {
+        gameTimerManager.setTimeoutListener(this);
+    }
+
+    @Override
+    public void onTimeout(GameRoom room) {
+        handleGameOver(room);
+    }
     /**
      * 랜덤 매칭 처리
      * 조건에 맞는 방이 있으면 입장시키고, 없으면 새로운 방 생성

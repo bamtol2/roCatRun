@@ -25,9 +25,20 @@ import java.util.stream.Collectors;
 public class GameTimerManager {
     private final SocketIOServer server;
     private final GameRoomManager gameRoomManager;
-    private final GameService gameService;  // GameService 주입 추가
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final Map<String, ScheduledFuture<?>> timerTasks = new ConcurrentHashMap<>();
+
+    // 옵저버 패턴을 위한 리스너 인터페이스
+    public interface GameTimeoutListener  {
+        void onTimeout(GameRoom room);
+    }
+
+    private GameTimeoutListener timeoutListener;
+
+    public void setTimeoutListener(GameTimeoutListener listener) {
+        this.timeoutListener = listener;
+    }
+
 
     public void startGameTimer(GameRoom room) {
         String roomId = room.getId();
@@ -56,11 +67,13 @@ public class GameTimerManager {
 
     private void handleGameTimeout(GameRoom room) {
         log.info("[Game Timeout] Room: {}, Players: {}, Final Boss Health: {}",
-                room.getId(),
-                room.getPlayers().size(),
-                room.getBossHealth());
-        // GameService의 handleGameOver 호출하여 나머지 처리 위임
-        gameService.handleGameOver(room);
+                room.getId(), room.getPlayers().size(), room.getBossHealth());
+
+        if (timeoutListener != null) {
+            timeoutListener.onTimeout(room);
+        }
+
+        cleanupTimerTasks(room.getId());
 
         // 타이머 정리
         cleanupTimerTasks(room.getId());
