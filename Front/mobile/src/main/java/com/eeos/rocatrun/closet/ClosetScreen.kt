@@ -51,22 +51,57 @@ import com.eeos.rocatrun.game.MainButtons
 import com.eeos.rocatrun.game.TopNavigation
 import com.eeos.rocatrun.home.HomeActivity
 
+
+data class ItemPosition(
+    val x: Int, // X 좌표 (dp 단위)
+    val y: Int  // Y 좌표 (dp 단위)
+)
+
+data class WearableItem(
+    val id: String,
+    val imageRes: Int, // 이미지 리소스
+    val position: ItemPosition, // 적용 위치
+    val size: Int, // 아이템 크기
+    val category: String,
+    val categoryInt: Int,
+    var isWorn: Boolean = false // 착용 여부
+)
+
+
 @Composable
 fun ClosetScreen() {
+    // 상단 홈 아이콘 버튼
+    val context = LocalContext.current
+
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("전체", "물감", "머리띠", "풍선", "오라")
-    val items = mapOf(
-        0 to listOf("item1", "item2", "item3", "item4"),
-        1 to listOf("paint1", "paint2"),
-        2 to listOf("headband1", "headband2"),
-        3 to listOf("balloon1", "balloon2"),
-        4 to listOf("ora1","ora2")
-    )
     var equippedItem by remember { mutableStateOf<String?>(null) }
 
-    // 상단 홈 아이콘 버튼
-
-    val context = LocalContext.current
+    // 아이템 더미 리스트
+    var items by remember {
+        mutableStateOf(
+            listOf(
+                WearableItem("aura1", R.drawable.closet_ora_1, ItemPosition(10, 90), 300, "오라", 4),
+                WearableItem("aura2", R.drawable.closet_ora_2, ItemPosition(10, -50), 300, "오라", 4),
+                WearableItem(
+                    "balloon1",
+                    R.drawable.closet_balloon_1,
+                    ItemPosition(70, -20),
+                    80,
+                    "풍선",
+                    3
+                ),
+                WearableItem(
+                    "balloon2",
+                    R.drawable.closet_balloon_2,
+                    ItemPosition(70, -20),
+                    80,
+                    "풍선",
+                    3
+                ),
+            )
+        )
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -98,26 +133,22 @@ fun ClosetScreen() {
 
         Column(modifier = Modifier.fillMaxSize()) {
             // 상단 캐릭터 영역
-            Box(
+            Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.all_img_whitecat),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(150.dp)
-                        .offset(x = 15.dp, y = 10.dp) // 이미지 위치 조정
-                )
+                CharacterWithItems(wornItems = items.filter { it.isWorn })
             }
 
             // 탭과 아이템 목록 영역
-            Column(modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(vertical = 10.dp)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp)
 
             ) {
                 CustomTabRow(
@@ -126,35 +157,75 @@ fun ClosetScreen() {
                     onTabSelected = { index -> selectedTab = index }
                 )
 
-                // 아이템 목록 (LazyVerticalGrid)
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                // 아이템 목록 + 개수 텍스트
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                        .border(width = 4.dp, color = Color(0xFFFFB9C7))
-                        .background(color = Color(0xD6B9999F), shape = RoundedCornerShape(12.dp))
-                        .padding(8.dp), // 내부 여백 추가,
-                    contentPadding = PaddingValues(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val currentItems = items[selectedTab] ?: emptyList()
-                    items(currentItems) { item ->
-                        ItemCard(item, equippedItem) { clickedItem ->
-                            equippedItem =
-                                if (equippedItem == clickedItem) null else clickedItem // 착용/해제 토글
+
+                    // 아이템 목록 (LazyVerticalGrid)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                            .border(width = 4.dp, color = Color(0xFFFFB9C7))
+                            .background(
+                                color = Color(0xD6B9999F),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(8.dp), // 내부 여백 추가,
+                        contentPadding = PaddingValues(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val currentItems = when (selectedTab) {
+                            0 -> items // 전체
+                            1 -> items.filter { it.categoryInt == 1 } // 물감
+                            2 -> items.filter { it.categoryInt == 2 } // 머리띠
+                            3 -> items.filter { it.categoryInt == 3 } // 풍선
+                            4 -> items.filter { it.categoryInt == 4 } // 오라
+                            else -> emptyList()
+                        }
+
+                        items(currentItems) { item ->
+                            ItemCard(item) { clickedItem ->
+                                items = items.map {
+                                    // 클릭한 아이템의 상태를 토글하고 같은 카테고리 아이템은 모두 해제
+                                    if (it.id == clickedItem.id) {
+                                        it.copy(isWorn = !it.isWorn)
+                                    } else if (it.categoryInt == clickedItem.categoryInt) {
+                                        it.copy(isWorn = false)
+                                    } else {
+                                        it
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
+                    // 획득 아이템 표시 텍스트
+                    val filteredItems = items.filter { item ->
+                        when (selectedTab) {
+                            0 -> true // 전체 아이템
+                            1 -> item.categoryInt == 1 // 물감
+                            2 -> item.categoryInt == 2 // 머리띠
+                            3 -> item.categoryInt == 3 // 풍선
+                            4 -> item.categoryInt == 4 // 오라
+                            else -> false
                         }
                     }
-                }
 
-                // 획득 아이템 표시 텍스트
-                Text(
-                    text = "획득 아이템 : 총 ${items[selectedTab]?.size ?: 0}개",
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
+                    Text(
+                        text = "획득 아이템 : 총 ${filteredItems.size}개",
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(vertical = 15.dp, horizontal = 30.dp),
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
     }
@@ -206,13 +277,13 @@ fun CustomTabRow(
 }
 
 @Composable
-fun ItemCard(item: String, equippedItem: String?, onClick: (String) -> Unit) {
-    Box (
+fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
+    Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(120.dp) // 정사각형 크기 설정
             .background(color = Color(0x80FFB9C7), shape = RoundedCornerShape(size = 18.dp))
-    ){
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -225,7 +296,11 @@ fun ItemCard(item: String, equippedItem: String?, onClick: (String) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 // 아이템 이미지 (임시 텍스트로 대체)
-                Text(text = item)
+                Image(
+                    painter = painterResource(id = item.imageRes),
+                    contentDescription = "아이템",
+                    modifier = Modifier.size(50.dp)
+                )
             }
 
             // 착용/해제 버튼
@@ -237,7 +312,7 @@ fun ItemCard(item: String, equippedItem: String?, onClick: (String) -> Unit) {
             ) {
                 Image(
                     painter = painterResource(
-                        id = if (equippedItem == item) R.drawable.closet_btn_dresson
+                        id = if (item.isWorn) R.drawable.closet_btn_dresson
                         else R.drawable.closet_btn_dressoff
                     ),
                     contentDescription = null,
@@ -245,7 +320,7 @@ fun ItemCard(item: String, equippedItem: String?, onClick: (String) -> Unit) {
                     modifier = Modifier.matchParentSize() // 이미지가 버튼 영역을 채우도록 설정
                 )
                 Text(
-                    text = if (equippedItem == item) "해제" else "착용",
+                    text = if (item.isWorn) "해제" else "착용",
                     color = Color.White,
                     fontSize = 12.sp,
                     modifier = Modifier.align(Alignment.Center)
@@ -253,7 +328,6 @@ fun ItemCard(item: String, equippedItem: String?, onClick: (String) -> Unit) {
             }
         }
     }
-
 }
 
 // 스트로크 글씨 함수
@@ -286,5 +360,50 @@ fun StrokedText(
                 fontSize = fontSize.sp
             )
         )
+    }
+}
+
+
+// 아이템 장착 화면 - 상단 캐릭터 영역
+@Composable
+fun CharacterWithItems(wornItems: List<WearableItem>) {
+
+    Box(modifier = Modifier.size(200.dp)) {
+        // 특정 카테고리(예: "오라")의 아이템 배치 (캐릭터 뒤)
+        wornItems.filter { it.category == "오라" }.forEach { item ->
+            Image(
+                painter = painterResource(id = item.imageRes),
+                contentDescription = "착용 아이템",
+                modifier = Modifier
+                    .size(item.size.dp)
+                    .offset(item.position.x.dp, item.position.y.dp)
+            )
+        }
+
+        // 캐릭터 이미지
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.all_img_whitecat),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(150.dp)
+                    .offset(x = 15.dp, y = 10.dp) // 이미지 위치 조정
+            )
+        }
+
+        // 나머지 카테고리의 아이템 배치 (캐릭터 위)
+        wornItems.filter { it.category != "오라" }.forEach { item ->
+            Image(
+                painter = painterResource(id = item.imageRes),
+                contentDescription = "착용 아이템",
+                modifier = Modifier
+                    .size(item.size.dp)
+                    .offset(item.position.x.dp, item.position.y.dp)
+            )
+        }
     }
 }

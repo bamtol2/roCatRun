@@ -101,4 +101,7 @@ dependencies {
     implementation(libs.accompanist.pager.indicators)
 
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
+
+    // 이미지 저장하기 위한 캡쳐 라이브러리
+    implementation ("dev.shreyaspatil:capturable:2.1.0")
 }
