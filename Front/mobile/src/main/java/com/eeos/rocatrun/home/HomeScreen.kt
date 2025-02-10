@@ -6,7 +6,6 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,25 +46,24 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontVariation.width
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GameRoom
+import com.eeos.rocatrun.home.api.HomeViewModel
 import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.ranking.RankingDialog
 import com.eeos.rocatrun.stats.StatsActivity
-import com.eeos.rocatrun.ui.theme.MyFontFamily
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(homeViewModel: HomeViewModel) {
     val context = LocalContext.current
+
+    // ViewModel에서 가져온 데이터
+    val homeInfoData = homeViewModel.homeData.observeAsState()
 
     // 랭킹 모달 변수
     var showRanking by remember { mutableStateOf(false) }
@@ -152,222 +150,137 @@ fun HomeScreen() {
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset(x = 0.dp, y = 200.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // 닉네임
-            StrokedText(
-                text = "과즙가람",
-                fontSize = 40,
-                strokeColor = Color(0xFF701F3D),
-                strokeWidth = 25f
-            )
-
-            // 캐릭터 이미지
-            Image(
-                painter = painterResource(id = R.drawable.all_img_whitecat),
-                contentDescription = "Cat Character",
+        homeInfoData.value?.data?.let { userData ->
+            Column(
                 modifier = Modifier
-                    .size(230.dp)
-                    .offset(x = 20.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 정보
-            Box(
-                modifier = Modifier
-                    .width(350.dp)
-                    .height(185.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xD70D1314)),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .offset(x = 0.dp, y = 200.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // 레벨 표시
-                        Text(
-                            text = "Lv.5",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFFDA0A)
-                        )
-                        Spacer(modifier = Modifier.width(14.dp))
+                // 닉네임
+                StrokedText(
+                    text = userData.nickname,
+                    fontSize = 40,
+                    strokeColor = Color(0xFF701F3D),
+                    strokeWidth = 25f
+                )
 
-                        // 레벨 게이지
-                        Box(
-                            modifier = Modifier
-                                .width(170.dp)
-                                .height(14.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFFC4C4C4))
+                // 캐릭터 이미지
+                Image(
+                    painter = painterResource(id = R.drawable.all_img_whitecat),
+                    contentDescription = "Cat Character",
+                    modifier = Modifier
+                        .size(230.dp)
+                        .offset(x = 20.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 정보
+                Box(
+                    modifier = Modifier
+                        .width(350.dp)
+                        .height(185.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xD70D1314)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
+                            // 레벨 표시
+                            Text(
+                                text = "Lv.${userData.level}",
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFFDA0A)
+                            )
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            // 레벨 게이지
+                            val progress = (userData.experience.toFloat() / 1000f).coerceIn(0f, 1f)
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(0.49f) // 현재 49% 진행
+                                    .width(170.dp)
                                     .height(14.dp)
-                                    .background(Color(0xFFFFDA0A))
-                            )
-                            Text(
-                                text = "490/1000",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF414141),
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(15.dp))
-
-                    Row() {
-                        // 코인 표시
-                        Box(
-                            modifier = Modifier
-                                .width(150.dp)
-                                .height(100.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0x9E2A4042))
-                                // Glare effect
-                                .innerShadow(
-                                    shape = RectangleShape, color = Color.White.copy(0.56f),
-                                    offsetY = (-2).dp, offsetX = (-2).dp
-                                )
-                                // Shadow effect
-                                .innerShadow(
-                                    shape = RectangleShape, color = Color.Black.copy(0.56f),
-                                    offsetY = 2.dp, offsetX = 2.dp
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column (
-                                modifier = Modifier.padding(top = 10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFFC4C4C4))
                             ) {
-                                Text(
-                                    text = "213500",
-                                    fontSize = 40.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(progress) // 현재 ~~% 진행
+                                        .height(14.dp)
+                                        .background(Color(0xFFFFDA0A))
                                 )
-
-                                Row (
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "캔코인",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-
-                                    Image(
-                                        painter = painterResource(id = R.drawable.home_img_cancoin),
-                                        contentDescription = "cancoin img",
-                                        contentScale = ContentScale.Fit,
-                                        modifier = Modifier.size(50.dp)
-                                    )
-                                }
+                                Text(
+                                    text = "${userData.experience}/1000",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF414141),
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                )
                             }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.height(15.dp))
 
-                        // 게임 횟수 표시
-                        Box(
-                            modifier = Modifier
-                                .width(150.dp)
-                                .height(100.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0x9E2A4042))
-                                // Glare effect
-                                .innerShadow(
-                                    shape = RectangleShape, color = Color.White.copy(0.56f),
-                                    offsetY = (-2).dp, offsetX = (-2).dp
-                                )
-                                // Shadow effect
-                                .innerShadow(
-                                    shape = RectangleShape, color = Color.Black.copy(0.56f),
-                                    offsetY = 2.dp, offsetX = 2.dp
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column (
-                                modifier = Modifier.padding(top = 10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "11승 3패",
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                )
+                        Row() {
+                            // 코인 표시
+                            ReusableInfoBox(
+                                value = userData.coin.toString(),
+                                label = "캔코인",
+                                iconResId = R.drawable.home_img_cancoin
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
 
-                                Row (
-                                    modifier = Modifier.offset(y = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "14판",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-
-                                    Image(
-                                        painter = painterResource(id = R.drawable.home_img_game),
-                                        contentDescription = "cancoin img",
-                                        contentScale = ContentScale.Fit,
-                                        modifier = Modifier.size(50.dp)
-                                    )
-                                }
-                            }
+                            // 게임 횟수 표시
+                            ReusableInfoBox(
+                                value = "${userData.wins}승 ${userData.losses}패",
+                                label = "${userData.totalGames}판",
+                                iconResId = R.drawable.home_img_game,
+                                mainFontSize = 30,
+                                modifier = Modifier.offset(y = 4.dp)
+                            )
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(30.dp))
 
-            // START 버튼
-            Button(
-                onClick = { context.startActivity(Intent(context, GameRoom::class.java)) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                shape = RoundedCornerShape(0.dp),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .width(216.dp)
-                    .height(72.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
+                // START 버튼
+                Button(
+                    onClick = { context.startActivity(Intent(context, GameRoom::class.java)) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier
+                        .width(216.dp)
+                        .height(72.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_btn_start),
-                        contentDescription = "Start Button",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.home_btn_start),
+                            contentDescription = "Start Button",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
 
-                    StrokedText(
-                        text = "START",
-                        color = Color(0xFFFFFFFF),
-                        fontSize = 42,
-                        strokeColor = Color(0xff36DBEB),
-                        strokeWidth = 20f,
-                        letterSpacing = 7f
-                    )
+                        StrokedText(
+                            text = "START",
+                            color = Color(0xFFFFFFFF),
+                            fontSize = 42,
+                            strokeColor = Color(0xff36DBEB),
+                            strokeWidth = 20f,
+                            letterSpacing = 7f
+                        )
+                    }
                 }
             }
         }
-
 
         // 랭킹 모달 표시
         if (showRanking) {
@@ -458,3 +371,63 @@ fun Modifier.innerShadow(
 }
 
 
+@Composable
+fun ReusableInfoBox(
+    value: String,
+    label: String,
+    iconResId: Int,
+    mainFontSize: Int = 40,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .width(150.dp)
+            .height(100.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0x9E2A4042))
+            // Glare effect
+            .innerShadow(
+                shape = RectangleShape, color = Color.White.copy(0.56f),
+                offsetY = (-2).dp, offsetX = (-2).dp
+            )
+            // Shadow effect
+            .innerShadow(
+                shape = RectangleShape, color = Color.Black.copy(0.56f),
+                offsetY = 2.dp, offsetX = 2.dp
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.padding(top = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Value Text
+            Text(
+                text = value,
+                fontSize = mainFontSize.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+
+            Row(
+                modifier = modifier,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = label,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Image(
+                    painter = painterResource(id = iconResId),
+                    contentDescription = label,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(50.dp)
+                )
+            }
+        }
+    }
+}
