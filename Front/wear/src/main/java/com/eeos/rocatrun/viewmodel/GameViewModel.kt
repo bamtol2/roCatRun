@@ -62,7 +62,7 @@ class GameViewModel : ViewModel() {
         _itemUsedSignal.value = true
         incrementTotalItemUsageCount()
         viewModelScope.launch {
-            delay(500) // 중복 전송 방지하기 위한 딜레이
+            delay(1000) // 중복 전송 방지하기 위한 딜레이
             _itemUsedSignal.value = false
         }
     }

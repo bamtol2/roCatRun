@@ -109,6 +109,8 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 val putDataMapRequest = PutDataMapRequest.create("/fever_start")
                 putDataMapRequest.dataMap.apply {
                     putBoolean("feverStart", true)
+                    putLong("timestamp", System.currentTimeMillis())
+
                 }
                 val request = putDataMapRequest.asPutDataRequest().setUrgent()
                 dataClient.putDataItem(request)
@@ -130,6 +132,7 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
             val putDataMapRequest = PutDataMapRequest.create("/fever_end")
             putDataMapRequest.dataMap.apply {
                 putBoolean("feverEnd", true)
+                putLong("timestamp", System.currentTimeMillis())
             }
             val request = putDataMapRequest.asPutDataRequest().setUrgent()
             dataClient.putDataItem(request)

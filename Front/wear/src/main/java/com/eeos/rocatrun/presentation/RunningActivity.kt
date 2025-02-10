@@ -141,6 +141,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 } else 0.0
                 // GameViewModel에서 itemUsed값 가져와서 아이템 사용했는지 체크
                 val itemUsed = gameViewModel.itemUsedSignal.value
+                Log.d("itemUsedCheck", "체크 : $itemUsed")
                 // itemUsed 상태에 따라 데이터 전송
                 if (itemUsed) {
                     sendDataToPhone(itemUsed = true)
@@ -322,7 +323,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             dataMap.putDouble("averagePace", averagePace)
             dataMap.putDouble("averageHeartRate", averageHeartRate)
             dataMap.putInt("totalItemUsage", totalItemUsage)  // 총 아이템 사용 횟수 추가
-        }.asPutDataRequest()
+        }.asPutDataRequest().setUrgent()
 
         Log.d("Final Data 전송", "총 아이템 사용 횟수: $totalItemUsage")
 
@@ -633,7 +634,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             val itemUsedRequest = PutDataMapRequest.create("/use_item").apply {
                 dataMap.putBoolean("itemUsed", true)
                 dataMap.putLong("timestamp", System.currentTimeMillis())
-            }.asPutDataRequest()
+            }.asPutDataRequest().setUrgent()
             Wearable.getDataClient(this).putDataItem(itemUsedRequest)
                 .addOnSuccessListener {
                     Log.d("RunningActivity", "아이템 사용 신호 성공적으로 보냄: $itemUsed")

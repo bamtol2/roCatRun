@@ -177,6 +177,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 gameEnd = getBoolean("gameEnd")
             )
         }
+        Log.d("Multi", "게임 종료 데이터 받는중 : $gameEndData")
     }
 
     private fun generateMockData(): List<UserData> {
