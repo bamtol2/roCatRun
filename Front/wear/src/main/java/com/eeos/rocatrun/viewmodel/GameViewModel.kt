@@ -111,7 +111,7 @@ class GameViewModel : ViewModel() {
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
 
-    private fun startFeverTime(context: Context) {
+    fun startFeverTime(context: Context) {
         _feverTimeActive.value = true
 
         // 진동과 소리 재생
@@ -131,7 +131,7 @@ class GameViewModel : ViewModel() {
     }
 
     // 피버타임 효과 중지
-    private fun stopFeverTimeEffects() {
+    fun stopFeverTimeEffects() {
         _feverTimeActive.value = false
         vibrator?.cancel()
         vibrator = null

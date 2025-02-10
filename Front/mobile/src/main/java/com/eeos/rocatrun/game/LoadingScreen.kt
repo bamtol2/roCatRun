@@ -62,7 +62,7 @@ fun LoadingScreen(
     var maxUsers by remember { mutableStateOf(initialMaxUsers) }
 
     LaunchedEffect(Unit) {
-        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
+//        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
         SocketHandler.mSocket.on("playerJoined") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject
