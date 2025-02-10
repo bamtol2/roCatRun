@@ -79,6 +79,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     // 회원 정보가 있을 경우 바로 HomeActivity로 이동
+                    Log.d("토큰 확인(LoginScreen)", "회원 : $token" )
                     Log.d("회원 체크" , "1. $response, 2. ${response.body()}")
                     val intent = Intent(context, HomeActivity::class.java)
                     context.startActivity(intent)
@@ -87,7 +88,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                     showDialog = true
                 }
             } catch (e: Exception) {
-                Log.e("LoginScreen", "회원 정보 조회 중 오류 발생", e)
+                Log.e("LoginScreen", "회원 정보 조회 중 오류 발생 ${e.message}", )
                 showDialog = true
             }
         } else {
@@ -241,7 +242,7 @@ fun UserInfoDialog(
     var weight by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
-
+    var showErrorModal by remember { mutableStateOf(false) }
 
 
     Dialog(onDismissRequest = onDismiss) {
@@ -472,7 +473,7 @@ fun UserInfoDialog(
                                                 .clip(CircleShape)
                                                 .border(
                                                     if (gender == "male"){
-                                                        BorderStroke(4.dp, Color.Black)
+                                                        BorderStroke(4.dp, Color(0XFF00FFCC))
                                                     }else{
                                                       BorderStroke(0.3.dp,Color.Cyan)
                                                     },
@@ -490,7 +491,7 @@ fun UserInfoDialog(
                                                 .clip(CircleShape)
                                                 .border(
                                                     if (gender == "female"){
-                                                        BorderStroke(4.dp, Color.Black)
+                                                        BorderStroke(4.dp, Color(0XFF00FFCC))
                                                     }else{
                                                         BorderStroke(0.3.dp,Color.Cyan)
                                                     },
@@ -600,7 +601,9 @@ fun UserInfoDialog(
                         .width(150.dp)
                         .height(70.dp)
                         .offset(y = (-25).dp)
-                        .clickable {
+                        .clickable {if (nickname.isEmpty() || age.isEmpty() || height.isEmpty() || weight.isEmpty() || gender.isEmpty()) {
+                            showErrorModal = true
+                        } else{
                              // 회원가입 API 호출
                             coroutineScope.launch {
                                 val token = TokenStorage.getAccessToken(context)
@@ -624,8 +627,8 @@ fun UserInfoDialog(
                                 }
                             }
 
-
                         }
+                    }
                 )
 
 
@@ -634,7 +637,25 @@ fun UserInfoDialog(
 
     }
 
-
+    // 에러 모달창 표시
+    if (showErrorModal) {
+        AlertDialog(
+            onDismissRequest = { showErrorModal = false },
+            confirmButton = {
+                Text(
+                    text = "확인",
+                    modifier = Modifier.clickable { showErrorModal = false }.padding(8.dp),
+                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                )
+            },
+            text = {
+                Text(
+                    text = "모든 필수 정보를 입력해주세요.",
+                    style = TextStyle(fontSize = 16.sp, color = Color.Black)
+                )
+            }
+        )
+    }
 
     // 닉네임 경고 알림 다이얼로그
     if (showNicknameAlert) {
