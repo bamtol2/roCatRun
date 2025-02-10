@@ -1,6 +1,13 @@
 package com.eeos.rocatrun.closet
 
+import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.os.Environment
+import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,14 +37,19 @@ import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -50,6 +62,10 @@ import com.eeos.rocatrun.game.InfoScreen
 import com.eeos.rocatrun.game.MainButtons
 import com.eeos.rocatrun.game.TopNavigation
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.ui.theme.MyFontFamily
+import dev.shreyaspatil.capturable.capturable
+import dev.shreyaspatil.capturable.controller.rememberCaptureController
+import kotlinx.coroutines.launch
 
 
 data class ItemPosition(
@@ -68,37 +84,30 @@ data class WearableItem(
 )
 
 
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeApi::class)
 @Composable
 fun ClosetScreen() {
     // 상단 홈 아이콘 버튼
     val context = LocalContext.current
 
+    // 이미지 캡쳐 변수
+    val captureController = rememberCaptureController()
+    val scope = rememberCoroutineScope()
+
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("전체", "물감", "머리띠", "풍선", "오라")
+
+    // 리스트로 만들어서 착용 아이템들 전달하는 용도로 사용해도 될 듯
     var equippedItem by remember { mutableStateOf<String?>(null) }
 
     // 아이템 더미 리스트
     var items by remember {
         mutableStateOf(
             listOf(
-                WearableItem("aura1", R.drawable.closet_ora_1, ItemPosition(10, 90), 300, "오라", 4),
+                WearableItem("aura1", R.drawable.closet_ora_1, ItemPosition(7, 65), 300, "오라", 4),
                 WearableItem("aura2", R.drawable.closet_ora_2, ItemPosition(10, -50), 300, "오라", 4),
-                WearableItem(
-                    "balloon1",
-                    R.drawable.closet_balloon_1,
-                    ItemPosition(70, -20),
-                    80,
-                    "풍선",
-                    3
-                ),
-                WearableItem(
-                    "balloon2",
-                    R.drawable.closet_balloon_2,
-                    ItemPosition(70, -20),
-                    80,
-                    "풍선",
-                    3
-                ),
+                WearableItem("balloon1", R.drawable.closet_balloon_1, ItemPosition(70, -20), 80, "풍선", 3),
+                WearableItem("balloon2", R.drawable.closet_balloon_2, ItemPosition(70, -20), 80, "풍선", 3),
             )
         )
     }
@@ -130,6 +139,33 @@ fun ClosetScreen() {
             )
         }
 
+        // (임시) 이미지 다운로드 버튼
+        Button(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(y = 70.dp)
+                .padding(10.dp)
+                .border(
+                    width = 2.dp,
+                    color = Color(0xFF36DBEB),
+                    shape = RoundedCornerShape(15.dp)
+                ),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            onClick = {
+                scope.launch {
+                    val bitmapAsync = captureController.captureAsync()
+                    try {
+                        val bitmap = bitmapAsync.await()
+                        saveImageToDownloads(context, bitmap)
+                    } catch (error: Throwable) {
+                        Toast.makeText(context, "이미지 저장 실패: ${error.message}", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            }) {
+            Text(text = "다운로드", fontFamily = MyFontFamily, color = Color.White)
+        }
+
 
         Column(modifier = Modifier.fillMaxSize()) {
             // 상단 캐릭터 영역
@@ -140,7 +176,9 @@ fun ClosetScreen() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CharacterWithItems(wornItems = items.filter { it.isWorn })
+                Box(modifier = Modifier.capturable(captureController)) {
+                    CharacterWithItems(wornItems = items.filter { it.isWorn })
+                }
             }
 
             // 탭과 아이템 목록 영역
@@ -158,11 +196,7 @@ fun ClosetScreen() {
                 )
 
                 // 아이템 목록 + 개수 텍스트
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-
+                Box(modifier = Modifier.fillMaxSize()) {
                     // 아이템 목록 (LazyVerticalGrid)
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(3),
@@ -174,7 +208,7 @@ fun ClosetScreen() {
                                 color = Color(0xD6B9999F),
                                 shape = RoundedCornerShape(12.dp)
                             )
-                            .padding(8.dp), // 내부 여백 추가,
+                            .padding(8.dp),
                         contentPadding = PaddingValues(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -231,6 +265,7 @@ fun ClosetScreen() {
     }
 }
 
+// Custom Tab
 @Composable
 fun CustomTabRow(
     tabs: List<String>,
@@ -276,12 +311,13 @@ fun CustomTabRow(
     }
 }
 
+// Item UI
 @Composable
 fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(120.dp) // 정사각형 크기 설정
+            .size(120.dp)
             .background(color = Color(0x80FFB9C7), shape = RoundedCornerShape(size = 18.dp))
     ) {
         Column(
@@ -295,7 +331,7 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
                     .padding(bottom = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // 아이템 이미지 (임시 텍스트로 대체)
+                // 아이템 이미지
                 Image(
                     painter = painterResource(id = item.imageRes),
                     contentDescription = "아이템",
@@ -317,7 +353,7 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
                     ),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
-                    modifier = Modifier.matchParentSize() // 이미지가 버튼 영역을 채우도록 설정
+                    modifier = Modifier.matchParentSize()
                 )
                 Text(
                     text = if (item.isWorn) "해제" else "착용",
@@ -391,7 +427,7 @@ fun CharacterWithItems(wornItems: List<WearableItem>) {
                 contentDescription = null,
                 modifier = Modifier
                     .size(150.dp)
-                    .offset(x = 15.dp, y = 10.dp) // 이미지 위치 조정
+                    .offset(x = 15.dp, y = 10.dp)
             )
         }
 
@@ -405,5 +441,30 @@ fun CharacterWithItems(wornItems: List<WearableItem>) {
                     .offset(item.position.x.dp, item.position.y.dp)
             )
         }
+    }
+}
+
+
+// 이미지 저장 함수 (폰에 저장됨)
+fun saveImageToDownloads(context: Context, imageBitmap: ImageBitmap) {
+    val bitmap = imageBitmap.asAndroidBitmap()
+    val fileName = "captured_image_${System.currentTimeMillis()}.png"
+
+    val resolver = context.contentResolver
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+    }
+
+    val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+    if (uri != null) {
+        resolver.openOutputStream(uri)?.use { outputStream ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            Toast.makeText(context, "Pictures 폴더에 저장됨: $fileName", Toast.LENGTH_SHORT).show()
+        } ?: Toast.makeText(context, "파일 저장 실패 (OutputStream null)", Toast.LENGTH_SHORT).show()
+    } else {
+        Toast.makeText(context, "파일 저장 실패 (URI null)", Toast.LENGTH_SHORT).show()
     }
 }
