@@ -108,4 +108,7 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
     implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
 
+
+    // socket.io -
+    implementation ("io.socket:socket.io-client:2.0.0")
 }

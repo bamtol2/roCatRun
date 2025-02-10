@@ -17,6 +17,9 @@ class Matching : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val initialCurrentUsers = intent.getIntExtra("currentPlayers", 1)
+        val initialMaxUsers = intent.getIntExtra("maxPlayers", 4)
+
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
                 Color.Transparent.toArgb()
@@ -34,7 +37,11 @@ class Matching : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MatchingScreen()
+                    // LoadingScreen에 전달받은 데이터를 전달
+                    MatchingScreen(
+                        initialCurrentUsers = initialCurrentUsers,
+                        initialMaxUsers = initialMaxUsers
+                    )
                 }
             }
         }

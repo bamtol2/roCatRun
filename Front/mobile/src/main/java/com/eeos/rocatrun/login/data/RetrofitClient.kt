@@ -6,7 +6,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "http://i12e205.p.ssafy.io:8080/"
+    private const val BASE_URL = "https://i12e205.p.ssafy.io:8080/"
 
     // 로그 인터셉터 추가
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

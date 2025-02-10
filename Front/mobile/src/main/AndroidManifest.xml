@@ -14,29 +14,19 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
-        android:usesCleartextTraffic="true"
         android:name=".login.GlobalApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_rocatrun"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_rocatrun_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RoCatRun"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
-
-        <!-- 카카오 SDK를 위한 메타데이터 추가 -->
-        <meta-data
-            android:name="com.kakao.sdk.AppKey"
-            android:value="ee4a19a75c1dad14d8d226e4285b1cba" />
-        <activity
-            android:name=".login.LoginActivity"
-            android:exported="true"
-            android:theme="@style/Theme.RoCatRun" />
-
         <activity
             android:name=".game.GameRoom"
             android:exported="true" />
@@ -72,7 +62,10 @@
             android:name=".login.social.GoogleWebViewLoginActivity"
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />
-
+        <activity
+            android:name=".login.LoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -84,9 +77,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-
-
         <service
             android:name=".service.MessageHandlerService"
             android:exported="true"

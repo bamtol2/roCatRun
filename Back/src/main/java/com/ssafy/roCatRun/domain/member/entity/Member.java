@@ -1,6 +1,6 @@
 package com.ssafy.roCatRun.domain.member.entity;
 
-import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
+import com.ssafy.roCatRun.domain.character.entity.Character;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -58,7 +58,7 @@ public class Member {
      * cascade: Member 엔티티의 변경사항이 Character 엔티티에도 적용
      */
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL)
-    private GameCharacter gameCharacter;
+    private Character character;
 
     /**
      * 엔티티 생성 시 자동으로 호출되는 메서드
@@ -86,14 +86,14 @@ public class Member {
      * 새로운 Member 엔티티를 생성하는 정적 팩토리 메서드
      *
      * @param email 사용자 이메일
-     * @param name 사용자 닉네임
+     * @param nickname 사용자 닉네임
      * @param loginType 소셜 로그인 타입
      * @param socialId 소셜 서비스의 고유 ID
      * @return 생성된 Member 엔티티
      */
-    public static Member createMember(String email, String name, String loginType, String socialId) {
+    public static Member createMember(String email, String nickname, String loginType, String socialId) {
         Member member = new Member();
-        member.setName(name);
+        member.setName(nickname);
         member.setLoginType(loginType);
         member.setSocialId(socialId);
         member.setEmail(email);
@@ -107,18 +107,10 @@ public class Member {
      * @return Character 회원의 캐릭터 정보
      * @throws RuntimeException 캐릭터가 존재하지 않는 경우
      */
-    public GameCharacter getGameCharacter() {
-        if (this.gameCharacter == null) {
+    public Character getCharacter() {
+        if (this.character == null) {
             throw new RuntimeException("Character not found for member");
         }
-        return this.gameCharacter;
-    }
-
-    /**
-     * 소셜 로그인 타입을 반환
-     * @return 소셜 로그인 타입 (KAKAO, NAVER, GOOGLE)
-     */
-    public String getSocialType() {
-        return this.loginType;
+        return this.character;
     }
 }
