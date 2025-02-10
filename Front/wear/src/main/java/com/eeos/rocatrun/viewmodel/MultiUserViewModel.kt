@@ -1,7 +1,9 @@
 package com.eeos.rocatrun.viewmodel
 
+import android.app.Application
 import android.content.Context
 import android.provider.ContactsContract.Data
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
@@ -25,8 +27,11 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
+import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
+import androidx.lifecycle.AndroidViewModel
+
 
 data class UserData(
     val nickname: String,
@@ -34,12 +39,15 @@ data class UserData(
     val itemCount: Int
 )
 // ViewModel 정의
-class MultiUserViewModel(context: Context) : ViewModel(), DataClient.OnDataChangedListener {
+class MultiUserViewModel(application: Application) : AndroidViewModel(application), DataClient.OnDataChangedListener {
 
     private lateinit var dataClient: DataClient
     private val _userList = MutableStateFlow<List<UserData>>(emptyList())
 
     private var playersData by mutableStateOf<PlayersData?>(null)
+    private var bossHealthData by mutableStateOf<BossHealthData?>(null)
+    private var feverEndData by mutableStateOf<FeverEndData?>(null)
+    private var feverStartData by mutableStateOf<FeverStartData?>(null)
     // 실시간으로 받아올 사용자들의 러닝 데이터
 
 
@@ -52,7 +60,21 @@ class MultiUserViewModel(context: Context) : ViewModel(), DataClient.OnDataChang
         val itemCount: Int
     )
 
+    // 피버 시작 데이터
+    data class FeverStartData(
+        val feverstart : Boolean
+    )
+    // 피버 종료 데이터
+    data class FeverEndData(
+        val feverend : Boolean
+    )
+    // 보스 체력 데이터
+    data class BossHealthData(
+        val bossHealth: Int
+    )
 
+
+    private val context = application.applicationContext
 
     val userList: StateFlow<List<UserData>> get() = _userList
 
@@ -76,27 +98,53 @@ class MultiUserViewModel(context: Context) : ViewModel(), DataClient.OnDataChang
                 val dataItem = event.dataItem
                 when(dataItem.uri.path){
                     "/players_data" -> processPlayersData(dataItem)
+                    "/boss_health" -> processBossHealthData(dataItem)
+                    "/fever_start" -> processFeverStartData(dataItem)
+                    "/fever_end" -> processFeverEndData(dataItem)
+
                 }
             }
 
         }
     }
+    // 실시간 유저 데이터
     private fun processPlayersData(dataItem: DataItem) {
-        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
-        val nickname = dataMap.getString("userId", "Unknown")
-        val distance = dataMap.getDouble("distance", 0.0)
-        val itemCount = dataMap.getInt("itemUseCount", 0)
-
-        // playersData 업데이트
-        val updatedData = PlayersData(nickname, distance, itemCount)
-
-        // 사용자 리스트 업데이트 (예시로 단순히 리스트에 추가하는 방식)
-        viewModelScope.launch {
-            val currentList = _userList.value.toMutableList()
-            currentList.removeIf { it.nickname == nickname }  // 기존 데이터 제거
-            currentList.add(UserData(updatedData.nickname, updatedData.distance, updatedData.itemCount))
-            _userList.emit(currentList)
+        DataMapItem.fromDataItem(dataItem).dataMap.apply {
+            playersData = PlayersData(
+                nickname = getString("nickname") ?: "Unknown",
+                distance = getDouble("distance"),
+                itemCount = getInt("itemUsed")
+            )
         }
+        Log.d("Multi", "사용자 데이터 받는중 : $playersData")
+    }
+
+    // 실시간 보스 체력 데이터
+    private fun processBossHealthData(dataItem: DataItem){
+        DataMapItem.fromDataItem(dataItem).dataMap.apply{
+            bossHealthData = BossHealthData(
+                bossHealth = getInt("bosshealth")
+            )
+        }
+        Log.d("Multi", "보스 체력 데이터 받는중 : $bossHealthData" )
+    }
+
+    private fun processFeverStartData(dataItem: DataItem){
+        DataMapItem.fromDataItem(dataItem).dataMap.apply{
+            feverStartData = FeverStartData(
+                feverstart = getBoolean("feverStart")
+            )
+        }
+        Log.d("Multi", "피버 시작 데이터 받는중 : $feverStartData")
+    }
+
+    private fun processFeverEndData(dataItem: DataItem){
+        DataMapItem.fromDataItem(dataItem).dataMap.apply{
+            feverEndData = FeverEndData(
+                feverend = getBoolean("feverEnd")
+            )
+        }
+        Log.d("Multi", "피버 종료 데이터 받는중 : $feverEndData")
     }
 
 
