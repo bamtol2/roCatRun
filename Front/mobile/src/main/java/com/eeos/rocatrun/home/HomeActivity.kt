@@ -13,11 +13,7 @@ class HomeActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-
-            // 소켓 초기화, 연결
-            SocketHandler.initialize()
-            SocketHandler.connect()
-
+            
             RoCatRunTheme {
                 HomeScreen()
             }

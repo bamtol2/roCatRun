@@ -356,6 +356,10 @@ fun CreateRoomContent(onBack: () -> Unit) {
 
                     onGenerateClick = {
 
+                        // 소켓 초기화, 연결
+                        SocketHandler.initialize()
+                        SocketHandler.connect()
+
                         // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
                         val bossLevel = when (selectedDifficulty) {
                             "상" -> "HARD"
@@ -538,6 +542,9 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         )
                         // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
+                            // 소켓 초기화, 연결
+                            SocketHandler.initialize()
+                            SocketHandler.connect()
 
                             // 웹소켓 입장 이벤트 호출: 성공하면 LoadingActivity로 이동, 에러면 모달 띄움
                             JoinRoomSocket(inviteCode = inviteCode,
@@ -743,6 +750,10 @@ fun RandomContent(onBack: () -> Unit) {
                     enabled = isRandomMatchEnabled,
                     onRandomMatchClick = {
 
+                        // 소켓 초기화, 연결
+                        SocketHandler.initialize()
+                        SocketHandler.connect()
+
                         // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
                         val bossLevel = when (randomDifficulty) {
                             "상" -> "HARD"
@@ -917,6 +928,10 @@ fun SingleContent(onBack: () -> Unit) {
                 SingleSection(
                     enabled = isSingleEnabled,
                     onSingleClick = {
+
+                        // 소켓 초기화, 연결
+                        SocketHandler.initialize()
+                        SocketHandler.connect()
 
                         // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
                         val bossLevel = when (singleDifficulty) {
