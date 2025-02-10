@@ -9,14 +9,14 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.net.URISyntaxException
-
+import com.eeos.rocatrun.login.data.TokenStorage
 
 object SocketHandler {
     lateinit var mSocket: Socket
 
     // 유저 2 생성 토큰
-    private var user1Token: String = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTczOTE1NTY4NSwiZXhwIjoxNzM5MjQyMDg1fQ.eQDqgfpY-5cjvv9hNtb1TrLgM915PXkODCW8k3gTz_StxqSncJ6LNClN_o_pq8eO-cNKzKaIrKsvtFd8JDoCdg"
 
+    val user1Token = TokenStorage.getAccessTokenWithOutContext() ?: ""
     private var authValue = "Bearer $user1Token"
 
     // 웹소켓 통신 베이스 주소 - 추후 https 로 바뀔 예정
