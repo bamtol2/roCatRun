@@ -20,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,8 +43,11 @@ import com.eeos.rocatrun.result.MultiLoseScreen
 import com.eeos.rocatrun.result.MultiWinScreen
 import com.eeos.rocatrun.result.SingleLoseScreen
 import com.eeos.rocatrun.result.SingleWinScreen
+import com.eeos.rocatrun.socket.SocketHandler
 import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import org.json.JSONObject
 
 
 @Composable
@@ -56,6 +60,106 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
     var showSingleLoseDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+    val dataClient = Wearable.getDataClient(context)
+
+    LaunchedEffect(Unit) {
+
+        // 웹소켓 - 보스체력 이벤트 수신
+        SocketHandler.mSocket.on("gameStatusUpdated") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val responseJson = args[0] as JSONObject
+                val bossHealth = responseJson.optInt("bossHealth", 10000)
+
+                Log.d(
+                    "Socket", "On - gameStatusUpdated: " +
+                            "bossHealth: $bossHealth"
+                )
+
+                // 워치에 bossHealth 보내기
+                val putDataMapRequest = PutDataMapRequest.create("/boss_health")
+                putDataMapRequest.dataMap.apply {
+                    putInt("bossHealth",bossHealth)
+                }
+                val request = putDataMapRequest.asPutDataRequest().setUrgent()
+                dataClient.putDataItem(request)
+                    .addOnSuccessListener { _ ->
+                        Log.d("Wear", "보스체력 업데이트 송신")
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("Wear", "보스체력 업데이트 실패", exception)
+                    }
+            }
+
+        }
+
+        // 웹소켓 - 피버시작 이벤트 수신
+        // 서버에서 gameStatusUpdated 응답 받기
+        SocketHandler.mSocket.on("feverTimeStarted") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val responseJson = args[0] as JSONObject
+                val active = responseJson.optBoolean("active", false)
+                val duration = responseJson.optInt("duration", 0)
+
+                Log.d(
+                    "Socket", "On - feverTimeStarted"
+                )
+
+                // 워치에 피버타임 시작 메세지 보내기
+                val putDataMapRequest = PutDataMapRequest.create("/fever_start")
+                putDataMapRequest.dataMap.apply {
+                    putBoolean("feverStart", true)
+                }
+                val request = putDataMapRequest.asPutDataRequest().setUrgent()
+                dataClient.putDataItem(request)
+                    .addOnSuccessListener { _ ->
+                        Log.d("Wear", "피버타임 시작")
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("Wear", "피버타임 시작 실패", exception)
+                    }
+            }
+        }
+
+        // 웹소켓 - 피버종료 이벤트 수신
+        // 서버에서 gameStatusUpdated 응답 받기
+        SocketHandler.mSocket.on("feverTimeEnded") {
+            Log.d("Socket", "On - feverTimeEnded")
+
+            // 워치에 피버타임 종료 메세지 보내기
+            val putDataMapRequest = PutDataMapRequest.create("/fever_end")
+            putDataMapRequest.dataMap.apply {
+                putBoolean("feverEnd", true)
+            }
+            val request = putDataMapRequest.asPutDataRequest().setUrgent()
+            dataClient.putDataItem(request)
+                .addOnSuccessListener { _ ->
+                    Log.d("Wear", "피버타임 종료")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Wear", "피버타임 종료 실패", exception)
+                }
+        }
+
+        // 웹소켓 - 게임 종료 이벤트 수신
+        SocketHandler.mSocket.on("gameOver") {
+            Log.d("Socket", "On - gameOver")
+
+            // 워치에 게임종료 메세지 보내기
+            val putDataMapRequest = PutDataMapRequest.create("/game_end")
+            putDataMapRequest.dataMap.apply {
+                putBoolean("gameEnd", true)
+            }
+            val request = putDataMapRequest.asPutDataRequest().setUrgent()
+            dataClient.putDataItem(request)
+                .addOnSuccessListener { _ ->
+                    Log.d("Wear", "게임 종료")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Wear", "게임 종료 실패", exception)
+                }
+        }
+    }
 
     // 워치화면 띄우기
     fun startWatchApp(context: Context) {

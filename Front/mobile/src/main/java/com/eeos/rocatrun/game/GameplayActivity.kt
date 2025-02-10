@@ -230,8 +230,6 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         context.startActivity(Intent.createChooser(shareIntent, "GPX 파일 공유"))
     }
 
-
-
     // 웹소켓 - 실시간 러닝데이터 송신
     private fun updateRunDataSocket(
         distance: Double,
@@ -291,93 +289,6 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
                     }
 
             }
-        }
-    }
-
-    // 웹소켓 - 보스체력 이벤트 수신
-    private fun bossHealthSocket(){
-
-        // 서버에서 gameStatusUpdated 응답 받기
-        SocketHandler.mSocket.on("gameStatusUpdated") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val responseJson = args[0] as JSONObject
-                val bossHealth = responseJson.optInt("bossHealth", 10000)
-
-                Log.d(
-                    "Socket", "On - gameStatusUpdated: " +
-                            "bossHealth: $bossHealth"
-                )
-
-                // 워치에 bossHealth 보내기
-                val putDataMapRequest = PutDataMapRequest.create("/boss_health")
-                putDataMapRequest.dataMap.apply {
-                    putInt("bossHealth",bossHealth)
-                }
-                val request = putDataMapRequest.asPutDataRequest().setUrgent()
-                dataClient.putDataItem(request)
-                    .addOnSuccessListener { _ ->
-                        Log.d("Wear", "보스체력 업데이트 송신")
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("Wear", "보스체력 업데이트 실패", exception)
-                    }
-            }
-        }
-    }
-
-    // 웹소켓 - 피버시작 이벤트 수신
-    private fun feverStartSocket(){
-
-        // 서버에서 gameStatusUpdated 응답 받기
-        SocketHandler.mSocket.on("feverTimeStarted") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val responseJson = args[0] as JSONObject
-                val active = responseJson.optBoolean("active", false)
-                val duration = responseJson.optInt("duration", 0)
-
-                Log.d(
-                    "Socket", "On - feverTimeStarted"
-                )
-
-                // 워치에 피버타임 시작 메세지 보내기
-                val putDataMapRequest = PutDataMapRequest.create("/fever_start")
-                putDataMapRequest.dataMap.apply {
-                    putBoolean("feverStart", true)
-                }
-                val request = putDataMapRequest.asPutDataRequest().setUrgent()
-                dataClient.putDataItem(request)
-                    .addOnSuccessListener { _ ->
-                        Log.d("Wear", "피버타임 시작")
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("Wear", "피버타임 시작 실패", exception)
-                    }
-
-            }
-        }
-    }
-
-    // 웹소켓 - 피버종료 이벤트 수신
-    private fun feverEndSocket(){
-
-        // 서버에서 gameStatusUpdated 응답 받기
-        SocketHandler.mSocket.on("feverTimeEnded") { 
-            Log.d("Socket", "On - feverTimeEnded")
-
-            // 워치에 피버타임 종료 메세지 보내기
-            val putDataMapRequest = PutDataMapRequest.create("/fever_end")
-            putDataMapRequest.dataMap.apply {
-                putBoolean("feverEnd", true)
-            }
-            val request = putDataMapRequest.asPutDataRequest().setUrgent()
-            dataClient.putDataItem(request)
-                .addOnSuccessListener { _ ->
-                    Log.d("Wear", "피버타임 종료")
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("Wear", "피버타임 종료 실패", exception)
-                }
-
         }
     }
 }
