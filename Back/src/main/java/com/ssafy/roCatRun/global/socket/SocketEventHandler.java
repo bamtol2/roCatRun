@@ -11,10 +11,11 @@ import com.ssafy.roCatRun.domain.game.service.manager.GameDisconnectionManager;
 import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
 import com.ssafy.roCatRun.domain.game.service.GameService;
-import com.ssafy.roCatRun.global.util.JwtUtil;
+import com.ssafy.roCatRun.global.security.jwt.JwtTokenProvider;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -31,7 +32,7 @@ public class SocketEventHandler {
     private final GameService gameService;
     private final GameRoomManager gameRoomManager;
     private final GameDisconnectionManager disconnectionManager;
-    private final JwtUtil jwtUtil;
+    private final JwtTokenProvider jwtTokenProvider;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @PostConstruct
@@ -186,7 +187,20 @@ public class SocketEventHandler {
 
     private void handleAuthentication(SocketIOClient client, AuthenticateRequest data) {
         try {
-            String userId = validateAndGetUserId(data.getToken());
+            String token = data.getToken();
+
+            // 토큰 유효성 검증
+            if (!jwtTokenProvider.validateToken(token)) {
+                throw new RuntimeException("Invalid token");
+            }
+
+            // Security Context와 동일한 방식으로 Authentication 객체 생성
+            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+            String userId = authentication.getName();
+
+            if (userId == null) {
+                throw new RuntimeException("User ID not found in token");
+            }
 
             // 재접속 시도
             boolean reconnected = disconnectionManager.handlePlayerReconnection(userId, client);
@@ -276,7 +290,15 @@ public class SocketEventHandler {
     }
 
     private String validateAndGetUserId(String token) {
-        String userId = jwtUtil.extractUserId(token);
+        // 토큰 유효성 검증
+        if (!jwtTokenProvider.validateToken(token)) {
+            throw new RuntimeException("Invalid token");
+        }
+
+        // Security Context와 동일한 방식으로 인증 정보 추출
+        Authentication authentication = jwtTokenProvider.getAuthentication(token);
+        String userId = authentication.getName();
+
         if (userId == null) {
             throw new RuntimeException("Invalid token: userId not found");
         }

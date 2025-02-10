@@ -40,6 +40,9 @@ dependencies {
     // Actuator: 애플리케이션 모니터링
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
+    // WebClient 사용을 위해 필요
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
     // === 보안 관련 ===
     // Spring Security: 보안 기능
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -67,7 +70,6 @@ dependencies {
     // === 개발 편의성 ===
     // DevTools: 자동 리로드 등 개발 편의 기능
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
     // 보안 테스트
