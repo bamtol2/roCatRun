@@ -91,6 +91,12 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    // ViewModel이 소멸될 때 호출되는 메서드
+    override fun onCleared() {
+        super.onCleared()
+        dataClient.removeListener(this)
+        Log.d("MultiUserViewModel", "데이터 리스너 제거됨")
+    }
 
     override fun onDataChanged(dataEvents: DataEventBuffer){
         dataEvents.forEach{ event ->
