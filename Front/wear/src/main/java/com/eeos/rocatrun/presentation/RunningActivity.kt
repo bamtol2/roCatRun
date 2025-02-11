@@ -98,6 +98,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var sensorManager: SensorManager
+    private var stepCounter: Sensor? = null
     private var heartRateSensor: Sensor? = null
     private var formatUtils = FormatUtils()
 
@@ -117,6 +118,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var averageHeartRate by mutableDoubleStateOf(0.0)
     private var heartRateSum = 0
     private var heartRateCount = 0
+    private var initialStepCount: Int = 0
+    private var lastStepCount: Int = 0
+    private var lastStepTimestamp = 0L
 
     // 발걸음수
     private var stepCount = 0  // 누적 걸음 수
@@ -189,11 +193,11 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
-        val stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
-        stepDetectorSensor?.let {
+        stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+        stepCounter?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
-            Log.d("StepDetector", "Step detector sensor registered successfully.")
-        } ?: Log.w("StepDetector", "No step detector sensor available.")
+            Log.d("StepCounter", "Step counter sensor registered successfully.")
+        } ?: Log.w("StepCounter", "No step counter sensor available.")
 
         requestPermissions()
     }
@@ -245,7 +249,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private fun requestPermissions() {
         val permissions = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.BODY_SENSORS
+            Manifest.permission.BODY_SENSORS,
+            Manifest.permission.ACTIVITY_RECOGNITION
         )
 
         if (permissions.any {
@@ -286,10 +291,13 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private fun startTracking() {
         if (isRunning) return
         resetTrackingData()
+        cadenceList.clear()
+
         isRunning = true
         startTime = System.currentTimeMillis()
+
+
         handler.post(updateRunnable)
-        cadenceHandler.post(updateCadenceRunnable)
 
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY, 1000
@@ -312,6 +320,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         averageHeartRate = 0.0
         heartRate = "--"
         lastLocation = null
+        initialStepCount = 0
+        lastStepCount = 0
+        lastStepTimestamp = 0L
+        stepCount = 0
         currentCadence = 0
     }
 
@@ -326,7 +338,11 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         if (heartRateCount > 0) {
             averageHeartRate = heartRateSum.toDouble() / heartRateCount
         }
-        cadenceHandler.removeCallbacks(updateCadenceRunnable)
+
+        val averageCadence = calculateAverageCadence()
+        Log.d("FinalStats", "Average Cadence: $averageCadence steps/min")
+
+        sensorManager.unregisterListener(this)
 
         Log.d("Stats",
             "Elapsed Time: ${formatUtils.formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
@@ -396,33 +412,33 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         val startTime = System.currentTimeMillis()
         var locationIndex = 0
         var lastHeartRate = 0
+        if (isRunning) {
+            for (i in heartRateList.indices) {
+                val heartRate = if (i < heartRateList.size) heartRateList[i] else lastHeartRate
+                lastHeartRate = heartRate
+                val pace = if (i < paceList.size) paceList[i] else 0.0
+                val time = startTime + (i * 1000)
+                if (locationIndex < locationList.size && locationList[locationIndex].time <= time) {
+                    val location = locationList[locationIndex]
+                    gpxBuilder.append("      <trkpt lat=\"${location.latitude}\" lon=\"${location.longitude}\">\n")
+                    gpxBuilder.append("        <ele>${location.altitude}</ele>\n")
+                    locationIndex++
+                } else {
+                    gpxBuilder.append("      <trkpt>\n")
+                    gpxBuilder.append("        <ele></ele>\n")
+                }
 
-        for (i in heartRateList.indices) {
-            val heartRate = if (i < heartRateList.size) heartRateList[i] else lastHeartRate
-            lastHeartRate = heartRate
-            val pace = if (i < paceList.size) paceList[i] else 0.0
-            val time = startTime + (i * 1000)
-            if (locationIndex < locationList.size && locationList[locationIndex].time <= time) {
-                val location = locationList[locationIndex]
-                gpxBuilder.append("      <trkpt lat=\"${location.latitude}\" lon=\"${location.longitude}\">\n")
-                gpxBuilder.append("        <ele>${location.altitude}</ele>\n")
-                locationIndex++
-            } else {
-                gpxBuilder.append("      <trkpt>\n")
-                gpxBuilder.append("        <ele></ele>\n")
+                gpxBuilder.append("        <extensions>\n")
+                gpxBuilder.append("          <gpxtpx:TrackPointExtension>\n")
+                gpxBuilder.append("            <gpxtpx:hr>$heartRate</gpxtpx:hr>\n")
+                gpxBuilder.append("            <gpxtpx:pace>$pace</gpxtpx:pace>\n")
+                gpxBuilder.append("            <gpxtpx:cad>${cadenceList.lastOrNull() ?: 0}</gpxtpx:cad>\n")
+                gpxBuilder.append("          </gpxtpx:TrackPointExtension>\n")
+                gpxBuilder.append("        </extensions>\n")
+                gpxBuilder.append("        <time>${sdf.format(Date(time))}</time>\n")
+                gpxBuilder.append("      </trkpt>\n")
             }
-
-            gpxBuilder.append("        <extensions>\n")
-            gpxBuilder.append("          <gpxtpx:TrackPointExtension>\n")
-            gpxBuilder.append("            <gpxtpx:hr>$heartRate</gpxtpx:hr>\n")
-            gpxBuilder.append("            <gpxtpx:pace>$pace</gpxtpx:pace>\n")
-            gpxBuilder.append("            <gpxtpx:cad>${cadenceList.lastOrNull() ?: 0}</gpxtpx:cad>\n")
-            gpxBuilder.append("          </gpxtpx:TrackPointExtension>\n")
-            gpxBuilder.append("        </extensions>\n")
-            gpxBuilder.append("        <time>${sdf.format(Date(time))}</time>\n")
-            gpxBuilder.append("      </trkpt>\n")
         }
-
         gpxBuilder.append("    </trkseg>\n")
         gpxBuilder.append("  </trk>\n")
         gpxBuilder.append("</gpx>")
@@ -751,17 +767,26 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     Log.d("추가", "심박수 추가")
                 }
             }
-            Sensor.TYPE_STEP_DETECTOR -> {
-                stepCount++
+            Sensor.TYPE_STEP_COUNTER -> {
+                val currentSteps = event.values[0].toInt()
                 val currentTime = System.currentTimeMillis()
-                stepTimes.add(currentTime)
-                Log.d("걸음수", "걸음시간 :$stepTimes" )
 
-                Log.d("StepTimes", "Step times: $stepTimes")
-                Log.d("CadenceCalculation", "Elapsed time in minutes: ${(stepTimes.last() - stepTimes.first()) / 60000.0}")
+                if (initialStepCount == 0) {
+                    initialStepCount = currentSteps
+                    lastStepCount = currentSteps
+                    lastStepTimestamp = currentTime
+                } else {
+                    val stepsDelta = currentSteps - lastStepCount
+                    val timeDelta = currentTime - lastStepTimestamp
 
-                Log.d("StepDetector", "Step detected. Total steps: $stepCount")
-                updateCadence()
+                    if (stepsDelta > 0 && timeDelta > 0) {
+                        updateStepCount(stepsDelta)
+                        updateCadence(stepsDelta, timeDelta)
+                    }
+
+                    lastStepCount = currentSteps
+                    lastStepTimestamp = currentTime
+                }
             }
         }
     }
@@ -777,24 +802,16 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         return recentSteps * 2
     }
 
-    // 주기적 업데이트를 위한 핸들러
-    private val cadenceHandler = Handler(Looper.getMainLooper())
-    private val updateCadenceRunnable = object : Runnable {
-        override fun run() {
-            updateCadence()
-            cadenceHandler.postDelayed(this, 5000) // 5초 간격 업데이트
-        }
+    private fun updateStepCount(stepsDelta: Int) {
+        stepCount += stepsDelta
+        Log.d("StepCounter", "Total steps: $stepCount")
     }
 
-    private fun updateCadence() {
-        val now = System.currentTimeMillis()
-        val oneMinuteAgo = now - 60000
-
-        // 최근 1분간 걸음 수 계산
-        val recentSteps = stepTimes.count { it > oneMinuteAgo }
-        currentCadence = recentSteps
-
-        cadenceList.add(recentSteps)
+    private fun updateCadence(stepsDelta: Int, timeDelta: Long) {
+        val cadence = (stepsDelta.toFloat() / (timeDelta / 60000f)).roundToInt()
+        currentCadence = cadence
+        cadenceList.add(cadence)
+        Log.d("Cadence", "Current cadence: $cadence steps/min")
     }
 
     // 오래된 데이터 정리
@@ -805,10 +822,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
 
     private fun calculateAverageCadence(): Int {
-        if (stepTimes.size <= 1) return 0
-        val elapsedTimeInMinutes = (stepTimes.last() - stepTimes.first()) / 60000.0
-        return if (elapsedTimeInMinutes > 0) {
-            (stepTimes.size / elapsedTimeInMinutes).roundToInt()
+        return if (cadenceList.isNotEmpty()) {
+            cadenceList.average().roundToInt()
         } else {
             0
         }
