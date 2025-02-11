@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // "/api/auth/**" 경로는 누구나 접근 가능
                         .requestMatchers("/api/auth/**").permitAll()
+                        // "/domian/mypage/**" 경로는 누구나 접근 가능
+                        .requestMatchers("/domain/mypage").permitAll()
                         // 닉네임 중복 체크도 누구나 가능
                         .requestMatchers("/domain/characters/**").permitAll()
                         // Swagger 관련 경로도 누구나 접근 가능
