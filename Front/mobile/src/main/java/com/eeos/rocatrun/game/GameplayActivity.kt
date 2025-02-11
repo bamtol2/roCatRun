@@ -88,10 +88,14 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // intent로 전달된 bossHealth 추출
+        val firstBossHealth = intent.getIntExtra("firstBossHealth", 100000)
         dataClient = Wearable.getDataClient(this)
 
-        // 워치 앱을 시작하면서 성공 시 onSuccess 콜백 실행하도록 수정
-        fun startWatchApp(context: Context, onSuccess: () -> Unit) {
+        Log.d("Socket", "페이지 이동 후 표출 $firstBossHealth")
+
+        // 워치 앱을 시작
+        fun startWatchApp(context: Context) {
             val messageClient: MessageClient = Wearable.getMessageClient(context)
             val path = "/start_watch_app"
             val messageData = "Start Game".toByteArray()
@@ -103,10 +107,9 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
 
                     messageClient.sendMessage(nodeId, path, messageData).apply {
                         addOnSuccessListener {
-                            // 메시지 전송 성공 후 콜백 실행
-                            onSuccess()
                             Log.d("Wear APP", "메시지 전송 성공")
                             Toast.makeText(context, "워치 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
+                            gameStartEvent(firstBossHealth)
                         }
                         addOnFailureListener { exception ->
                             Log.e("Wear APP", "메시지 전송 실패: ${exception.message}")
@@ -124,10 +127,10 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         }
 
         // 메세지 보내기
-        startWatchApp(this){
-            gameStartSocket()
-            playerDataUpdatedSocket()
-        }
+        startWatchApp(this)
+//        gameStartEvent(firstBossHealth)
+
+        playerDataUpdatedSocket()
 
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
@@ -158,13 +161,11 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
     override fun onResume() {
         super.onResume()
         dataClient.addListener(this)
-//        registerSocketListeners()
     }
 
     override fun onPause() {
         super.onPause()
         dataClient.removeListener(this)
-//        unregisterSocketListeners()
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -295,31 +296,21 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
     }
 
     // 웹소켓 - 게임 스타트 수신
-    private fun gameStartSocket(){
-        SocketHandler.mSocket.off("gameStart")
-        // 게임 스타트 이벤트 시작
-        SocketHandler.mSocket.on("gameStart") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val json = args[0] as JSONObject
-                val firstBossHealth = json.optInt("bossHp", 10000)
+    private fun gameStartEvent(firstBossHealth: Int){
 
-                Log.d("Socket", "On - gameStart : $firstBossHealth")
-
-                // 워치에 초기 boss health 보내기
-                val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
-                putDataMapRequest.dataMap.apply {
-                    putInt("firstBossHealth",firstBossHealth)
-                }
-                val request = putDataMapRequest.asPutDataRequest().setUrgent()
-                dataClient.putDataItem(request)
-                    .addOnSuccessListener { _ ->
-                        Log.d("Wear", "보스 초기 체력 송신")
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("Wear", "보스 초기 체력 송신 실패", exception)
-                    }
-            }
+        // 워치에 초기 boss health 보내기
+        val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
+        putDataMapRequest.dataMap.apply {
+            putInt("firstBossHealth",firstBossHealth)
         }
+        val request = putDataMapRequest.asPutDataRequest().setUrgent()
+        dataClient.putDataItem(request)
+            .addOnSuccessListener { _ ->
+                Log.d("Wear", "보스 초기 체력 송신")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Wear", "보스 초기 체력 송신 실패", exception)
+            }
     }
 
     // 웹소켓 - 실시간 러닝데이터 송신

@@ -64,7 +64,7 @@ fun LoadingScreen(
     val dataClient = Wearable.getDataClient(context)
 
     LaunchedEffect(Unit) {
-//        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
+        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
         SocketHandler.mSocket.on("playerJoined") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject
@@ -95,6 +95,7 @@ fun LoadingScreen(
                 maxUsers = json.optInt("maxPlayers", maxUsers)
             }
         }
+        SocketHandler.mSocket.off("gameReady")
         SocketHandler.mSocket.on("gameReady") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject

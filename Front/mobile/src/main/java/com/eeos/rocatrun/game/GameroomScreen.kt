@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -928,10 +929,6 @@ fun SingleContent(onBack: () -> Unit) {
                     enabled = isSingleEnabled,
                     onSingleClick = {
 
-//                        // 소켓 초기화, 연결
-//                        SocketHandler.initialize(context)
-//                        SocketHandler.connect()
-
                         // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
                         val bossLevel = when (singleDifficulty) {
                             "상" -> "HARD"
@@ -940,16 +937,15 @@ fun SingleContent(onBack: () -> Unit) {
                             else -> "EASY" // 기본값 설정
                         }
 
-                        singlePlaySocket(bossLevel, 1) { bossLevel, playerNum ->
+                        singlePlaySocket(bossLevel, 1) { firstBossHealth ->
                             val intent = Intent(context, GamePlay::class.java)
-                            intent.putExtra("bossLevel", bossLevel)
-                            intent.putExtra("playerNum", playerNum)
+                            intent.putExtra("firstBossHealth", firstBossHealth)
                             context.startActivity(intent)
+                            Log.d("Socket", "firstBossHealth: $firstBossHealth")
                         }
                     }
                 )
             }
-
             Spacer(modifier = Modifier.height(15.dp))
         }
     }
@@ -1183,6 +1179,7 @@ fun RandomMatchSocket(
     SocketHandler.mSocket.emit("randomMatch", randomMatchJson)
 
     // 매치 상황 이벤트 리스너 등록
+    SocketHandler.mSocket.off("matchStatus")
     SocketHandler.mSocket.on("matchStatus") { args ->
         if (args.isNotEmpty() && args[0] is JSONObject) {
             val json = args[0] as JSONObject
@@ -1207,12 +1204,12 @@ fun RandomMatchSocket(
 fun singlePlaySocket(
     bossLevel: String,
     roomPlayers: Int,
-    gameStart: (bossLevel: String,
-                   playerNum: Int) -> Unit)
+    gameStart: (firstBossHealth: Int) -> Unit)
 {
+    var firstBossHealth = 0
     // 전송할 JSON 생성
     val singleMatchJson = JSONObject().apply {
-        put("bossLevel", bossLevel)    // "EASY" "MEDIUM", "HARD"
+        put("bossLevel", bossLevel)    // "EASY" "NORMAL", "HARD"
         put("maxPlayers", roomPlayers)        // 1
     }
     Log.d("Socket", "Emit - singleRandomMatch")
@@ -1224,6 +1221,15 @@ fun singlePlaySocket(
         Log.d("Socket", "On - gameReady")
     }
 
-    // 콜백
-    gameStart(bossLevel, 1)
+    // 게임 스타트 이벤트 시작
+    SocketHandler.mSocket.on("gameStart") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+            firstBossHealth = json.optInt("bossHp", 10000)
+
+            Log.d("Socket", "On - gameStart : $firstBossHealth")
+        }
+
+        gameStart(firstBossHealth)
+    }
 }
