@@ -80,6 +80,7 @@ object SocketHandler {
                 val success = json.optBoolean("success", false)
                 Log.d("Socket", "On - authenticated : success=$success")
             }
+            Log.d("Socket", "On - authenticated : success")
         }
 
         // 연결 시작
@@ -104,7 +105,5 @@ object SocketHandler {
             mSocket.disconnect()
         }
     }
-
-
 }
 

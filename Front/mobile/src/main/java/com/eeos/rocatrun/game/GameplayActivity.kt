@@ -261,7 +261,7 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
                 val json = args[0] as JSONObject
                 val firstBossHealth = json.optInt("bossHp", 10000)
 
-                Log.d("Socket", "On - gameStart")
+                Log.d("Socket", "On - gameStart : $firstBossHealth")
 
                 // 워치에 초기 boss health 보내기
                 val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
@@ -359,43 +359,8 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         }
         Log.d("Socket", "Emit - submitRunningResult: $runningResultJson")
 
-        // updateRunningData 실시간 러닝 데이터 전송
+        // 본인 러닝 결과 전송
         SocketHandler.mSocket.emit("submitRunningResult", runningResultJson)
 
-        // 플레이어들 결과 공유 데이터 수신
-        SocketHandler.mSocket.on("gameResult") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val responseJson = args[0] as JSONObject
-                // 클리어/페일
-                val cleared = responseJson.optBoolean("cleared", false)
-                // 플레이어 결과 배열에 저장
-                val playerResultsArray = responseJson.optJSONArray("playerResults")
-                val playerResults = mutableListOf<PlayersResultData>()
-
-                if (playerResultsArray != null) {
-                    for (i in 0 until playerResultsArray.length()) {
-                        val playerObj = playerResultsArray.optJSONObject(i)
-                        playerObj?.let {
-                            val result = PlayersResultData(
-                                userId = it.optString("userId", "unknown"),
-                                runningTime = it.optLong("runningTime", 0),
-                                totalDistance = it.optDouble("totalDistance", 0.0),
-                                paceAvg = it.optDouble("paceAvg", 0.0),
-                                heartRateAvg = it.optDouble("heartRateAvg", 0.0),
-                                cadenceAvg = it.optDouble("cadenceAvg", 0.0),
-                                calories = it.optInt("calories", 0),
-                                itemUseCount = it.optInt("itemUseCount", 0)
-                            )
-                            playerResults.add(result)
-                        }
-                    }
-                }
-
-                Log.d(
-                    "Socket",
-                    "On - gameResult: cleared: $cleared, playerResults: $playerResults"
-                )
-            }
-        }
     }
 }
