@@ -17,7 +17,9 @@ fun CircularItemGauge(
     Canvas(modifier = modifier) {
         val bossStrokeWidth = 4.dp.toPx()
         val itemStrokeWidth = 4.dp.toPx()
-        val gapBetweenGauges = 4.dp.toPx()
+        val gapBetweenGauges = 6.dp.toPx()
+
+
 
         // 보스 게이지
         drawArc(

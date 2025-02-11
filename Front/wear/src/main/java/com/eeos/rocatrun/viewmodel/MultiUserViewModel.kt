@@ -2,8 +2,12 @@ package com.eeos.rocatrun.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.provider.ContactsContract.Data
 import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
@@ -23,6 +27,10 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -31,8 +39,11 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import androidx.lifecycle.AndroidViewModel
+import com.eeos.rocatrun.R
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import com.eeos.rocatrun.component.CircularItemGauge
+import com.eeos.rocatrun.presentation.ResultActivity
 
 
 data class UserData(
@@ -52,6 +63,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private var feverStartData by mutableStateOf<FeverStartData?>(null)
     private var firstBossHealthData by mutableStateOf<FirstBossHealthData?>(null)
     private var gameEndData by mutableStateOf<GameEndData?>(null)
+
 
 
     // 데이터 클래스 정의
@@ -87,6 +99,11 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private val _feverEventFlow = MutableSharedFlow<Boolean>()
     val feverEventFlow: SharedFlow<Boolean> get() = _feverEventFlow
 
+
+    // 게임 종료 이벤트 플로우
+     private val _gameEndEventFlow = MutableSharedFlow<Boolean>()
+     val gameEndEventFlow: SharedFlow<Boolean> get() = _gameEndEventFlow
+
     private val context = application.applicationContext
 
     val userList: StateFlow<List<UserData>> get() = _userList
@@ -96,6 +113,20 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             dataClient = Wearable.getDataClient(context)
             dataClient.addListener(this@MultiUserViewModel)
+            Log.d("MultiUserViewModel", "DataClient listener 등록됨")
+
+            // 추가: 리스너 등록 후, 이미 캐시되어 있는 /first_boss_health 데이터 조회
+            dataClient.getDataItems().addOnSuccessListener { dataItemBuffer ->
+                for (dataItem in dataItemBuffer) {
+                    if (dataItem.uri.path == "/first_boss_health") {
+                        processFirstBossHealthData(dataItem)
+                    }
+                }
+                dataItemBuffer.release()
+            }.addOnFailureListener { exception ->
+                Log.e("MultiUserViewModel", "캐시된 데이터 조회 실패", exception)
+            }
+
             while (true) {
                 delay(1000)  // 1초마다 데이터 갱신
                 val updatedList = generateMockData()
@@ -139,12 +170,12 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         Log.d("MultiUserViewModel", "사용자 데이터 받는중 : $playersData")
     }
 
-    // 실시간 보스 체력 데이터
+    // 실시간 보스 체력 데이터 (Repository에 업데이트)
     private fun processBossHealthData(dataItem: DataItem){
         DataMapItem.fromDataItem(dataItem).dataMap.apply{
-            bossHealthData = BossHealthData(
-                bossHealth = getInt("bosshealth")
-            )
+            val health = getInt("bossHealth")
+            bossHealthData = BossHealthData(bossHealth = health)
+            BossHealthRepository.updateBossHealth(health)
         }
         Log.d("MultiUserViewModel", "보스 체력 데이터 받는중 : $bossHealthData" )
     }
@@ -169,12 +200,14 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch { _feverEventFlow.emit(false) }  // 종료 이벤트 전송
     }
 
-    // 난이도 별 보스 데이터
+    // 난이도 별 보스 데이터(초기 보스 체력 데이터를 받아서 Repository에 반영)
     private fun processFirstBossHealthData(dataItem: DataItem){
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
-            firstBossHealthData = FirstBossHealthData(
-                firstBossHealth = getInt("firstBossHealth")
-            )
+            val health = getInt("firstBossHealth")
+            firstBossHealthData = FirstBossHealthData(firstBossHealth = health)
+            // 이 값을 최대 체력으로 사용하고, 동시에 현재 체력으로도 반영
+            bossHealthData = BossHealthData(bossHealth = health)
+            BossHealthRepository.updateBossHealth(health)
         }
         Log.d("MultiUserViewModel", "보스 초기 체력 데이터 : $firstBossHealthData")
     }
@@ -184,6 +217,12 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             gameEndData = GameEndData(
                 gameEnd = getBoolean("gameEnd")
             )
+            viewModelScope.launch {
+                delay(500)
+                BossHealthRepository.updateBossHealth(0)
+                _gameEndEventFlow.emit(true)
+
+            }
         }
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
@@ -200,48 +239,98 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     }
 }
 
+
+
 // 사용자 정보를 표시하는 카드 컴포저블
 @Composable
 fun UserInfoCard(user: UserData) {
-    Row(
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(160.dp)
+            .height(130.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .background(Color.DarkGray)
+            .background(Color.DarkGray, shape = RoundedCornerShape(16.dp))
             .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = user.nickname,
-            color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            text = "${"%.1f".format(user.distance)}km",
-            color = Color.White,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(end = 16.dp)
-        )
-        Text(
-            text = "\uD83D\uDCA1 x ${user.itemCount}",
-            color = Color.White,
-            fontSize = 16.sp
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text(
+                text = user.nickname,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.neodgm)),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "${"%.1f".format(user.distance)}km",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontFamily = FontFamily(Font(R.font.neodgm)),
+            )
+        }
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Image(
+                painter = painterResource(id = R.drawable.wear_icon_fish),
+                contentDescription = "Item Icon",
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(end = 4.dp)
+            )
+            Text(
+                text = "x ${user.itemCount}",
+                color = Color.White,
+                fontFamily = FontFamily(Font(R.font.neodgm)),
+                fontSize = 20.sp
+            )
+
+        }
+
     }
 }
 
 // 여러 사용자 정보를 표시하는 메인 화면 컴포저블
 @Composable
-fun MultiUserScreen(viewModel: MultiUserViewModel) {
+fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel) {
     val userList by viewModel.userList.collectAsState()
+
+    // GameViewModel에서 가져온 게이지 값
+    val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
+    val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
+
+    val itemProgress by animateFloatAsState(
+        targetValue = itemGaugeValue.toFloat() / 100,
+        animationSpec = tween(durationMillis = 500)
+    )
+    val bossProgress by animateFloatAsState(
+        targetValue = bossGaugeValue.toFloat() / 100,
+        animationSpec = tween(durationMillis = 500)
+    )
+
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
             .background(Color.Black)
+
     ) {
+
+        CircularItemGauge(
+            itemProgress = itemProgress,
+            bossProgress = bossProgress,
+            modifier = Modifier.size(200.dp)
+        )
+
+
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,

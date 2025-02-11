@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.eeos.rocatrun.presentation.ResultActivity
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * 게임의 상태 관리하는 ViewModel 클래스
@@ -27,7 +28,9 @@ class GameViewModel : ViewModel() {
     private var isHandlingGauge = false
 
     private val _itemGaugeValue = MutableStateFlow(0)
-    private val _bossGaugeValue = MutableStateFlow(100)
+    // BossHealthRepository에서 관리하는 값을 가져옴
+    private val _bossGaugeValue = MutableStateFlow(0)
+
     private val _feverTimeActive = MutableStateFlow(false)
     private val _showItemGif = MutableStateFlow(false)
     private val _itemUsageCount = MutableStateFlow(0)
@@ -39,13 +42,24 @@ class GameViewModel : ViewModel() {
     private var _totalItemUsageCount = MutableStateFlow(0)
 
     // 외부에서 읽기 전용으로 사용할 수 있는 상태 흐름 (StateFlow).
-    val itemGaugeValue = _itemGaugeValue.asStateFlow()
-    val bossGaugeValue = _bossGaugeValue.asStateFlow()
-    val feverTimeActive = _feverTimeActive.asStateFlow()
+    val itemGaugeValue: StateFlow<Int> get() = _itemGaugeValue
+    val bossGaugeValue: StateFlow<Int> get() = _bossGaugeValue
+    val feverTimeActive: StateFlow<Boolean> get() = _feverTimeActive
     val showItemGif = _showItemGif.asStateFlow()
     val itemUsedSignal = _itemUsedSignal.asStateFlow()
     val totalItemUsageCount = _totalItemUsageCount.asStateFlow()
 
+
+
+    // GameViewModel 초기화 시 BossHealthRepository의 bossHealth를 구독하여 보스 게이지 업데이트
+    init {
+        viewModelScope.launch {
+            BossHealthRepository.bossHealth.collect { health ->
+                _bossGaugeValue.value = health
+                Log.d("GameViewModel", "bossGaugeValue updated to $health")
+            }
+        }
+    }
     // 총 아이템 사용 횟수 증가 함수
     private fun incrementTotalItemUsageCount() {
         _totalItemUsageCount.value++
@@ -92,13 +106,13 @@ class GameViewModel : ViewModel() {
             _showItemGif.value = false
 
             _itemGaugeValue.value = 0
-            _bossGaugeValue.value = (_bossGaugeValue.value - 20).coerceAtLeast(0)
-
-//            if (_bossGaugeValue.value == 0) {
-//                stopFeverTimeEffects()  // 효과 중지
-//                navigateToResultActivity(context)  // 결과 액티비티로 이동
-//                return@launch
-//            }
+//            _bossGaugeValue.value = (_bossGaugeValue.value - 20).coerceAtLeast(0)
+//
+////            if (_bossGaugeValue.value == 0) {
+////                stopFeverTimeEffects()  // 효과 중지
+////                navigateToResultActivity(context)  // 결과 액티비티로 이동
+////                return@launch
+////            }
 
 
             isHandlingGauge = false
