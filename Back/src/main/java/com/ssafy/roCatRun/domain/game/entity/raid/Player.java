@@ -12,7 +12,7 @@ import java.util.Optional;
 public class Player {
     private String id;
     private String nickname;
-    private String socketId;
+    private String characterId;
     private RunningData runningData = new RunningData();
     private List<Item> items = new ArrayList<>();
     private int usedItemCount = 0;
@@ -26,10 +26,10 @@ public class Player {
         this.itemCountForFever=0;
     }
 
-    public Player(String id, String nickname, String socketId) {
+    public Player(String id, String characterId, String nickname) {
         this.id = id;
         this.nickname = nickname;
-        this.socketId = socketId;
+        this.characterId = characterId;
         this.items = new ArrayList<>();
         this.runningData = new RunningData();
         this.usedItemCount=0;

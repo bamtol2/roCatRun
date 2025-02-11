@@ -137,9 +137,7 @@ fun SingleWinScreen() {
                 )
             }
         }
-
     }
-
 }
 
 @Composable

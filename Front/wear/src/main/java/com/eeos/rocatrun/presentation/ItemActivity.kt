@@ -30,16 +30,18 @@ import com.eeos.rocatrun.component.FeverTime
 //import android.os.Vibrator
 import androidx.activity.viewModels
 import com.eeos.rocatrun.viewmodel.GameViewModel
+import com.eeos.rocatrun.viewmodel.MultiUserViewModel
 
 
 class ItemActivity : ComponentActivity() {
     private val gameViewModel: GameViewModel by viewModels()
+    private val multiUserViewModel: MultiUserViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             RoCatRunTheme {
-                GameScreen(gameViewModel)
+                GameScreen(gameViewModel, multiUserViewModel)
             }
         }
     }
@@ -47,7 +49,7 @@ class ItemActivity : ComponentActivity() {
 
 
 @Composable
-fun AnimatedGifView(resourceId: Int) {
+fun AnimatedGifView(resourceId: Int, modifier: Modifier) {
     val context = LocalContext.current
     val drawable = remember {
         context.getDrawable(resourceId) as? AnimatedImageDrawable
@@ -61,12 +63,12 @@ fun AnimatedGifView(resourceId: Int) {
     // AndroidView를 통해 AnimatedImageDrawable 표시
     AndroidView(
         factory = { ImageView(it).apply { setImageDrawable(drawable) } },
-        modifier = Modifier.size(80.dp)
+        modifier = modifier
     )
 }
 
 @Composable
-fun GameScreen(gameViewModel: GameViewModel) {
+fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
     val context = LocalContext.current
     val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
     val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
@@ -76,7 +78,10 @@ fun GameScreen(gameViewModel: GameViewModel) {
 
     var itemUsageCount by remember { mutableIntStateOf(0) } // 아이템 사용 횟수 추적
 
-
+    // 피버 이벤트 관찰 시작
+    LaunchedEffect(Unit) {
+        gameViewModel.observeFeverEvents(multiUserViewModel, context)
+    }
 
     val itemProgress by animateFloatAsState(
         targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
@@ -92,10 +97,8 @@ fun GameScreen(gameViewModel: GameViewModel) {
         modifier = Modifier.fillMaxSize().background(Color.Black)
     ) {
         if (feverTimeActive) {
-            FeverTime(
-//                modifier = Modifier.fillMaxSize().zIndex(1f)
-            )
-        } else {
+            FeverTime()
+
             // 원형 게이지 표시
             CircularItemGauge(
                 itemProgress = itemProgress,
@@ -110,35 +113,72 @@ fun GameScreen(gameViewModel: GameViewModel) {
                 modifier = Modifier.padding(16.dp)
             ) {
                 // 고양이 GIF
-                AnimatedGifView(resourceId = R.drawable.wear_gif_movewhitecat)
+                AnimatedGifView(
+                    resourceId = R.drawable.wear_gif_rainbowcat,
+                    modifier = Modifier.size(130.dp)
+                )
 
                 // 아이템 GIF (조건부 표시)
                 if (showItemGif) {
-                    AnimatedGifView(resourceId = R.drawable.wear_gif_spincan)
+                    AnimatedGifView(
+                        resourceId = R.drawable.wear_gif_spincan,
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            }
+
+        }else{
+            // 원형 게이지 표시
+            CircularItemGauge(
+                itemProgress = itemProgress,
+                bossProgress = bossProgress,
+                modifier = Modifier.size(200.dp)
+            )
+
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // 고양이 GIF
+                AnimatedGifView(
+                    resourceId = R.drawable.wear_gif_movewhitecat,
+                    modifier = Modifier.size(80.dp)
+                    )
+
+                // 아이템 GIF (조건부 표시)
+                if (showItemGif) {
+                    AnimatedGifView(
+                        resourceId = R.drawable.wear_gif_spincan,
+                        modifier = Modifier.size(60.dp)
+                        )
                 }
             }
         }
+
+
     }
 
 
-//    // "게이지 올리기" 버튼 (상단에 작게 배치)
-//    Column(
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.Top,
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(top = 16.dp)
-//    ) {
-//        Button(
-//            onClick = {
-//                gameViewModel.increaseItemGauge()
-//                if (gameViewModel.itemGaugeValue.value == 100) {
-//                    gameViewModel.handleGaugeFull(context)
-//                }
-//            },
-//            modifier = Modifier.wrapContentSize() // 버튼 크기 조정
-//        ) {
-//            Text("게이지+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
-//        }
-//    }
+    // "게이지 올리기" 버튼 (상단에 작게 배치)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 16.dp)
+    ) {
+        Button(
+            onClick = {
+                gameViewModel.increaseItemGauge(1)
+                if (gameViewModel.itemGaugeValue.value == 100) {
+                    gameViewModel.handleGaugeFull(context)
+                }
+            },
+            modifier = Modifier.wrapContentSize() // 버튼 크기 조정
+        ) {
+            Text("게이지+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
+        }
+    }
 }

@@ -16,6 +16,7 @@ public class GameResultResponse {
     @AllArgsConstructor
     public static class PlayerResult {
         private String userId;
+        private String nickName;
         private Duration runningTime;
         private double totalDistance;
         private double paceAvg;
@@ -23,5 +24,7 @@ public class GameResultResponse {
         private double cadenceAvg;
         private int calories;
         private int itemUseCount;
+        private int rewardExp;
+        private int rewardCoin;
     }
 }

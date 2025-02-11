@@ -30,15 +30,15 @@ import java.io.IOException
 
 class GameMulti : ComponentActivity(), DataClient.OnDataChangedListener {
     private lateinit var dataClient: DataClient
-    private var runningData by mutableStateOf<RunningData?>(null)
+//    private var runningData by mutableStateOf<RunningData?>(null)
     private var gpxFileReceived by mutableStateOf(false)
-
-    data class RunningData(
-        val averagePace: Double,
-        val totalDistance: Double,
-        val elapsedTime: Long,
-        val heartRate: String
-    )
+//
+//    data class RunningData(
+//        val averagePace: Double,
+//        val totalDistance: Double,
+//        val elapsedTime: Long,
+//        val heartRate: String
+//    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +57,7 @@ class GameMulti : ComponentActivity(), DataClient.OnDataChangedListener {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     GamemultiScreen(
-                        runningData = runningData,
+//                        runningData = runningData,
                         gpxFileReceived = gpxFileReceived,
                         onShareClick = { shareLatestGpxFile() }
                     )
@@ -82,23 +82,23 @@ class GameMulti : ComponentActivity(), DataClient.OnDataChangedListener {
             if (event.type == DataEvent.TYPE_CHANGED) {
                 val dataItem = event.dataItem
                 when (dataItem.uri.path) {
-                    "/running_data" -> processRunningData(dataItem)
+//                    "/running_data" -> processRunningData(dataItem)
                     "/gpx_data" -> processGpxData(dataItem)
                 }
             }
         }
     }
 
-    private fun processRunningData(dataItem: DataItem) {
-        DataMapItem.fromDataItem(dataItem).dataMap.apply {
-            runningData = RunningData(
-                averagePace = getDouble("pace"),
-                totalDistance = getDouble("distance"),
-                elapsedTime = getLong("time"),
-                heartRate = getString("heartRate", "--")
-            )
-        }
-    }
+//    private fun processRunningData(dataItem: DataItem) {
+//        DataMapItem.fromDataItem(dataItem).dataMap.apply {
+//            runningData = RunningData(
+//                averagePace = getDouble("pace"),
+//                totalDistance = getDouble("distance"),
+//                elapsedTime = getLong("time"),
+//                heartRate = getString("heartRate", "--")
+//            )
+//        }
+//    }
 
     private fun processGpxData(dataItem: DataItem) {
         val asset = DataMapItem.fromDataItem(dataItem).dataMap.getAsset("gpx_file")

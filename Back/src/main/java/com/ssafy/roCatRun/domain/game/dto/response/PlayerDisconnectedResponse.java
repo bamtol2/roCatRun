@@ -7,5 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class PlayerDisconnectedResponse {
     private String userId;
+    private String nickName;
     private long reconnectionTimeout; // 초단위
 }

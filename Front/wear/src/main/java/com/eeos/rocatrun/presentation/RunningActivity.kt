@@ -89,9 +89,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.platform.LocalContext
 import com.eeos.rocatrun.receiver.SensorUpdateReceiver
+import com.eeos.rocatrun.viewmodel.MultiUserScreen
+import com.eeos.rocatrun.viewmodel.MultiUserViewModel
 
 class RunningActivity : ComponentActivity(), SensorEventListener {
     private val gameViewModel: GameViewModel by viewModels()
+    private val multiUserViewModel: MultiUserViewModel by viewModels()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var sensorManager: SensorManager
@@ -102,6 +105,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private val locationList = mutableListOf<Location>()
     private val heartRateList = mutableListOf<Int>()
     private val paceList = mutableListOf<Double>()
+    private val cadenceList = mutableListOf<Int>()
+    private var currentCadence by mutableIntStateOf(0)
 
     // 상태 변수들
     private var totalDistance by mutableDoubleStateOf(0.0)
@@ -126,6 +131,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     private val handler = Handler(Looper.getMainLooper())
 
+    // LaunchedEffect에서 데이터 측정 함수 실행하기 위한 변수
+    private var startTrackingRequested by mutableStateOf(false)
+
+
     private val updateRunnable = object : Runnable {
         override fun run() {
             if (isRunning) {
@@ -134,23 +143,31 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     val paceInSeconds = elapsedTime / 1000.0 / totalDistance
                     paceInSeconds / 60
                 } else 0.0
+                // GameViewModel에서 itemUsed값 가져와서 아이템 사용했는지 체크
+                val itemUsed = gameViewModel.itemUsedSignal.value
+                Log.d("itemUsedCheck", "체크 : $itemUsed")
+                // itemUsed 상태에 따라 데이터 전송
+                if (itemUsed) {
+                    sendDataToPhone(itemUsed = true)
+                } else {
+                    sendDataToPhone()
+                }
 
-                // 데이터 전송 추가
-                sendDataToPhone()
-
-                handler.postDelayed(this, 500)
+                handler.postDelayed(this, 1000)
             }
         }
     }
-
+    // 결과창 보여주기 위한 변수
     private var showStats by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val gameViewModel: GameViewModel by viewModels()
-
-            RunningApp(gameViewModel) }
+            val multiUserViewModel: MultiUserViewModel by viewModels()
+            RunningApp(gameViewModel, multiUserViewModel) }
+        // 데이터 측정 변수 상태 관찰하여 자동 실행
+        observeStartTrackingState()
         // 절전모드 방지를 위한 WakeLock 초기화 및 활성화
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RunningApp::Wakelock")
@@ -182,6 +199,20 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
 
+    private fun observeStartTrackingState() {
+        // 상태가 true로 변경되면 `startTracking()` 실행
+        handler.post(object : Runnable {
+            override fun run() {
+                if (startTrackingRequested && !isRunning) {
+                    startTracking()
+                    startTrackingRequested = false  // 실행 후 초기화
+                }
+                handler.postDelayed(this, 500)  // 주기적으로 상태 확인
+            }
+        })
+    }
+
+    // 포그라운드서비스 시작
     private fun startForegroundService() {
         val serviceIntent = Intent(this, LocationForegroundService::class.java)
         startForegroundService(serviceIntent)  // Android 8.0 이상에서는 이 메서드 사용
@@ -202,6 +233,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         sensorManager.unregisterListener(this)
     }
 
+    // 심박수 센서 등록
     private fun registerHeartRateSensor() {
         heartRateSensor?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
@@ -209,6 +241,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         } ?: Log.w("HeartRate", "No heart rate sensor available.")
     }
 
+    // 권한 요청
     private fun requestPermissions() {
         val permissions = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -224,6 +257,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     private var lastDistanceUpdate = 0.0  // 마지막으로 게이지가 업데이트된 거리
 
+    // 위치 업데이트후 거리 계산
     private fun updateLocation(location: Location) {
         lastLocation?.let {
             val distanceMoved = it.distanceTo(location) / 1000  // 이동 거리를 km 단위로 계산
@@ -231,9 +265,11 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 totalDistance += distanceMoved
                 speed = location.speed * 3.6
 
-                // 게이지 증가 로직: 50m 마다 증가
-                if (totalDistance - lastDistanceUpdate >= 0.01) {  // 0.05km = 50m
-                    gameViewModel.increaseItemGauge()
+                // 게이지 증가 로직: 1m마다 증가(나중에 7.5m마다 증가되게 수정할 예정)
+                if (totalDistance - lastDistanceUpdate >= 0.01) {
+                    val isFeverTime = gameViewModel.feverTimeActive.value
+                    val gaugeIncrement = if (isFeverTime) 2 else 1  // 피버타임일 경우 2배로 증가
+                    gameViewModel.increaseItemGauge(gaugeIncrement)
                     lastDistanceUpdate = totalDistance
                     if (gameViewModel.itemGaugeValue.value == 100) {
                       gameViewModel.handleGaugeFull(this)
@@ -246,13 +282,14 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         paceList.add(averagePace)
     }
 
-
+    // 운동 시작
     private fun startTracking() {
         if (isRunning) return
         resetTrackingData()
         isRunning = true
         startTime = System.currentTimeMillis()
         handler.post(updateRunnable)
+        cadenceHandler.post(updateCadenceRunnable)
 
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY, 1000
@@ -275,6 +312,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         averageHeartRate = 0.0
         heartRate = "--"
         lastLocation = null
+        currentCadence = 0
     }
 
     private fun stopTracking() {
@@ -282,14 +320,45 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         handler.removeCallbacks(updateRunnable)
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
+        // GameViewModel에서 가져온 총 아이템 사용 횟수
+        val totalItemUsage = gameViewModel.totalItemUsageCount.value
+
         if (heartRateCount > 0) {
             averageHeartRate = heartRateSum.toDouble() / heartRateCount
         }
+        cadenceHandler.removeCallbacks(updateCadenceRunnable)
 
-        Log.d("Stats", "Elapsed Time: ${formatUtils.formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
+        Log.d("Stats",
+            "Elapsed Time: ${formatUtils.formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
+
         showStats = true
+        sendFinalResultToPhone(totalItemUsage)
         createAndSendGpxFile()
     }
+
+
+    // 최종 결과 보내는 함수(모바일에서 데이터 받는
+    private fun sendFinalResultToPhone(totalItemUsage: Int) {
+        val dataMapRequest = PutDataMapRequest.create("/final_result_data").apply {
+            dataMap.putDouble("distance", totalDistance)
+            dataMap.putLong("time", elapsedTime)
+            dataMap.putDouble("averagePace", averagePace)
+            dataMap.putDouble("averageHeartRate", averageHeartRate)
+            dataMap.putInt("totalItemUsage", totalItemUsage)  // 총 아이템 사용 횟수 추가
+        }.asPutDataRequest().setUrgent()
+
+        Log.d("Final Data 전송", "총 아이템 사용 횟수: $totalItemUsage")
+
+        Wearable.getDataClient(this).putDataItem(dataMapRequest)
+            .addOnSuccessListener {
+                Log.d("RunningActivity", "Final result data sent successfully")
+            }
+            .addOnFailureListener { e ->
+                Log.e("RunningActivity", "Failed to send final result data", e)
+            }
+    }
+
+    // GPX 만들고 보내는 함수
     private fun createAndSendGpxFile() {
         val gpxString = createGpxString()
         val gpxBytes = gpxString.toByteArray(Charsets.UTF_8)
@@ -311,6 +380,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 Log.e("RunningActivity", "Failed to send GPX data", e)
             }
     }
+
+    // GPx 문자열 형태로 바꾸는 함수
     private fun createGpxString(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
         sdf.timeZone = TimeZone.getTimeZone("Asia/Seoul")
@@ -321,26 +392,34 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         gpxBuilder.append("  <trk>\n")
         gpxBuilder.append("    <name>RocatRun Activity</name>\n")
         gpxBuilder.append("    <trkseg>\n")
+
         val startTime = System.currentTimeMillis()
+        var locationIndex = 0
+        var lastHeartRate = 0
+
         for (i in heartRateList.indices) {
-            Log.i("gg","인덱스 : $i")
-//            val location = locationList[i]
-            val heartRate = if (i < heartRateList.size) heartRateList[i] else 0
+            val heartRate = if (i < heartRateList.size) heartRateList[i] else lastHeartRate
+            lastHeartRate = heartRate
             val pace = if (i < paceList.size) paceList[i] else 0.0
             val time = startTime + (i * 1000)
+            if (locationIndex < locationList.size && locationList[locationIndex].time <= time) {
+                val location = locationList[locationIndex]
+                gpxBuilder.append("      <trkpt lat=\"${location.latitude}\" lon=\"${location.longitude}\">\n")
+                gpxBuilder.append("        <ele>${location.altitude}</ele>\n")
+                locationIndex++
+            } else {
+                gpxBuilder.append("      <trkpt>\n")
+                gpxBuilder.append("        <ele></ele>\n")
+            }
 
-//            gpxBuilder.append("      <trkpt lat=\"${location.latitude}\" lon=\"${location.longitude}\">\n")
-//            gpxBuilder.append("        <ele>${location.altitude}</ele>\n")
-//            gpxBuilder.append("        <time>${sdf.format(Date(location.time))}</time>\n")
-            gpxBuilder.append("     <trkpt lat=\"0.0\" lon=\"0.0\">\n")
-            gpxBuilder.append("        <ele>0.0</ele>\n") // 더미 고도 데이터
-            gpxBuilder.append("        <time>${sdf.format(Date(time))}</time>\n")
             gpxBuilder.append("        <extensions>\n")
             gpxBuilder.append("          <gpxtpx:TrackPointExtension>\n")
             gpxBuilder.append("            <gpxtpx:hr>$heartRate</gpxtpx:hr>\n")
             gpxBuilder.append("            <gpxtpx:pace>$pace</gpxtpx:pace>\n")
+            gpxBuilder.append("            <gpxtpx:cad>${cadenceList.lastOrNull() ?: 0}</gpxtpx:cad>\n")
             gpxBuilder.append("          </gpxtpx:TrackPointExtension>\n")
             gpxBuilder.append("        </extensions>\n")
+            gpxBuilder.append("        <time>${sdf.format(Date(time))}</time>\n")
             gpxBuilder.append("      </trkpt>\n")
         }
 
@@ -352,8 +431,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun RunningApp(gameViewModel: GameViewModel) {
-
+    fun RunningApp(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
+        val activity = LocalContext.current as? RunningActivity
         var isCountdownFinished by remember { mutableStateOf(false) }
         var countdownValue by remember { mutableIntStateOf(5) }
 
@@ -364,10 +443,14 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 countdownValue -= 1
             }
             isCountdownFinished = true
+
+            // 카운트다운 완료 후 트래킹 상태 변경
+            activity?.startTrackingRequested = true
+
         }
 
         if (isCountdownFinished) {
-            WatchAppUI(gameViewModel)
+            WatchAppUI(gameViewModel, multiUserViewModel)
         } else {
             CountdownScreen(countdownValue)
         }
@@ -393,11 +476,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun WatchAppUI(gameViewModel: GameViewModel) {
-        val pagerState = rememberPagerState(pageCount = {3})
-
+    fun WatchAppUI(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
+        val pagerState = rememberPagerState(pageCount = {4})
         if (showStats) {
-            ShowStatsScreen()
+            ShowStatsScreen(gameViewModel)
         } else {
             HorizontalPager(
                 state = pagerState,
@@ -406,7 +488,10 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     0 -> CircularLayout(gameViewModel)
                     1 -> ControlButtons { stopTracking() }
                     2 -> Box(modifier = Modifier.fillMaxSize()) {
-                        GameScreen(gameViewModel) // Modifier.fillMaxSize() 적용된 상태로 화면 전체에 표시
+                        GameScreen(gameViewModel,multiUserViewModel) // Modifier.fillMaxSize() 적용된 상태로 화면 전체에 표시
+                    }
+                    3 -> Box(modifier = Modifier.fillMaxSize()) {
+                        MultiUserScreen(multiUserViewModel)
                     }
                 }
             }
@@ -565,36 +650,60 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
+
+
+
     // 폰에 데이터 전송
-    private fun sendDataToPhone() {
-        val dataMapRequest = PutDataMapRequest.create("/running_data").apply {
-            dataMap.putDouble("pace", averagePace)
-            dataMap.putDouble("distance", totalDistance)
-            dataMap.putLong("time", elapsedTime)
-            dataMap.putString("heartRate", heartRate)
-            dataMap.putLong("timestamp", System.currentTimeMillis())
-        }.asPutDataRequest()
-        Log.d("데이터 전송 함수", "데이터 형태 - Pace : $averagePace distance : $totalDistance, time : $elapsedTime, heartRate: $heartRate")
-        dataMapRequest.setUrgent() // 즉시 전송하도록 설정
+    private fun sendDataToPhone(itemUsed: Boolean = false) {
+        // 아이템 사용했을 때 데이터 보내는 경로
+        if (itemUsed) {
+            val itemUsedRequest = PutDataMapRequest.create("/use_item").apply {
+                dataMap.putBoolean("itemUsed", true)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }.asPutDataRequest().setUrgent()
+            Wearable.getDataClient(this).putDataItem(itemUsedRequest)
+                .addOnSuccessListener {
+                    Log.d("RunningActivity", "아이템 사용 신호 성공적으로 보냄: $itemUsed")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("RunningActivity", "아이템 사용 신호 보내지 못하였음", e)
+                }
+        } else {
 
-        Wearable.getDataClient(this).putDataItem(dataMapRequest)
-            .addOnSuccessListener {
-                Log.d("RunningActivity", "Data sent successfully")
-            }
-            .addOnFailureListener { e ->
-                Log.e("RunningActivity", "Failed to send data", e)
-            }
+            val dataMapRequest = PutDataMapRequest.create("/running_data").apply {
+                dataMap.putDouble("pace", averagePace)
+                dataMap.putDouble("distance", totalDistance)
+                dataMap.putLong("time", elapsedTime)
+                dataMap.putString("heartRate", heartRate)
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+            }.asPutDataRequest()
+            Log.d(
+                "데이터 전송 함수",
+                "데이터 형태 - Pace : $averagePace distance : $totalDistance, time : $elapsedTime, heartRate: $heartRate"
+            )
+            dataMapRequest.setUrgent() // 즉시 전송하도록 설정
+
+            Wearable.getDataClient(this).putDataItem(dataMapRequest)
+                .addOnSuccessListener {
+                    Log.d("RunningActivity", "Data sent successfully")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("RunningActivity", "Failed to send data", e)
+                }
+        }
     }
-
     @Composable
-    fun ShowStatsScreen() {
+    fun ShowStatsScreen(gameViewModel: GameViewModel) {
+        // 아이템 총 사용 횟수
+        val totalItemUsageCount by gameViewModel.totalItemUsageCount.collectAsState()
         val averageCadence = calculateAverageCadence()
         val statsData = listOf(
             "총 시간: ${formatUtils.formatTime(elapsedTime)}",
             "총 거리: ${"%.2f".format(totalDistance)} km",
             "평균 페이스: ${"%.2f".format(averagePace)} min/km",
             "평균 심박수: ${"%.1f".format(averageHeartRate)} bpm",
-            "평균 케이던스: $averageCadence spm"
+            "평균 케이던스: $averageCadence spm",
+            "총 아이템 사용 횟수 : $totalItemUsageCount"
         )
 
         ScalingLazyColumn(
@@ -652,9 +761,49 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 Log.d("CadenceCalculation", "Elapsed time in minutes: ${(stepTimes.last() - stepTimes.first()) / 60000.0}")
 
                 Log.d("StepDetector", "Step detected. Total steps: $stepCount")
+                updateCadence()
             }
         }
     }
+
+    private fun calculateCurrentCadence(): Int {
+        val now = System.currentTimeMillis()
+        val timeWindow = 30000 // 최근 30초 데이터 사용
+
+        // 최근 30초 내 걸음 수 계산
+        val recentSteps = stepTimes.count { it > now - timeWindow }
+
+        // 분당 걸음 수로 변환 (recentSteps * 2)
+        return recentSteps * 2
+    }
+
+    // 주기적 업데이트를 위한 핸들러
+    private val cadenceHandler = Handler(Looper.getMainLooper())
+    private val updateCadenceRunnable = object : Runnable {
+        override fun run() {
+            updateCadence()
+            cadenceHandler.postDelayed(this, 5000) // 5초 간격 업데이트
+        }
+    }
+
+    private fun updateCadence() {
+        val now = System.currentTimeMillis()
+        val oneMinuteAgo = now - 60000
+
+        // 최근 1분간 걸음 수 계산
+        val recentSteps = stepTimes.count { it > oneMinuteAgo }
+        currentCadence = recentSteps
+
+        cadenceList.add(recentSteps)
+    }
+
+    // 오래된 데이터 정리
+    private fun cleanOldSteps() {
+        val now = System.currentTimeMillis()
+        stepTimes.removeAll { it < now - 60000 } // 1분 이전 데이터 삭제
+    }
+
+
     private fun calculateAverageCadence(): Int {
         if (stepTimes.size <= 1) return 0
         val elapsedTimeInMinutes = (stepTimes.last() - stepTimes.first()) / 60000.0

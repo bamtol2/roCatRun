@@ -80,6 +80,19 @@ fun MatchingScreen(
                 maxUsers = json.optInt("maxPlayers", maxUsers)
             }
         }
+
+        SocketHandler.mSocket.on("gameReady") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val json = args[0] as JSONObject
+                val message = json.optString("message", "")
+
+                Log.d("Socket", "On - gameReady $message")
+
+                // GameplayActivity로 이동
+                val intent = Intent(context, GamePlay::class.java)
+                context.startActivity(intent)
+            }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

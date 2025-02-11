@@ -45,6 +45,11 @@ interface ApiService {
         @Header("Authorization") authorization: String,
         @Body request: CreateCharacterRequest
     ): Response<CreateCharacterResponse>
+
+    @GET("/domain/characters/me")
+    suspend fun checkMember(
+        @Header("Authorization") authorization: String
+    ) :Response<MemberResponse>
 }
 
 data class JwtTokenRequest(

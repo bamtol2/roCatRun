@@ -4,6 +4,8 @@ package com.ssafy.roCatRun.global.socket;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.google.gson.JsonObject;
+import com.ssafy.roCatRun.domain.character.entity.Character;
+import com.ssafy.roCatRun.domain.character.service.CharacterService;
 import com.ssafy.roCatRun.domain.game.dto.request.*;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
@@ -33,6 +35,7 @@ public class SocketEventHandler {
     private final GameRoomManager gameRoomManager;
     private final GameDisconnectionManager disconnectionManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CharacterService characterService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @PostConstruct
@@ -81,7 +84,9 @@ public class SocketEventHandler {
     }
 
     private void handleRunningResult(SocketIOClient client, PlayerRunningResultRequest data) {
+        String characterId = client.get("characterId");
         String userId = client.get("userId");
+
         if (userId == null) {
             client.sendEvent("error", "Not authenticated");
             return;
@@ -124,13 +129,16 @@ public class SocketEventHandler {
 
     private void handleJoinRoom(SocketIOClient client, JoinRoomRequest request) {
         String userId = client.get("userId");
+        String characterId = client.get("characterId");
+        String nickname = client.get("nickname");
+
         if(userId==null){
             client.sendEvent("error", "Not authenticated");
             return;
         }
 
         try{
-            GameRoom room = gameService.joinRoomByInviteCode(userId, request.getInviteCode());
+            GameRoom room = gameService.joinRoomByInviteCode(userId, request.getInviteCode(), characterId, nickname);
             client.joinRoom(room.getId());
 
             // 방 참여 성공 응답
@@ -144,6 +152,7 @@ public class SocketEventHandler {
             // 같은 방의 다른 유저들에게 새 유저 입장 알림
             server.getRoomOperations(room.getId()).sendEvent("playerJoined", new PlayerJoinedResponse(
                     userId,
+                    nickname,
                     room.getPlayers().size(),
                     room.getMaxPlayers()
             ));
@@ -157,13 +166,16 @@ public class SocketEventHandler {
 
     private void handleCreateRoom(SocketIOClient client, CreateRoomRequest request) {
         String userId = client.get("userId");
+        String characterId = client.get("characterId");
+        String nickname = client.get("nickname");
+
         if(userId==null){
             client.sendEvent("error", "Not authenticated");
             return;
         }
 
         try{
-            GameRoom room = gameService.createPrivateRoom(userId, request);
+            GameRoom room = gameService.createPrivateRoom(userId, request, characterId, nickname);
             client.joinRoom(room.getId());
 
 
@@ -221,13 +233,16 @@ public class SocketEventHandler {
 
     private void handleRandomMatch(SocketIOClient client, MatchRequest request) {
         String userId = client.get("userId");
+        String characterId = client.get("characterId");
+        String nickname = client.get("nickname");
+
         if (userId == null) {
             client.sendEvent("matchError", "Not authenticated");
             return;
         }
 
         try {
-            GameRoom room = gameService.findOrCreateRandomMatch(userId, request);
+            GameRoom room = gameService.findOrCreateRandomMatch(userId, request, characterId, nickname);
             client.joinRoom(room.getId());
 
             // 매칭 상태 전송
@@ -240,6 +255,7 @@ public class SocketEventHandler {
             // 같은 방의 다른 유저들에게 새 유저 입장 알림
             server.getRoomOperations(room.getId()).sendEvent("playerJoined", new PlayerJoinedResponse(
                     userId,
+                    nickname,
                     room.getPlayers().size(),
                     room.getMaxPlayers()));
 
@@ -253,6 +269,9 @@ public class SocketEventHandler {
 
     private void handleCancelMatch(SocketIOClient client) {
         String userId = client.get("userId");
+        String characterId = client.get("characterId");;
+        String nickName = client.get("nickname");
+
         if (userId == null) {
             client.sendEvent("error", "Not authenticated");
             return;
@@ -269,6 +288,7 @@ public class SocketEventHandler {
                     server.getRoomOperations(room.getId()).sendEvent("playerLeft",
                             new PlayerLeftResponse(
                                     userId,
+                                    nickName,
                                     room.getPlayers().size(),
                                     room.getMaxPlayers()
                             )
@@ -310,15 +330,17 @@ public class SocketEventHandler {
     private void handleDisconnect(SocketIOClient client) {
         String socketId = client.getSessionId().toString();
         String userId = client.get("userId"); // 직접 client에서 userId를 가져옴
+        String characterId = client.get("characterId");
+        String nickName = client.get("nickname");
 
         if (userId != null) {  // userId가 있는 경우에만 처리
             gameRoomManager.findRoomByUserId(userId).ifPresent(room -> {
                 if (room.getStatus() == GameStatus.PLAYING) {
                     // 게임 중일 때는 연결 끊김 특수 처리
-                    disconnectionManager.handlePlayerDisconnection(room, userId);
+                    disconnectionManager.handlePlayerDisconnection(room, userId, nickName);
                 } else {
                     // 게임 중이 아닐 때는 기존 로직대로 처리
-                    handleNormalDisconnection(room, userId, socketId);
+                    handleNormalDisconnection(room, userId, socketId, nickName);
                 }
             });
 
@@ -339,9 +361,13 @@ public class SocketEventHandler {
         // 새 세션 생성
         sessionManager.createSession(userId, client.getSessionId().toString());
         client.set("userId", userId);
+        Character characterByMemberId = characterService.getCharacterByMemberId(Long.parseLong(userId));
+        client.set("characterId", characterByMemberId.getId());
+        client.set("nickname", characterByMemberId.getNickname());
+        client.set("level", characterByMemberId.getLevel());
     }
 
-    private void handleNormalDisconnection(GameRoom room, String userId, String socketId) {
+    private void handleNormalDisconnection(GameRoom room, String userId, String socketId, String nickName) {
         String roomId = room.getId();
         room.getPlayers().removeIf(player -> player.getId().equals(userId));
 
@@ -353,6 +379,7 @@ public class SocketEventHandler {
             server.getRoomOperations(roomId).sendEvent("playerLeft",
                     new PlayerLeftResponse(
                             userId,
+                            nickName,
                             room.getPlayers().size(),
                             room.getMaxPlayers()
                     )

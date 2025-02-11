@@ -7,4 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class PlayerReconnectedResponse {
     private String userId;
+    private String nickName;
 }

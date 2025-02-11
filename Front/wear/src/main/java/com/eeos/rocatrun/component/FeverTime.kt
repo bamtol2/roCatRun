@@ -67,26 +67,28 @@ fun FeverTime() {
             Row {
 
                 Column {
-                    // 피
                     FeverTimeText(
-                        text = "피"
+                        text = "피",
+                        modifier = Modifier.offset(x= (-8).dp)
+
                     )
 
-                    // 버
                     FeverTimeText(
-                        text = "버"
+                        text = "버",
+                        modifier = Modifier.offset(y = 30.dp, x = (-8).dp)
+
                     )
                 }
 
                 Column {
-                    // 피
                     FeverTimeText(
-                        text = "타"
+                        text = "타",
+                        modifier = Modifier.offset(y=1.dp, x = 38.dp)
                     )
 
-                    // 버
                     FeverTimeText(
-                        text = "임"
+                        text = "임",
+                        modifier = Modifier.offset(y=30.dp, x= 38.dp)
                     )
                 }
             }
@@ -100,7 +102,7 @@ fun FeverTimeText(text: String, modifier: Modifier = Modifier) {
         // 스트로크 텍스트
         Text(
             text = text,
-            fontSize = 25.sp,
+            fontSize = 35.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFFED2F2F),
             fontFamily = FontFamily(Font(R.font.neodgm)),
@@ -116,7 +118,7 @@ fun FeverTimeText(text: String, modifier: Modifier = Modifier) {
         // 내부 텍스트
         Text(
             text = text,
-            fontSize = 25.sp,
+            fontSize = 35.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFFFFFF00),
             fontFamily = FontFamily(Font(R.font.neodgm)),

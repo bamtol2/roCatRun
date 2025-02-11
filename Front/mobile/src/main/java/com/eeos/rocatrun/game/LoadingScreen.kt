@@ -47,6 +47,7 @@ import androidx.compose.ui.zIndex
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.socket.SocketHandler
 import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
 
@@ -60,9 +61,10 @@ fun LoadingScreen(
     val clipboardManager = LocalClipboardManager.current
     var currentUsers by remember { mutableStateOf(initialCurrentUsers) }
     var maxUsers by remember { mutableStateOf(initialMaxUsers) }
+    val dataClient = Wearable.getDataClient(context)
 
     LaunchedEffect(Unit) {
-        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
+//        SocketHandler.mSocket.off("playerJoined") // 기존 리스너 제거
         SocketHandler.mSocket.on("playerJoined") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject
@@ -106,9 +108,7 @@ fun LoadingScreen(
             }
 
         }
-        SocketHandler.mSocket.on("gameStart") {
-            Log.d("Socket", "On - gameStart")
-        }
+
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

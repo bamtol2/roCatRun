@@ -61,6 +61,11 @@
             android:exported="true"
             android:theme="@style/Theme.AppCompat">
         </activity>
+        <activity
+            android:name=".presentation.ResultActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat">
+        </activity>
         <service
             android:name=".service.LocationForegroundService"
             android:exported="false"
@@ -73,7 +78,7 @@
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/start_mobile_app" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/start_watch_app" />
             </intent-filter>
         </service>
         <receiver
