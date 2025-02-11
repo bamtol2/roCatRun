@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 
 @RestController
-@RequestMapping("/api/stats")
+@RequestMapping("/api/statistics/running-stats")
 @RequiredArgsConstructor
 public class GameStatsController {
     private final GameStatsService gameStatsService;
