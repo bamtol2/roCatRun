@@ -23,19 +23,12 @@ public class ItemController {
      * 코인을 사용하여 랜덤으로 아이템을 획득합니다.
      */
     @PostMapping("/draw")
-    public ApiResponse<ItemDrawResponse> drawItem(
-            @AuthenticationPrincipal Member member,
-            @RequestBody ItemDrawRequest request) {
-
-        ItemDrawResponse response = itemService.drawItem(member.getId(), request.getDrawCount());
-
-        if (response == null) {
-            if (request.getDrawCount() != 1 && request.getDrawCount() != 10) {
-                return ApiResponse.error("뽑기 횟수는 1회 또는 10회만 가능합니다.");
-            }
-            return ApiResponse.error("아이템 뽑기에 실패했습니다. 코인이 부족하거나 캐릭터 정보가 없습니다.");
+    public ApiResponse<ItemDrawResponse> drawItem(@RequestBody ItemDrawRequest request) {
+        try {
+            ItemDrawResponse response = itemService.drawItem(request.getDrawCount());
+            return ApiResponse.success("아이템 뽑기 성공", response);
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(e.getMessage());
         }
-
-        return ApiResponse.success("아이템 뽑기 성공", response);
     }
 }

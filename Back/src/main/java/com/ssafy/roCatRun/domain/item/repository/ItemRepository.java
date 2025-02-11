@@ -9,7 +9,7 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     /**
      * 카테고리별 아이템 조회
      */
-    List<Item> findByCategory(Item.ItemCategory category);
+    List<Item> findByCategory(Item.Category category);
 
     /**
      * 희귀도별 아이템 조회

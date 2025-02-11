@@ -8,6 +8,7 @@ import com.ssafy.roCatRun.domain.item.dto.response.ItemDrawResponse;
 import com.ssafy.roCatRun.domain.item.entity.Item;
 import com.ssafy.roCatRun.domain.item.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,54 +23,39 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ItemService {
+    private static final int DRAW_COST = 100; // 1회 뽑기 비용
+    private static final String ERROR_INVALID_DRAW_COUNT = "유효하지 않은 뽑기 횟수입니다.";
+
     private final ItemRepository itemRepository;
     private final GameCharacterRepository gameCharacterRepository;
     private final InventoryRepository inventoryRepository;
     private final Random random = new Random();
 
-    /**
-     * 아이템 뽑기를 실행하고 결과를 반환합니다.
-     * @param memberId 회원 ID
-     * @param drawCount 뽑기 횟수
-     * @return 뽑기 결과와 남은 코인
-     */
     @Transactional
-    public ItemDrawResponse drawItem(Long memberId, int drawCount) {
+    public ItemDrawResponse drawItem(int drawCount) {
         if (drawCount != 1 && drawCount != 10) {
-            return null;  // 클라이언트에서 처리
+            throw new IllegalArgumentException(ERROR_INVALID_DRAW_COUNT);
         }
 
-        GameCharacter character = gameCharacterRepository.findByMemberId(memberId)
-                .orElse(null);
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        GameCharacter character = gameCharacterRepository.getReferenceById(memberId);
 
-        if (character == null) {
-            return null;
-        }
+        int requiredCoins = drawCount * DRAW_COST;
+        character.useCoin(requiredCoins); // GameCharacter의 useCoin 메서드 사용
 
-        // 코인 확인 및 차감
-        int requiredCoins = drawCount * 100; // 1회당 100코인
-        if (character.getCoin() < requiredCoins) {
-            return null;  // 코인 부족
-        }
-
-        character.useCoin(requiredCoins);
-
-        // 아이템 뽑기 실행
         List<Item> drawnItems = new ArrayList<>();
         for (int i = 0; i < drawCount; i++) {
             Item item = selectRandomItem();
             drawnItems.add(item);
-            // 인벤토리에 아이템 추가
             Inventory inventory = Inventory.createInventory(character, item);
             inventoryRepository.save(inventory);
         }
 
-        // 응답 생성
         List<ItemDrawResponse.DrawnItem> drawnItemResponses = drawnItems.stream()
                 .map(ItemDrawResponse.DrawnItem::from)
                 .collect(Collectors.toList());
 
-        return new ItemDrawResponse(drawnItemResponses, character.getCoin());
+        return new ItemDrawResponse(drawnItemResponses, character.getCoin()); // GameCharacter의 getCoin() getter 사용
     }
 
     /**

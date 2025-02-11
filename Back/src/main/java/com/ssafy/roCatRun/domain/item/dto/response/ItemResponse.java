@@ -10,7 +10,7 @@ public class ItemResponse {
     private Long id;
     private String name;
     private String imagePath;
-    private Item.ItemCategory category;
+    private Item.Category category;
     private Item.ItemRarity rarity;
     private Integer price;
 

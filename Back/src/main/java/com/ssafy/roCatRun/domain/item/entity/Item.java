@@ -23,7 +23,7 @@ public class Item {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ItemCategory category;  // 아이템 카테고리
+    private Category category;  // 아이템 카테고리
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -36,7 +36,7 @@ public class Item {
     private Integer price;          // 판매 가격
 
     // 아이템 카테고리 정의
-    public enum ItemCategory {
+    public enum Category {
         AURA("effect"),    // 오라
         BALLOON("balloon"), // 풍선
         HEADBAND("headband"), // 머리띠
@@ -44,7 +44,7 @@ public class Item {
 
         private final String value;
 
-        ItemCategory(String value) {
+        Category(String value) {
             this.value = value;
         }
 
