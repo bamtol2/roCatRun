@@ -136,7 +136,7 @@ fun MultiLoseScreen() {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 입장 버튼
+                // 확인 버튼
                 Box(
                     modifier = Modifier
                         .border(
@@ -144,7 +144,6 @@ fun MultiLoseScreen() {
                             color = Color(0xFFFFFF00),
                             shape = RoundedCornerShape(7.dp)
                         )
-                        // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
                             // 홈화면으로 이동.
                             val intent = Intent(context, HomeActivity::class.java)

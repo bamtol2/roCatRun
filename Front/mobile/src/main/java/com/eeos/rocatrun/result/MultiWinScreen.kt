@@ -40,12 +40,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.game.GifImage
 import com.eeos.rocatrun.home.HomeActivity
 import kotlinx.coroutines.delay
 
 @Composable
-fun MultiWinScreen() {
+fun MultiWinScreen(playersResult: List<GamePlay.PlayersResultData?>) {
     // confetti GIF 표시 여부 상태
     var showConfetti by remember { mutableStateOf(true) }
     val context = LocalContext.current

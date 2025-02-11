@@ -1,9 +1,7 @@
 package com.eeos.rocatrun.game
 
-import android.content.Context
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,16 +36,12 @@ import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.game.GamePlay.PlayersResultData
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.result.MultiLoseScreen
 import com.eeos.rocatrun.result.MultiWinScreen
 import com.eeos.rocatrun.result.SingleLoseScreen
 import com.eeos.rocatrun.result.SingleWinScreen
 import com.eeos.rocatrun.socket.SocketHandler
-import com.google.android.gms.wearable.DataEvent
-import com.google.android.gms.wearable.DataEventBuffer
-import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
@@ -56,7 +50,7 @@ import org.json.JSONObject
 @Composable
 fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
-    // 임시 테스트용 버튼
+    // 모달 분기용 변수들
     var showMultiWinDialog by remember { mutableStateOf(false) }
     var showMultiLoseDialog by remember { mutableStateOf(false) }
     var showSingleWinDialog by remember { mutableStateOf(false) }
@@ -64,6 +58,9 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
     val context = LocalContext.current
     val dataClient = Wearable.getDataClient(context)
+
+
+    var playersResult by remember { mutableStateOf<List<GamePlay.PlayersResultData>>(emptyList())}
 
     LaunchedEffect(Unit) {
 
@@ -171,13 +168,13 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 val cleared = responseJson.optBoolean("cleared", false)
                 // 플레이어 결과 배열에 저장
                 val playerResultsArray = responseJson.optJSONArray("playerResults")
-                val playerResults = mutableListOf<PlayersResultData>()
+                val playerResults = mutableListOf<GamePlay.PlayersResultData>()
 
                 if (playerResultsArray != null) {
                     for (i in 0 until playerResultsArray.length()) {
                         val playerObj = playerResultsArray.optJSONObject(i)
                         playerObj?.let {
-                            val result = PlayersResultData(
+                            val result = GamePlay.PlayersResultData(
                                 userId = it.optString("userId", "unknown"),
                                 nickName = it.optString("nickName", "unknown"),
                                 characterImage = it.optString("characterImage", ""),
@@ -202,6 +199,8 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 )
                 
                 // 싱글/멀티, 승리/패비 모달 분기처리
+
+                playersResult = playerResults
 
                 if (cleared) {
                     when {
@@ -359,16 +358,16 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
         // 모달 표시
         if (showMultiWinDialog) {
-            MultiWinScreen()
+            MultiWinScreen(playersResult = playersResult)
         }
         else if (showMultiLoseDialog) {
-            MultiLoseScreen()
+            MultiLoseScreen(playersResult = playersResult)
         }
         else if (showSingleWinDialog) {
-            SingleWinScreen()
+            SingleWinScreen(playerResult = playersResult.firstOrNull())
         }
         else if (showSingleLoseDialog) {
-            SingleLoseScreen()
+            SingleLoseScreen(playerResult = playersResult.firstOrNull())
         }
     }
 }
