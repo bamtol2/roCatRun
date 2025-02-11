@@ -92,7 +92,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                         Log.e("Wear", "보스체력 업데이트 실패", exception)
                     }
             }
-
         }
 
         // 웹소켓 - 피버시작 이벤트 수신 -> 워치 송신
@@ -144,42 +143,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 }
         }
 
-        // 플레이어들 결과 공유 데이터 수신 -> 워치 송신
-        SocketHandler.mSocket.on("gameResult") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val responseJson = args[0] as JSONObject
-                // 클리어/페일
-                val cleared = responseJson.optBoolean("cleared", false)
-                // 플레이어 결과 배열에 저장
-                val playerResultsArray = responseJson.optJSONArray("playerResults")
-                val playerResults = mutableListOf<PlayersResultData>()
-
-                if (playerResultsArray != null) {
-                    for (i in 0 until playerResultsArray.length()) {
-                        val playerObj = playerResultsArray.optJSONObject(i)
-                        playerObj?.let {
-                            val result = PlayersResultData(
-                                userId = it.optString("userId", "unknown"),
-                                runningTime = it.optLong("runningTime", 0),
-                                totalDistance = it.optDouble("totalDistance", 0.0),
-                                paceAvg = it.optDouble("paceAvg", 0.0),
-                                heartRateAvg = it.optDouble("heartRateAvg", 0.0),
-                                cadenceAvg = it.optDouble("cadenceAvg", 0.0),
-                                calories = it.optInt("calories", 0),
-                                itemUseCount = it.optInt("itemUseCount", 0)
-                            )
-                            playerResults.add(result)
-                        }
-                    }
-                }
-
-                Log.d(
-                    "Socket",
-                    "On - gameResult: cleared: $cleared, playerResults: $playerResults"
-                )
-            }
-        }
-
         // 웹소켓 - 게임종료 이벤트 수신 -> 워치 송신
         SocketHandler.mSocket.on("gameOver") {
             Log.d("Socket", "On - gameOver")
@@ -198,6 +161,60 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 .addOnFailureListener { exception ->
                     Log.e("Wear", "게임 종료 실패", exception)
                 }
+        }
+
+        // 플레이어들 결과 공유 데이터 수신
+        SocketHandler.mSocket.on("gameResult") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                val responseJson = args[0] as JSONObject
+                // 클리어/페일
+                val cleared = responseJson.optBoolean("cleared", false)
+                // 플레이어 결과 배열에 저장
+                val playerResultsArray = responseJson.optJSONArray("playerResults")
+                val playerResults = mutableListOf<PlayersResultData>()
+
+                if (playerResultsArray != null) {
+                    for (i in 0 until playerResultsArray.length()) {
+                        val playerObj = playerResultsArray.optJSONObject(i)
+                        playerObj?.let {
+                            val result = PlayersResultData(
+                                userId = it.optString("userId", "unknown"),
+                                nickName = it.optString("nickName", "unknown"),
+                                characterImage = it.optString("characterImage", ""),
+                                runningTime = it.optLong("runningTime", 0),
+                                totalDistance = it.optDouble("totalDistance", 0.0),
+                                paceAvg = it.optDouble("paceAvg", 0.0),
+                                heartRateAvg = it.optDouble("heartRateAvg", 0.0),
+                                cadenceAvg = it.optDouble("cadenceAvg", 0.0),
+                                calories = it.optInt("calories", 0),
+                                itemUseCount = it.optInt("itemUseCount", 0),
+                                rewardExp = it.optInt("rewardExp", 0),
+                                rewardCoin = it.optInt("rewardCoin", 0)
+                            )
+                            playerResults.add(result)
+                        }
+                    }
+                }
+
+                Log.d(
+                    "Socket",
+                    "On - gameResult: cleared: $cleared, playerResults: $playerResults"
+                )
+                
+                // 싱글/멀티, 승리/패비 모달 분기처리
+
+                if (cleared) {
+                    when {
+                        playerResults.size == 1 -> { showSingleWinDialog = true }
+                        playerResults.size > 1 -> { showMultiWinDialog = true }
+                    }
+                } else {
+                    when {
+                        playerResults.size == 1 -> { showSingleLoseDialog = true }
+                        playerResults.size > 1 -> { showMultiLoseDialog = true }
+                    }
+                }
+            }
         }
     }
 
@@ -257,7 +274,7 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
             }
 
 
-            // 임시 테스트용 버튼
+            // 임시 테스트용 버튼 - 없앨거임
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.padding(top = 150.dp),

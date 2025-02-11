@@ -86,17 +86,33 @@ fun MatchingScreen(
         }
 //        SocketHandler.mSocket.off("gameStart")
         SocketHandler.mSocket.on("gameStart") { args ->
+
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject
+
                 val firstBossHealth = json.optInt("bossHp", 10000)
 
-                Log.d("Socket", "On - gameStart : $firstBossHealth")
+                val playerNicknames = arrayListOf<String>()
+                val playersArray = json.optJSONArray("players")
+                if (playersArray != null) {
+                    for (i in 0 until playersArray.length()) {
+                        val playerObj = playersArray.optJSONObject(i)
+                        playerObj?.let {
+                            val nickname = it.optString("nickname", "")
+                            if (nickname.isNotEmpty()) {
+                                playerNicknames.add(nickname)
+                            }
+                        }
+                    }
+                }
+
+                Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
 
                 // GameplayActivity로 이동
                 val intent = Intent(context, GamePlay::class.java)
                 intent.putExtra("firstBossHealth", firstBossHealth)
+                intent.putStringArrayListExtra("playerNicknames", playerNicknames)
                 context.startActivity(intent)
-                Log.d("Socket", "firstBossHealth: $firstBossHealth")
             }
         }
     }
