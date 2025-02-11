@@ -1,22 +1,23 @@
 package com.eeos.rocatrun.stats
 
+import android.util.Log
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import com.eeos.rocatrun.R
 import androidx.compose.ui.window.Dialog
+import com.eeos.rocatrun.stats.api.StatsViewModel
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
@@ -45,16 +47,25 @@ import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.LineProperties
 import ir.ehsannarmani.compose_charts.models.StrokeStyle
 import java.util.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eeos.rocatrun.stats.api.WeekMonStatsResponse
+import com.eeos.rocatrun.ui.components.StrokedText
+import ir.ehsannarmani.compose_charts.models.PopupProperties
 
 @Composable
-fun WeekStatsScreen() {
-    var isDialogVisible by remember { mutableStateOf(false) } // 다이얼로그의 표시 여부 상태
-    var selectedDate by remember { mutableStateOf("2024년 7월 3주") } // 선택된 날짜를 저장하는 상태
+fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
+    val statsViewModel: StatsViewModel = viewModel()
 
-    val (year, month, week) = selectedDate.split(Regex("년|월|주")).let {
-        Triple(it[0].trim().toInt(), it[1].trim().toInt(), it[2].trim().toInt())
-    }
+    // 다이얼로그의 표시 여부 상태
+    var isDialogVisible by remember { mutableStateOf(false) }
 
+    // 선택된 날짜를 저장하는 상태
+    val selectedDate by remember { derivedStateOf { statsViewModel.selectedWeekDate } }
+    var previousDate by remember { mutableStateOf(selectedDate) }
+    val (sYear, sMonth, sWeek) = parseYearMonthWeek(selectedDate)
+
+
+    // UI
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -96,18 +107,27 @@ fun WeekStatsScreen() {
 
             // DatePickerDialog 보여주기
             if (isDialogVisible) {
-                DatePickerDialog(
-                    initialYear = year,
-                    initialMonth = month,
-                    initialWeek = week,
+                DatePickerDialogWeek(
+                    initialYear = sYear,
+                    initialMonth = sMonth,
+                    initialWeek = sWeek,
                     onDateSelected = { selectedYear, selectedMonth, selectedWeek ->
-                        selectedDate = "${selectedYear}년 ${selectedMonth}월 ${selectedWeek}주" // 날짜 선택 후 상태 업데이트
+                        statsViewModel.updateWeekDate("${selectedYear}년 ${selectedMonth}월 ${selectedWeek}주")
                         isDialogVisible = false
                     },
                     onDismiss = {
                         isDialogVisible = false
                     }
                 )
+            }
+
+            // API 재호출
+            LaunchedEffect(selectedDate) {
+                if (selectedDate != previousDate) {
+                    val (selectedYear, selectedMonth, selectedWeek) = parseYearMonthWeek(selectedDate)
+                    statsViewModel.fetchWeekStats(selectedYear, selectedMonth, selectedWeek)
+                    previousDate = selectedDate
+                }
             }
 
             // 총 거리
@@ -124,7 +144,7 @@ fun WeekStatsScreen() {
                 contentAlignment = Alignment.Center
             ) {
                 StrokedText(
-                    text = "20.6 KM",
+                    text = "${weekStatsData?.data?.summary?.totalDistance} KM",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,
@@ -140,9 +160,9 @@ fun WeekStatsScreen() {
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem(label = "러닝", value = "3")
-                StatItem(label = "페이스", value = "05'43\"")
-                StatItem(label = "총 시간", value = "01h 48m")
+                StatItem(label = "러닝", value = "${weekStatsData?.data?.summary?.totalRuns}")
+                StatItem(label = "페이스", value = "${weekStatsData?.data?.summary?.averagePace}")
+                StatItem(label = "총 시간", value = formatTotalTime(weekStatsData?.data?.summary?.totalTime ?: "00:00:00"))
             }
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -154,50 +174,34 @@ fun WeekStatsScreen() {
                     .height(300.dp)
                     .background(Color(0x8200001E), RoundedCornerShape(8.dp))
             ) {
-                BarGraph()
+                BarGraphWeek(weekStatsData = weekStatsData)
             }
         }
     }
 }
 
-@Composable
-fun StatItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        StrokedText(
-            text = value,
-            color = Color.White,
-            strokeColor = Color(0xFF34B4C0),
-            fontSize = 35,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color.White
-        )
-    }
-}
 
+// 그래프 함수
 @Composable
-fun BarGraph() {
-    // 더미 데이터
-    val dataList = listOf(
-        "월" to 20.0,
-        "화" to 50.0,
-        "수" to 80.0,
-        "목" to 30.0,
-        "금" to 60.0,
-        "토" to 40.0,
-        "일" to 70.0
+fun BarGraphWeek(weekStatsData: WeekMonStatsResponse?) {
+    val dataList = weekStatsData?.data?.dailyStats ?: emptyList()
+
+    val maxDistance = (dataList.maxOfOrNull { it.distance } ?: 1.0).coerceAtLeast(1.0)
+    val yAxisIndicators = listOf(
+        maxDistance,
+        maxDistance * 0.75,
+        maxDistance * 0.5,
+        maxDistance * 0.25,
+        0.0
     )
 
     // Bars 데이터 생성
-    val chartData = dataList.map { (day, value) ->
+    val chartData = dataList.map { (day, distance) ->
         Bars(
             label = day,
             values = listOf(
                 Bars.Data(
-                    value = value,
+                    value = distance,
                     color = Brush.verticalGradient(
                         colors = listOf(Color.Blue, Color.Green),
                         startY = 0f,
@@ -208,6 +212,7 @@ fun BarGraph() {
         )
     }
 
+    // UI
     ColumnChart(
         modifier = Modifier
             .fillMaxSize()
@@ -231,10 +236,8 @@ fun BarGraph() {
             count = IndicatorCount.CountBased(count = 5),
             position = IndicatorPosition.Horizontal.Start,
             padding = 16.dp,
-            contentBuilder = { indicator ->
-                "%.2f".format(indicator)
-            },
-            indicators = listOf(80.0, 60.0, 40.0, 20.0, 0.0)
+            contentBuilder = { indicator -> "%.1f".format(indicator) },
+            indicators = yAxisIndicators
         ),
         labelProperties = LabelProperties(
             enabled = true,
@@ -274,6 +277,19 @@ fun BarGraph() {
             yAxisProperties = GridProperties.AxisProperties(
                 enabled = false,
             )
+        ),
+        popupProperties = PopupProperties(
+            enabled = true,
+            animationSpec = tween(300),
+            duration = 2000L,
+            textStyle = MaterialTheme.typography.labelSmall,
+            containerColor = Color.White,
+            cornerRadius = 8.dp,
+            contentHorizontalPadding = 4.dp,
+            contentVerticalPadding = 2.dp,
+            contentBuilder = { value ->
+                "%.1f".format(value) + "Km"
+            }
         )
     )
 }
@@ -281,7 +297,7 @@ fun BarGraph() {
 
 // 날짜 선택 모달
 @Composable
-fun DatePickerDialog(
+fun DatePickerDialogWeek(
     initialYear: Int,
     initialMonth: Int,
     initialWeek: Int,
@@ -296,6 +312,7 @@ fun DatePickerDialog(
     var selectedMonth by remember { mutableStateOf(initialMonth) }
     var selectedWeek by remember { mutableStateOf(initialWeek) }
 
+    // UI
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(8.dp),
@@ -350,79 +367,5 @@ fun DatePickerDialog(
                 }
             }
         }
-    }
-}
-
-// 날짜 선택 Wheel
-@Composable
-fun <T> WheelPicker(items: List<T>, selectedItem: T, onItemSelected: (T) -> Unit) {
-    val paddedItems = listOf(null) + items + listOf(null)
-    val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-
-    // 초기값 자동 선택
-    LaunchedEffect(Unit) {
-        val index = paddedItems.indexOf(selectedItem) - 1
-        if (index >= 0) {
-            listState.scrollToItem(index)
-        }
-    }
-
-    // Detect when the scroll stops and center the closest item
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            val centerItemIndex = listState.layoutInfo.visibleItemsInfo
-                .minByOrNull { Math.abs(it.offset + it.size / 2 - listState.layoutInfo.viewportEndOffset / 2) }
-                ?.index ?: 0
-
-            paddedItems[centerItemIndex]?.let {
-                if (it != selectedItem) {
-                    onItemSelected(it)
-                }
-            }
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .width(80.dp)
-            .height(114.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            items(paddedItems.size) { index ->
-                paddedItems[index]?.let { item ->
-                    Text(
-                        text = item.toString(),
-                        fontSize = if (item == selectedItem) 20.sp else 16.sp,
-                        fontWeight = if (item == selectedItem) FontWeight.Bold else FontWeight.Normal,
-                        color = if (item == selectedItem) Color.Black else Color.Gray,
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .clickable { onItemSelected(item) }
-                    )
-                } ?: Spacer(modifier = Modifier.height(32.dp))
-            }
-        }
-
-        HorizontalDivider(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = -19.dp),
-            thickness = 2.dp,
-            color = Color.Black
-        )
-
-        HorizontalDivider(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = 19.dp),
-            thickness = 2.dp,
-            color = Color.Black
-        )
     }
 }

@@ -21,97 +21,62 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.painter.Painter
+import com.eeos.rocatrun.stats.api.Game
+import com.eeos.rocatrun.stats.api.Player
+import com.eeos.rocatrun.ui.components.StrokedText
 
-data class Player(
-    val rank: Int,           // 순위
-    val profileImage: Painter, // 프로필 이미지
-    val name: String,        // 이름
-    val distance: String,    // 거리
-    val ammoCount: String    // 공격 횟수
-)
 
 @Composable
-fun DayStatsScreen() {
+fun DayStatsScreen(games: List<Game>) {
     // 세부 모달 변수
-    var showDetail by remember { mutableStateOf(false) }
+//    var showDetail by remember { mutableStateOf(false) }
+
+    // 세부 모달을 위한 상태: 클릭한 게임의 데이터를 저장
+    var selectedGame by remember { mutableStateOf<Game?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // Stats cards
-        DayStatCard(
-            date = "2025/01/22",
-            status = "정복완료",
-            players = listOf(
-                Player(
-                    rank = 1,
-                    profileImage = painterResource(id = R.drawable.stats_img_profile),
-                    name = "과즙가람",
-                    distance = "9.5km",
-                    ammoCount = "3"
-                ),
-                Player(
-                    rank = 2,
-                    profileImage = painterResource(id = R.drawable.stats_img_profile),
-                    name = "타노스",
-                    distance = "5.5km",
-                    ammoCount = "2"
+        if (games.isEmpty()) {
+            Text("게임 데이터가 없습니다.")
+        } else {
+            games.forEach { game ->
+                DayStatCard(
+                    date = game.date,
+                    status = if (game.result) "정복완료" else "정복실패",
+                    players = game.players.map { player ->
+                        Player(
+                            rank = player.rank,
+                            profileUrl = player.profileUrl,
+                            nickname = player.nickname,
+                            distance = player.distance,
+                            attackCount = player.attackCount
+                        )
+                    },
+                    isSuccess = game.result,
+                    bossImg = painterResource(id = R.drawable.all_img_boss1),  // 필요 시 수정
+                    onClick = { selectedGame = game }
                 )
-            ),
-            isSuccess = true,
-            bossImg = painterResource(id = R.drawable.all_img_boss1),
-            onClick = { showDetail = true }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        DayStatCard(
-            date = "2025/01/21",
-            status = "정복실패",
-            players = listOf(
-                Player(
-                    rank = 0,
-                    profileImage = painterResource(id = R.drawable.stats_img_profile),
-                    name = "과즙가람",
-                    distance = "5.3km",
-                    ammoCount = "3"
-                ),
-            ),
-            isSuccess = false,
-            bossImg = painterResource(id = R.drawable.all_img_boss2),
-            onClick = { showDetail = true }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        DayStatCard(
-            date = "2025/01/22",
-            status = "정복완료",
-            players = listOf(
-                Player(
-                    rank = 1,
-                    profileImage = painterResource(id = R.drawable.stats_img_profile),
-                    name = "과즙가람",
-                    distance = "9.5km",
-                    ammoCount = "3"
-                ),
-                Player(
-                    rank = 2,
-                    profileImage = painterResource(id = R.drawable.stats_img_profile),
-                    name = "타노스",
-                    distance = "5.5km",
-                    ammoCount = "2"
-                )
-            ),
-            isSuccess = true,
-            bossImg = painterResource(id = R.drawable.all_img_boss1),
-            onClick = { showDetail = true }
-        )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
     }
 
     // 세부 모달 표시
-    if (showDetail) {
-        DetailDialog(onDismiss = { showDetail = false })
-    }
+//    if (showDetail) {
+//        DetailDialog(onDismiss = { showDetail = false })
+//    }
 
+    // 세부 모달 표시: selectedGame이 null이 아닐 때만 보여줌
+    selectedGame?.let { game ->
+        DetailDialog(
+            date = game.date,
+            details = game.details,  // game.details 전달
+            onDismiss = { selectedGame = null }
+        )
+    }
 }
 
 @Composable
@@ -252,14 +217,14 @@ fun DayStatCard(
                         }
 
                         Image(
-                            painter = player.profileImage,
+                            painter = painterResource(id = R.drawable.stats_img_profile),
                             contentDescription = "Profile Img",
                             modifier = Modifier
                                 .size(35.dp)
                                 .weight(0.5f)
                         )
                         Text(
-                            text = player.name,
+                            text = player.nickname,
                             color = Color.White,
                             fontSize = 18.sp,
                             textAlign = TextAlign.Start,
@@ -286,11 +251,11 @@ fun DayStatCard(
                             modifier = Modifier.weight(0.2f)
                         )
                         Text(
-                            text = player.ammoCount,
+                            text = player.attackCount,
                             color = Color.White,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(0.1f)
+                            modifier = Modifier.weight(0.2f)
                         )
                     }
                     Spacer(modifier = Modifier.height(4.dp))

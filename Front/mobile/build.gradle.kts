@@ -101,12 +101,13 @@ dependencies {
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
 
+    // 통계 차트
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
-    implementation(libs.ui.graphics.android)
 
     // composable에서 viewModel 이용
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
     implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
+    implementation(libs.ui.graphics.android)
 
 
     // socket.io -
