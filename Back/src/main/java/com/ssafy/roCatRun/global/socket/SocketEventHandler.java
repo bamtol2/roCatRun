@@ -203,12 +203,12 @@ public class SocketEventHandler {
             }
 
             // 재접속 시도
-            boolean reconnected = disconnectionManager.handlePlayerReconnection(userId, client);
+//            boolean reconnected = disconnectionManager.handlePlayerReconnection(userId, client);
 
-            if (!reconnected) {
+//            if (!reconnected) {
                 // 일반적인 새 연결 처리
                 handleNormalAuthentication(client, userId);
-            }
+//            }
 
             client.sendEvent("authenticated", new AuthResponse(true, null));
 
