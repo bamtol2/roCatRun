@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.input.maxLength
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -57,17 +58,17 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
     var nickname by remember { mutableStateOf(profileData?.data?.nickname ?: "") }
     val previousNickname by remember { mutableStateOf(nickname) }
     var isDuplicateChecked by remember { mutableStateOf(false) } // 중복 확인 여부
-    var isNicknameValid by remember { mutableStateOf(true) } // 닉네임 유효성
+    val isNicknameValid = profileViewModel.nicknameCheckResult.observeAsState().value ?: false// 닉네임 사용 가능
     val maxLength = 8
 
     // 정보 수정 텍스트 필드 변수들
     val age = rememberTextFieldState(profileData?.data?.age.toString() ?: "")
     val height = rememberTextFieldState(profileData?.data?.height.toString() ?: "")
     val weight = rememberTextFieldState(profileData?.data?.weight.toString() ?: "")
-    val genderOptions = listOf("Male", "Female")
+    val genderOptions = listOf("male", "female")
     val (selectedOption, onOptionSelected) = remember {
         mutableStateOf(
-            profileData?.data?.gender ?: "Male"
+            profileData?.data?.gender ?: "male"
         )
     }
     val maleImage = painterResource(id = R.drawable.profile_icon_male)
@@ -84,11 +85,6 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    // 중복 확인 처리
-    fun checkNickname() {
-        isNicknameValid = nickname != "벤츠남"
-        isDuplicateChecked = true
-    }
 
     // 저장 버튼 클릭 시 처리
     fun saveNickname() {
@@ -208,7 +204,11 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                         // 중복 확인 버튼
                         if (isEditing) {
                             Button(
-                                onClick = { checkNickname() },
+                                onClick = {
+                                    if (nickname != previousNickname) {
+                                        profileViewModel.checkNicknameAvailability(token, nickname)
+                                        isDuplicateChecked = true
+                                    } },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                                 modifier = Modifier.align(Alignment.CenterEnd)
                             ) {
@@ -324,7 +324,7 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                                             ),
                                     ) {
                                         Image(
-                                            painter = if (text == "Male") maleImage else femaleImage,
+                                            painter = if (text == "male") maleImage else femaleImage,
                                             contentDescription = text,
                                             modifier = Modifier
                                                 .size(32.dp)

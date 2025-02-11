@@ -62,9 +62,6 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
 
-    // 이미지 선택 coil
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-gif:3.0.4")
 
     // Data Layer API
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
@@ -91,6 +88,7 @@ dependencies {
     // coil 추가
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-gif:3.0.4")
+    implementation("io.coil-kt:coil-compose:2.0.0")
     implementation(libs.androidx.runtime.livedata)
 
     testImplementation(libs.junit)

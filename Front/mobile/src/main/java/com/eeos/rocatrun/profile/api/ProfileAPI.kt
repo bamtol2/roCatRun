@@ -4,6 +4,7 @@ import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface ProfileAPI {
 
@@ -12,6 +13,13 @@ interface ProfileAPI {
     fun getProfileInfo(
         @Header("Authorization") authorization: String,
     ): Call<ProfileResponse>
+
+    // 닉네임 중복 확인
+    @GET("domain/characters/check-nickname/{nickname}")
+    fun checkNickname(
+        @Header("Authorization") authorization: String,
+        @Path("nickname") nickname: String
+    ): Call<NicknameCheckResponse>
 
     // 로그아웃
     @POST("domain/members/logout")

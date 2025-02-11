@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
@@ -180,8 +182,9 @@ fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel 
                 )
 
                 // 캐릭터 이미지
+                val painter = rememberAsyncImagePainter(characterData.characterImage)
                 Image(
-                    painter = painterResource(id = R.drawable.all_img_whitecat),
+                    painter = painter,
                     contentDescription = "Cat Character",
                     modifier = Modifier
                         .size(230.dp)
