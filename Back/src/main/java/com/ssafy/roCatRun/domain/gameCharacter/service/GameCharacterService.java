@@ -103,46 +103,39 @@ public class GameCharacterService {
     /**
      * 캐릭터 랭킹 정보를 조회합니다.
      * @param memberId 현재 로그인한 회원의 ID
-     * @param page 조회할 페이지 번호
-     * @param size 페이지당 표시할 랭킹 수
      * @return 랭킹 정보 (현재 사용자 랭킹 및 전체 랭킹 리스트)
      */
     @Transactional(readOnly = true)
-    public RankingListResponse getRankings(Long memberId, int page, int size) {
+    public RankingListResponse getRankings(Long memberId) {  // page, size 파라미터 제거
         // 현재 사용자의 캐릭터 조회
         GameCharacter currentGameCharacter = getCharacterByMemberId(memberId);
 
-        // 현재 사용자의 랭킹 계산
+        // 현재 사용자의 랭킹 정보 조회
         Long myRank = gameCharacterRepository.findRankByLevelAndExperience(
                 currentGameCharacter.getLevel(),
                 currentGameCharacter.getExperience()
         );
 
-        // 페이지네이션을 위한 Pageable 객체 생성 (레벨과 경험치로 내림차순 정렬)
-        Pageable pageable = PageRequest.of(page, size, Sort.by("level").descending()
-                .and(Sort.by("experience").descending()));
+        // 상위 N개의 랭킹 조회 (내 캐릭터 제외)
+        List<GameCharacter> topRankings = gameCharacterRepository.findTopNByIdNotOrderByLevelDescExperienceDesc(
+                currentGameCharacter.getId(),
+                GameCharacterRepository.MAX_RANKING_SIZE  // 상수 사용
+        );
 
-        // 전체 랭킹 리스트 조회
-        Page<GameCharacter> rankingPage = gameCharacterRepository.findAllOrderByLevelAndExperience(pageable);
-
-        // 랭킹 리스트 생성
-        List<RankingResponse> rankingList = rankingPage.getContent().stream()
+        List<RankingResponse> rankingList = topRankings.stream()
                 .map(character -> RankingResponse.from(
                         character,
                         gameCharacterRepository.findRankByLevelAndExperience(
                                 character.getLevel(),
                                 character.getExperience()
-                        ),
-                        character.getId().equals(currentGameCharacter.getId())
+                        )
                 ))
                 .collect(Collectors.toList());
 
-        // 랭킹 응답 생성 및 반환
-        return new RankingListResponse(
-                RankingResponse.from(currentGameCharacter, myRank, true),
-                rankingList,
-                rankingPage.hasNext()
-        );
+        // 내 랭킹 정보 생성
+        RankingResponse myRankingResponse = RankingResponse.from(currentGameCharacter, myRank);
+
+        return new RankingListResponse(myRankingResponse, rankingList);
     }
 
     /**
