@@ -189,6 +189,7 @@ public class SocketEventHandler {
         try {
             String token = data.getToken();
 
+            log.info("현재 token = {}", token);
             // 토큰 유효성 검증
             if (!jwtTokenProvider.validateToken(token)) {
                 throw new RuntimeException("Invalid token");
