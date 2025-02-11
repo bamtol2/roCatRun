@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.profile
 
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -58,12 +59,14 @@ fun ProfileDialog(
     var isEditing by remember { mutableStateOf(false) } // 수정 모드 여부
 
     // 닉네임 관련 변수들
-    var nickname by remember { mutableStateOf(profileData?.data?.nickname ?: "") }
-    val previousNickname by remember { mutableStateOf(nickname) }
+    val nickname = rememberTextFieldState(profileData?.data?.nickname ?: "")
+    val previousNickname by remember { mutableStateOf(nickname.text.toString()) }
     var isDuplicateChecked by remember { mutableStateOf(false) } // 중복 확인 여부
-    var isNicknameValid =
-        profileViewModel.nicknameCheckResult.observeAsState().value ?: false// 닉네임 사용 가능
-    val maxLength = 8
+    var isNicknameValid = profileViewModel.nicknameCheckResult.observeAsState().value ?: false // 닉네임 사용 가능
+    LaunchedEffect(nickname.text) {
+        isDuplicateChecked = false
+    }
+    val social = rememberTextFieldState(profileData?.data?.socialType ?: "")
 
     // 정보 수정 텍스트 필드 변수들
     val age = rememberTextFieldState(profileData?.data?.age.toString() ?: "")
@@ -83,16 +86,13 @@ fun ProfileDialog(
     val updateProfileResponse by profileViewModel.updateProfileResponse.observeAsState()
     var showToast by remember { mutableStateOf(false) }
     val isButtonEnabled = isEditing && isPhysicalInfoValid &&
-            (if (nickname != previousNickname) {
+            (if (nickname.text.toString() != previousNickname) {
                 isNicknameValid && isDuplicateChecked
             } else {
                 true
             })
 
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-
-
+    // UI
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -160,55 +160,21 @@ fun ProfileDialog(
                     Box(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        TextField(
-                            value = nickname,
-                            onValueChange = { newNickname ->
-                                if (newNickname.length <= maxLength) {
-                                    nickname = newNickname
-                                }
-                                if (isDuplicateChecked) {
-                                    isDuplicateChecked = false
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .padding(vertical = 0.dp)
-                                .border(1.dp, Color.White, RoundedCornerShape(8.dp))
-                                .focusRequester(focusRequester),
-                            textStyle = TextStyle(
-                                fontSize = 14.sp,
-                                fontFamily = MyFontFamily
-                            ),
-                            colors = TextFieldDefaults.colors(
-                                unfocusedContainerColor = if (isEditing) Color(0xBDACA8A8) else Color(
-                                    0xBD555151
-                                ),
-                                focusedContainerColor = if (isEditing) Color(0xBDACA8A8) else Color(
-                                    0xBD555151
-                                ),
-                                disabledContainerColor = Color(0xBD555151),
-                                unfocusedIndicatorColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent,
-                            ),
-                            shape = RoundedCornerShape(8.dp),
+                        CustomTextFieldLarge(
+                            state = nickname,
                             enabled = isEditing,
-                            singleLine = true,
-                            keyboardActions = KeyboardActions(onDone = { // 완료 키 클릭 시 키보드 안 사라짐 issue
-                                focusManager.clearFocus(force = true)
-                            }),
                         )
 
                         // 중복 확인 버튼
                         if (isEditing) {
                             Button(
                                 onClick = {
-                                    if (nickname == previousNickname) {
+                                    if (nickname.text.toString() == previousNickname) {
                                         isDuplicateChecked = true
                                         isNicknameValid = true
                                     } else {
-                                        profileViewModel.checkNicknameAvailability(token, nickname)
+                                        profileViewModel.checkNicknameAvailability(token, nickname.text.toString())
+                                        Log.d("api", "${isNicknameValid}")
                                         isDuplicateChecked = true
                                     }
                                 },
@@ -245,27 +211,9 @@ fun ProfileDialog(
                 }
                 Spacer(modifier = Modifier.height(10.dp))
 
-                TextField(
-                    value = profileData?.data?.socialType ?: "",
-                    onValueChange = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .padding(vertical = 0.dp)
-                        .border(1.dp, Color.White, RoundedCornerShape(8.dp))
-                        .focusRequester(focusRequester),
-                    textStyle = TextStyle(
-                        fontSize = 14.sp,
-                        fontFamily = MyFontFamily
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        disabledContainerColor = Color(0xBD555151),
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    enabled = false
+                CustomTextFieldLarge(
+                    state = social,
+                    enabled = false,
                 )
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -305,7 +253,7 @@ fun ProfileDialog(
                         .fillMaxWidth()
                         .height(110.dp)
                         .border(1.dp, Color.White, RoundedCornerShape(8.dp))
-                        .background(Color(0xBD555151)),
+                        .background(if (isEditing) Color(0xBDACA8A8) else Color(0xBD555151), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Column {
@@ -465,7 +413,7 @@ fun ProfileDialog(
                     Button(
                         onClick = {
                             val profileRequest = UpdateProfileRequest(
-                                nickname = nickname,
+                                nickname = nickname.text.toString(),
                                 height = height.text.toString().toIntOrNull() ?: 0,
                                 weight = weight.text.toString().toIntOrNull() ?: 0,
                                 age = age.text.toString().toIntOrNull() ?: 0,
@@ -530,6 +478,50 @@ fun ProfileDialog(
     }
 }
 
+@Composable
+fun CustomTextFieldLarge(
+    state: TextFieldState,
+    enabled: Boolean,
+    focusRequester: FocusRequester = FocusRequester(),
+    maxLength: Int = 8,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val textColor = when {
+        !enabled -> Color(0xBDACA8A8) // Disabled 상태
+        interactionSource.collectIsFocusedAsState().value -> Color(0xFFFFFFFF) // Focused 상태
+        else -> Color(0xFFDCE3E5) // 일반 상태
+    }
+
+    BasicTextField(
+        state = state,
+        enabled = enabled,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        inputTransformation = InputTransformation.maxLength(maxLength),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(vertical = 0.dp)
+            .border(1.dp, Color.White, RoundedCornerShape(8.dp))
+            .focusRequester(focusRequester),
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            fontFamily = MyFontFamily,
+            color = textColor
+        ),
+        interactionSource = interactionSource,
+        decorator = { innerTextField ->
+            Box(
+                modifier = Modifier
+                    .background(if (enabled) Color(0xBDACA8A8) else Color(0xBD555151), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 13.dp, vertical = 15.dp)
+                    .fillMaxWidth()
+            ) {
+                innerTextField()
+            }
+        }
+    )
+}
+
 
 @Composable
 fun CustomTextField(
@@ -548,7 +540,7 @@ fun CustomTextField(
     val textColor = when {
         !isEditing -> Color(0xBDACA8A8) // Disabled 상태
         interactionSource.collectIsFocusedAsState().value -> Color(0xFFFFFFFF) // Focused 상태
-        else -> Color(0xFFA7B5BD) // 일반 상태
+        else -> Color(0xFFDCE3E5) // 일반 상태
     }
 
     BasicTextField(

@@ -19,7 +19,8 @@ fun StrokedText(
     strokeWidth: Float = 10f,
     color: Color = Color.White,
     strokeColor: Color = Color.Black,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    letterSpacing: Float = 0f
 ) {
     Box {
         // Stroke 텍스트
@@ -31,7 +32,8 @@ fun StrokedText(
                 drawStyle = Stroke(
                     width = strokeWidth,
                     join = StrokeJoin.Round
-                )
+                ),
+                letterSpacing = letterSpacing.sp,
             ),
             modifier = modifier
         )
@@ -40,7 +42,8 @@ fun StrokedText(
             text = text,
             style = MaterialTheme.typography.titleLarge.copy(
                 color = color,
-                fontSize = fontSize.sp
+                fontSize = fontSize.sp,
+                letterSpacing = letterSpacing.sp,
             ),
             modifier = modifier
         )
