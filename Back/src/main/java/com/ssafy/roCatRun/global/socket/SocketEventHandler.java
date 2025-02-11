@@ -4,8 +4,6 @@ package com.ssafy.roCatRun.global.socket;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.google.gson.JsonObject;
-import com.ssafy.roCatRun.domain.character.entity.Character;
-import com.ssafy.roCatRun.domain.character.service.CharacterService;
 import com.ssafy.roCatRun.domain.game.dto.request.*;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
@@ -13,6 +11,9 @@ import com.ssafy.roCatRun.domain.game.service.manager.GameDisconnectionManager;
 import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
 import com.ssafy.roCatRun.domain.game.service.GameService;
+import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
+import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
+import com.ssafy.roCatRun.domain.gameCharacter.service.GameCharacterService;
 import com.ssafy.roCatRun.global.security.jwt.JwtTokenProvider;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ public class SocketEventHandler {
     private final GameRoomManager gameRoomManager;
     private final GameDisconnectionManager disconnectionManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final CharacterService characterService;
+    private final GameCharacterService characterService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @PostConstruct
@@ -361,7 +362,7 @@ public class SocketEventHandler {
         // 새 세션 생성
         sessionManager.createSession(userId, client.getSessionId().toString());
         client.set("userId", userId);
-        Character characterByMemberId = characterService.getCharacterByMemberId(Long.parseLong(userId));
+        GameCharacter characterByMemberId = characterService.getCharacterByMemberId(Long.parseLong(userId));
         client.set("characterId", characterByMemberId.getId());
         client.set("nickname", characterByMemberId.getNickname());
         client.set("level", characterByMemberId.getLevel());
