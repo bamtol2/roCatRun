@@ -17,6 +17,7 @@ public class GameResultResponse {
     public static class PlayerResult {
         private String userId;
         private String nickName;
+        private String characterImage;
         private Long runningTime;
         private double totalDistance;
         private double paceAvg;

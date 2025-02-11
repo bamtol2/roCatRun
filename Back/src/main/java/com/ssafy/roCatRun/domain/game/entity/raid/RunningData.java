@@ -13,5 +13,4 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class RunningData implements Serializable {
     private double distance = 0.0;
-    private double currentSpeed = 0.0;
 }

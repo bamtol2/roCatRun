@@ -13,6 +13,7 @@ import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
 import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
+import com.ssafy.roCatRun.domain.stats.service.GameStatsService;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -44,6 +45,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
     private final GameCharacterRepository characterRepository;
     private final MemberRepository memberRepository;
     private final GameResultRepository gameResultRepository;
+    private final GameStatsService gameStatsService;
 
     // 게임 종료 후 결과 데이터를 임시 저장할 Map
     private final Map<String, Map<String, PlayerRunningResultRequest>> gameResults = new ConcurrentHashMap<>();
@@ -64,14 +66,14 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param request 매칭 요청 정보 (보스 레벨, 최대 인원 등)
      * @return 입장한 또는 생성된 게임방
      */
-    public GameRoom findOrCreateRandomMatch(String userId, MatchRequest request, String characterId, String nickname) {
+    public GameRoom findOrCreateRandomMatch(String userId, MatchRequest request, String characterId, String nickname, String characterImage) {
         // 1. 먼저 적합한 방이 있는지 찾기
         Optional<GameRoom> existingRoom = gameRoomManager.findRandomRoom(request.getBossLevel(), request.getMaxPlayers());
 
         // 기존 방이 있으면 해당 방에 입장
         if (existingRoom.isPresent()) {
             GameRoom room = existingRoom.get();
-            handlePlayerJoin(room, userId, characterId, nickname); // handlePlayerJoin 사용
+            handlePlayerJoin(room, userId, characterId, nickname, characterImage); // handlePlayerJoin 사용
             return room;
         }
 
@@ -84,7 +86,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         );
 
         gameRoomManager.addRoom(newRoom);
-        handlePlayerJoin(newRoom, userId, characterId, nickname); // handlePlayerJoin 사용
+        handlePlayerJoin(newRoom, userId, characterId, nickname, characterImage); // handlePlayerJoin 사용
         return newRoom;
     }
 
@@ -109,7 +111,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param request 방 정보(보스 레벨, 참여 인원)
      * @return
      */
-    public GameRoom createPrivateRoom(String userId, CreateRoomRequest request, String characterId, String nickname){
+    public GameRoom createPrivateRoom(String userId, CreateRoomRequest request, String characterId, String nickname, String characterImage){
         // 새로운 방 생성
         GameRoom newRoom = new GameRoom(
                 UUID.randomUUID().toString(),
@@ -124,7 +126,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         newRoom.setInviteCode(inviteCode);
 
         gameRoomManager.addRoom(newRoom);
-        handlePlayerJoin(newRoom, userId, characterId, nickname); // handlePlayerJoin 사용
+        handlePlayerJoin(newRoom, userId, characterId, nickname, characterImage); // handlePlayerJoin 사용
         return newRoom;
     }
 
@@ -150,7 +152,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param inviteCode 초대코드
      * @return
      */
-    public GameRoom joinRoomByInviteCode(String userId, String inviteCode, String characterId, String nickname){
+    public GameRoom joinRoomByInviteCode(String userId, String inviteCode, String characterId, String nickname, String characterImage){
         String roomId = inviteCodes.get(inviteCode);
         if(roomId==null){
             throw new IllegalArgumentException("Invalid invite code");
@@ -159,7 +161,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         GameRoom room = gameRoomManager.getRoom(roomId)
                 .orElseThrow(()->new IllegalArgumentException("Room not found"));
 
-        handlePlayerJoin(room, userId, characterId, nickname);
+        handlePlayerJoin(room, userId, characterId, nickname, characterImage);
         return room;
     }
 
@@ -168,7 +170,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param room 방 정보
      * @param userId 유저 식별자
      */
-    public void handlePlayerJoin(GameRoom room, String userId, String characterId, String nickname) {
+    public void handlePlayerJoin(GameRoom room, String userId, String characterId, String nickname, String characterImage) {
         // 게임 중이면 입장 불가
         if (room.getStatus() != GameStatus.WAITING) {
             throw new IllegalStateException("Game is already in progress");
@@ -180,7 +182,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         }
 
         // 플레이어 추가
-        Player player = new Player(userId, characterId, nickname);
+        Player player = new Player(userId, characterId, nickname, characterImage);
         room.addPlayer(player);
 
         gameRoomManager.updateRoom(room);
@@ -420,16 +422,21 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         boolean isCleared = room.getBossHealth() <= 0;
         Map<String, GameResultInfo> resultInfoMap = new HashMap<>();
 
+        // 유저별 러닝 결과 데이터 가져오기
         for (Map.Entry<String, PlayerRunningResultRequest> entry : results.entrySet()) {
             try {
                 String userId = entry.getKey();
                 Long characterId = Long.parseLong(room.getPlayerById(userId).getCharacterId());
+
+                // 캐릭터 아이디로 캐릭터 정보 가져오기
                 GameCharacter character = characterRepository.findById(characterId)
                         .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
 
+                // 멤버 아이디로 멤버 정보 가져오기
                 Member member = memberRepository.findById(Long.parseLong(userId))
                         .orElseThrow(() -> new IllegalStateException("Member not found"));
 
+                // 유저의 러닝 결과 데이터 가져오기
                 PlayerRunningResultRequest resultData = entry.getValue();
                 Player player = room.getPlayerById(userId);
 
@@ -442,6 +449,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 // 칼로리 계산
                 int calories = calculateCalories(member, resultData.getTotalDistance(), resultData.getRunningTimeSec());
 
+                // 게임 결과 DB에 저장
                 GameResult gameResult = GameResult.builder()
                         .character(character)
                         .bossLevel(room.getBossLevel())
@@ -470,14 +478,6 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
             }
         }
         return resultInfoMap;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    private static class GameResultInfo {
-        private final int exp;
-        private final int coin;
-        private final int calories;
     }
 
     private int getRank(GameRoom room, String userId) {
@@ -554,6 +554,9 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         // 먼저 게임 결과를 저장하고 보상 정보를 받아옴
         Map<String, GameResultInfo> rewardInfo = saveGameResults(room, results);
 
+        // MongoDB에 게임 통계 저장 (방 정보, 유저별 러닝 결과, 리워드 정보)
+        gameStatsService.saveGameStats(room, results, rewardInfo);
+
         List<GameResultResponse.PlayerResult> playerResults = room.getPlayers().stream()
                 .map(player -> {
                     PlayerRunningResultRequest result = results.get(player.getId());
@@ -563,6 +566,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                     return new GameResultResponse.PlayerResult(
                             player.getId(),
                             player.getNickname(),
+                            player.getCharacterImage(),
                             result.getRunningTimeSec(),
                             result.getTotalDistance(),
                             result.getPaceAvg(),
@@ -642,5 +646,11 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 new FeverTimeEndedResponse("피버타임이 종료되었습니다"));
     }
 
-
+    @Getter
+    @AllArgsConstructor
+    public static class GameResultInfo {
+        private final int exp;
+        private final int coin;
+        private final int calories;
+    }
 }

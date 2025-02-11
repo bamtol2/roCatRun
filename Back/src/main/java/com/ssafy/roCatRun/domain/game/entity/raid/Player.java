@@ -13,6 +13,7 @@ public class Player {
     private String id;
     private String nickname;
     private String characterId;
+    private String characterImage;
     private RunningData runningData = new RunningData();
     private List<Item> items = new ArrayList<>();
     private int usedItemCount = 0;
@@ -26,10 +27,11 @@ public class Player {
         this.itemCountForFever=0;
     }
 
-    public Player(String id, String characterId, String nickname) {
+    public Player(String id, String characterId, String nickname, String characterImage) {
         this.id = id;
         this.nickname = nickname;
         this.characterId = characterId;
+        this.characterImage = characterImage;
         this.items = new ArrayList<>();
         this.runningData = new RunningData();
         this.usedItemCount=0;
