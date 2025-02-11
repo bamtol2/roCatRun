@@ -15,19 +15,35 @@ import com.google.accompanist.pager.*
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.stats.api.StatsViewModel
+import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun StatsScreen() {
+fun StatsScreen(statsViewModel: StatsViewModel) {
     val context = LocalContext.current
 
+    // Daily stats - ViewModel에서 가져온 데이터를 관찰
+    val dailyStatsData = statsViewModel.dailyStatsData.observeAsState()
+    val dailyLoading = statsViewModel.dailyLoading.observeAsState(initial = false)
+
+    // Week stats
+    val weekStatsData = statsViewModel.weekStatsData.observeAsState()
+    val weekLoading = statsViewModel.weekLoading.observeAsState(initial = false)
+
+    // Mon stats
+    val monStatsData = statsViewModel.monStatsData.observeAsState()
+    val monLoading = statsViewModel.monLoading.observeAsState(initial = false)
+
+    // Tab Settings
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("일", "주", "월")
     val pagerState = rememberPagerState(
@@ -37,6 +53,7 @@ fun StatsScreen() {
     )
     val tabIndex = pagerState.currentPage
 
+    // UI
     Box(modifier = Modifier.fillMaxSize()) {
         // 배경 이미지
         Image(
@@ -95,7 +112,9 @@ fun StatsScreen() {
                             text = {
                                 Text(
                                     text = title,
-                                    color = if (tabIndex == index) Color(0xFF36DBEB) else Color(0xFFFFFFFF),
+                                    color = if (tabIndex == index) Color(0xFF36DBEB) else Color(
+                                        0xFFFFFFFF
+                                    ),
                                     fontSize = 42.86.sp,
                                     fontFamily = MyFontFamily,
                                 )
@@ -112,13 +131,21 @@ fun StatsScreen() {
                     .fillMaxHeight(0.77f)
                     .padding(10.dp)
                     .offset(x = 0.dp, y = 130.dp),
-                contentAlignment = Alignment.TopCenter
+                contentAlignment = Alignment.Center
             ) {
-                HorizontalPager(state = pagerState, userScrollEnabled = true) { page ->
-                    when (page) {
-                        0 -> DayStatsScreen()
-                        1 -> WeekStatsScreen()
-                        2 -> MonStatsScreen()
+                if (dailyLoading.value || weekLoading.value || monLoading.value) {
+                    GifImage(
+                        modifier = Modifier.size(400.dp)
+                                    .offset(y = (-40).dp),
+                        gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.stats_gif_loading2}"
+                    )
+                } else {
+                    HorizontalPager(state = pagerState, userScrollEnabled = true) { page ->
+                        when (page) {
+                            0 -> dailyStatsData.value?.let { DayStatsScreen(games = it.games) }
+                            1 -> weekStatsData.value?.let { WeekStatsScreen(weekStatsData = it) }
+                            2 -> monStatsData.value?.let { MonStatsScreen(monStatsData = it) }
+                        }
                     }
                 }
             }

@@ -18,28 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.stats.api.GameDetails
+import com.eeos.rocatrun.ui.components.StrokedText
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
-data class DailyData(
-    val date: String,       // 날짜 (예: "2025-01-01")
-    val pace: String,       // 페이스 (예: "05'43\"")
-    val calories: Double,   // 칼로리 (예: 612)
-    val cadence: Int,       // 케이던스 (분당 걸음 수, 예: 160)
-    val distance: Double,   // 거리 (km, 예: 5.5)
-    val time: String        // 시간 (예: "01h 30m 20s")
-)
 
 @Composable
-fun DetailDialog(onDismiss: () -> Unit) {
-    val dailyStats = DailyData(
-        date = "2025/01/22",
-        pace = "05'43\"",
-        calories = 200.5,
-        cadence = 160,
-        distance = 5.5,
-        time = "01h 30m 20s"
-    )
-
+fun DetailDialog(date: String, details: GameDetails, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -64,7 +49,7 @@ fun DetailDialog(onDismiss: () -> Unit) {
             ) {
                 // 모달 Title (날짜)
                 Text(
-                    text = dailyStats.date,
+                    text = date,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -76,9 +61,9 @@ fun DetailDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatColumn(label = "페이스", value = "05'48\"")
-                    StatColumn(label = "칼로리", value = "612kcal")
-                    StatColumn(label = "케이던스", value = "162spm")
+                    StatColumn(label = "페이스", value = details.pace)
+                    StatColumn(label = "칼로리", value = details.calories)
+                    StatColumn(label = "케이던스", value = details.cadence)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -86,8 +71,8 @@ fun DetailDialog(onDismiss: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatColumn(label = "거리", value = "11.5km")
-                    StatColumn(label = "시간", value = "01:12:35")
+                    StatColumn(label = "거리", value = details.distance)
+                    StatColumn(label = "시간", value = details.time)
                 }
                 Spacer(modifier = Modifier.height(30.dp))
 
