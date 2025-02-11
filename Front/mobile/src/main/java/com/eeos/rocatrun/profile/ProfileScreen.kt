@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.profile
 
+import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.*
@@ -36,13 +37,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.login.LoginActivity
+import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.profile.api.ProfileResponse
+import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
-fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?) {
+fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileViewModel: ProfileViewModel = viewModel()) {
+    val context = LocalContext.current
+    val token = TokenStorage.getAccessToken(context)
+
     var isEditing by remember { mutableStateOf(false) } // 수정 모드 여부
 
     // 닉네임 관련 변수들
@@ -57,7 +65,11 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?) {
     val height = rememberTextFieldState(profileData?.data?.height.toString() ?: "")
     val weight = rememberTextFieldState(profileData?.data?.weight.toString() ?: "")
     val genderOptions = listOf("Male", "Female")
-    val (selectedOption, onOptionSelected) = remember { mutableStateOf(profileData?.data?.gender ?: "Male") }
+    val (selectedOption, onOptionSelected) = remember {
+        mutableStateOf(
+            profileData?.data?.gender ?: "Male"
+        )
+    }
     val maleImage = painterResource(id = R.drawable.profile_icon_male)
     val femaleImage = painterResource(id = R.drawable.profile_icon_female)
 
@@ -319,7 +331,9 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?) {
                                                 .border(
                                                     width = if (text == selectedOption) 2.dp else 0.dp,
                                                     color = when {
-                                                        isEditing && text == selectedOption -> Color(0xFF12D9C8) // 선택된 상태 색
+                                                        isEditing && text == selectedOption -> Color(
+                                                            0xFF12D9C8
+                                                        ) // 선택된 상태 색
                                                         !isEditing -> Color(0xFF75A09F)  // Disabled 상태 색
                                                         else -> Color.Transparent // 선택되지 않은 상태 색
                                                     },
@@ -390,7 +404,14 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?) {
                             .fillMaxSize(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xBDD7D7D7)),
                         shape = RoundedCornerShape(8.dp),
-                        onClick = { /* 로그아웃 로직*/ },
+                        onClick = {
+                            val authorization = "Bearer $token"
+                            profileViewModel.fetchLogout(authorization)
+                            TokenStorage.clearTokens(context)
+                            // 로그인 화면으로 이동
+                            val intent = Intent(context, LoginActivity::class.java)
+                            context.startActivity(intent)
+                        },
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

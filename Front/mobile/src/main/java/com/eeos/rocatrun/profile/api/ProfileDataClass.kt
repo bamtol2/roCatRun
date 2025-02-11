@@ -4,7 +4,7 @@ package com.eeos.rocatrun.profile.api
 data class ProfileResponse(
     val status: Boolean,
     val message: String,
-    val data: UserData
+    val data: UserData?
 )
 
 data class UserData(

@@ -5,13 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.ui.platform.LocalContext
 import com.eeos.rocatrun.home.api.HomeViewModel
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.socket.SocketHandler
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 
 class HomeActivity : ComponentActivity() {
-//    private lateinit var token: String
 
     private val homeViewModel: HomeViewModel by viewModels()
 
@@ -20,10 +20,10 @@ class HomeActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-//        token = TokenStorage.getAccessToken(applicationContext) ?: ""
-
-//        homeViewModel.fetchHomeInfo(token)
-        homeViewModel.fetchHomeInfo()
+        val token = TokenStorage.getAccessToken(this)
+        val authorization = "Bearer $token"
+        homeViewModel.fetchHomeInfo(authorization)
+//        homeViewModel.fetchHomeInfo()
 
         setContent {
 
