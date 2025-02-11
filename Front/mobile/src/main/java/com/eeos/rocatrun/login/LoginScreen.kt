@@ -613,8 +613,8 @@ fun UserInfoDialog(
                                         nickname,
                                         token,
                                         age.toIntOrNull()?:0,
-                                        weight.toIntOrNull()?:0,
                                         height.toIntOrNull()?:0,
+                                        weight.toIntOrNull()?:0,
                                         gender)
                                     if (registerSuccess){
                                         onShowMessageBox()

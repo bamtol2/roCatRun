@@ -136,7 +136,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 itemCount = getInt("itemUsed")
             )
         }
-        Log.d("Multi", "사용자 데이터 받는중 : $playersData")
+        Log.d("MultiUserViewModel", "사용자 데이터 받는중 : $playersData")
     }
 
     // 실시간 보스 체력 데이터
@@ -146,7 +146,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 bossHealth = getInt("bosshealth")
             )
         }
-        Log.d("Multi", "보스 체력 데이터 받는중 : $bossHealthData" )
+        Log.d("MultiUserViewModel", "보스 체력 데이터 받는중 : $bossHealthData" )
     }
     // 피버 시작 데이터
     private fun processFeverStartData(dataItem: DataItem){
@@ -155,7 +155,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 feverstart = getBoolean("feverStart")
             )
         }
-        Log.d("Multi", "피버 시작 데이터 받는중 : $feverStartData")
+        Log.d("MultiUserViewModel", "피버 시작 데이터 받는중 : $feverStartData")
         viewModelScope.launch { _feverEventFlow.emit(true) }  // 시작 이벤트 전송
     }
     // 피버 종료 데이터
@@ -165,7 +165,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 feverend = getBoolean("feverEnd")
             )
         }
-        Log.d("Multi", "피버 종료 데이터 받는중 : $feverEndData")
+        Log.d("MultiUserViewModel", "피버 종료 데이터 받는중 : $feverEndData")
         viewModelScope.launch { _feverEventFlow.emit(false) }  // 종료 이벤트 전송
     }
 
@@ -176,6 +176,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 firstBossHealth = getInt("firstBossHealth")
             )
         }
+        Log.d("MultiUserViewModel", "보스 초기 체력 데이터 : $firstBossHealthData")
     }
     // 게임 종료 데이터
     private fun processGameEndData(datItem: DataItem){
@@ -184,7 +185,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 gameEnd = getBoolean("gameEnd")
             )
         }
-        Log.d("Multi", "게임 종료 데이터 받는중 : $gameEndData")
+        Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
 
     private fun generateMockData(): List<UserData> {
