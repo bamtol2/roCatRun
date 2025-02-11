@@ -363,9 +363,11 @@ public class SocketEventHandler {
         sessionManager.createSession(userId, client.getSessionId().toString());
         client.set("userId", userId);
         GameCharacter characterByMemberId = characterService.getCharacterByMemberId(Long.parseLong(userId));
-        client.set("characterId", characterByMemberId.getId());
-        client.set("nickname", characterByMemberId.getNickname());
-        client.set("level", characterByMemberId.getLevel());
+        if(characterByMemberId!=null) {
+            client.set("characterId", Long.toString(characterByMemberId.getId()));
+            client.set("nickname", characterByMemberId.getNickname());
+            client.set("level", characterByMemberId.getLevel());
+        }
     }
 
     private void handleNormalDisconnection(GameRoom room, String userId, String socketId, String nickName) {

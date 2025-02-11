@@ -31,7 +31,7 @@ public class GameResult {
     @Column(nullable = false)
     private boolean isCleared;
 
-    private Duration runningTime;
+    private Long runningTime;
     private double totalDistance;
     private double paceAvg;
     private double heartRateAvg;
@@ -50,7 +50,7 @@ public class GameResult {
 
     @Builder
     public GameResult(GameCharacter character, BossLevel bossLevel, boolean isCleared,
-                      Duration runningTime, double totalDistance, double paceAvg,
+                      Long runningTime, double totalDistance, double paceAvg,
                       double heartRateAvg, double cadenceAvg, int itemUseCount,
                       int rewardExp, int rewardCoin) {
         this.character = character;

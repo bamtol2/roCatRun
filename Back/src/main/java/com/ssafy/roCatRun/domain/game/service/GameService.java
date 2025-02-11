@@ -436,7 +436,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         .character(character)
                         .bossLevel(room.getBossLevel())
                         .isCleared(isCleared)
-                        .runningTime(resultData.getRunningTime())
+                        .runningTime(resultData.getRunningTimeSec())
                         .totalDistance(resultData.getTotalDistance())
                         .paceAvg(resultData.getPaceAvg())
                         .heartRateAvg(resultData.getHeartRateAvg())
@@ -499,7 +499,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                     return new GameResultResponse.PlayerResult(
                             player.getId(),
                             player.getNickname(),
-                            result.getRunningTime(),
+                            result.getRunningTimeSec(),
                             result.getTotalDistance(),
                             result.getPaceAvg(),
                             result.getHeartRateAvg(),
