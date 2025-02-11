@@ -1,17 +1,16 @@
 package com.ssafy.roCatRun.domain.game.service;
 
 import com.corundumstudio.socketio.SocketIOServer;
-import com.ssafy.roCatRun.domain.character.repository.CharacterRepository;
 import com.ssafy.roCatRun.domain.game.dto.request.CreateRoomRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.MatchRequest;
 import com.ssafy.roCatRun.domain.game.dto.request.PlayerRunningResultRequest;
 import com.ssafy.roCatRun.domain.game.dto.response.*;
-import com.ssafy.roCatRun.domain.game.entity.raid.GameRoom;
-import com.ssafy.roCatRun.domain.game.entity.raid.GameStatus;
-import com.ssafy.roCatRun.domain.game.entity.raid.Player;
+import com.ssafy.roCatRun.domain.game.entity.raid.*;
+import com.ssafy.roCatRun.domain.game.repository.GameResultRepository;
 import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
-import com.ssafy.roCatRun.domain.game.entity.raid.RunningData;
 import com.ssafy.roCatRun.domain.game.service.manager.GameTimerManager;
+import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
+import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
@@ -39,8 +38,9 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
     private final GameRoomManager gameRoomManager;
     private final GameTimerManager gameTimerManager;
 
-    private final CharacterRepository characterRepository;
+    private final GameCharacterRepository characterRepository;
     private final MemberRepository memberRepository;
+    private final GameResultRepository gameResultRepository;
 
     // 게임 종료 후 결과 데이터를 임시 저장할 Map
     private final Map<String, Map<String, PlayerRunningResultRequest>> gameResults = new ConcurrentHashMap<>();
@@ -403,7 +403,8 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
             int finalExp = (int) (baseExp * rankMultiplier * clearMultiplier);
             int finalCoin = (int) (baseCoin * rankMultiplier * clearMultiplier);
 
-            Optional<com.ssafy.roCatRun.domain.character.entity.Character> userCharacter = characterRepository.findById(Long.parseLong(characterId));
+            GameCharacter userCharacter = characterRepository.findById(Long.parseLong(characterId))
+                    .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
             userCharacter.addExperience(finalExp);
             userCharacter.addCoin(finalCoin);
 
@@ -413,25 +414,67 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
 
     @Transactional
     private void saveGameResults(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
-        GameResult gameResult = GameResult.builder()
-            .gameRoomId(room.getId())
-            .bossLevel(room.getBossLevel())
-            .isCleared(room.getBossHealth() <= 0)
-            .startTime(room.getGameStartTime())
-            .endTime(System.currentTimeMillis())
-            .playerCount(room.getPlayers().size())
-            .build();
+        boolean isCleared = room.getBossHealth() <= 0;
 
         for (Map.Entry<String, PlayerRunningResultRequest> entry : results.entrySet()) {
-            PlayerGameResult playerResult = PlayerGameResult.builder()
-                .gameResult(gameResult)
-                .playerId(entry.getKey())
-                .runningData(entry.getValue())
-                .build();
-            gameResult.addPlayerResult(playerResult);
+            try {
+                String characterId = room.getPlayerById(entry.getKey()).getCharacterId();
+                Long charId = Long.parseLong(characterId);
+                GameCharacter character = characterRepository.findById(charId)
+                        .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
+
+                PlayerRunningResultRequest resultData = entry.getValue();
+                Player player = room.getPlayerById(entry.getKey());
+
+                // 보상 계산
+                double rankMultiplier = calculateRankMultiplier(getRank(room, entry.getKey()));
+                double clearMultiplier = isCleared ? 1.5 : 0.5;
+                int rewardExp = (int) (room.getBossLevel().getBaseExp() * rankMultiplier * clearMultiplier);
+                int rewardCoin = (int) (room.getBossLevel().getBaseCoin() * rankMultiplier * clearMultiplier);
+
+                GameResult gameResult = GameResult.builder()
+                        .character(character)
+                        .bossLevel(room.getBossLevel())
+                        .isCleared(isCleared)
+                        .runningTime(resultData.getRunningTime())
+                        .totalDistance(resultData.getTotalDistance())
+                        .paceAvg(resultData.getPaceAvg())
+                        .heartRateAvg(resultData.getHeartRateAvg())
+                        .cadenceAvg(resultData.getCadenceAvg())
+                        .itemUseCount(player.getUsedItemCount())
+                        .rewardExp(rewardExp)
+                        .rewardCoin(rewardCoin)
+                        .build();
+
+                gameResultRepository.save(gameResult);
+
+                log.info("Game result saved for character {}: cleared={}, exp={}, coin={}",
+                        characterId, isCleared, rewardExp, rewardCoin);
+            } catch (Exception e) {
+                log.error("Error saving game result: {}", e.getMessage());
+            }
+        }
     }
 
-    gameResultRepository.save(gameResult);
+    private int getRank(GameRoom room, String userId) {
+        List<Player> sortedPlayers = room.getPlayers().stream()
+                .sorted((p1, p2) -> {
+                    if (p1.getUsedItemCount() != p2.getUsedItemCount()) {
+                        return p2.getUsedItemCount() - p1.getUsedItemCount();
+                    }
+                    return Double.compare(
+                            p2.getRunningData().getDistance(),
+                            p1.getRunningData().getDistance()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < sortedPlayers.size(); i++) {
+            if (sortedPlayers.get(i).getId().equals(userId)) {
+                return i;
+            }
+        }
+        return sortedPlayers.size() - 1; // fallback
     }
 
     private double calculateRankMultiplier(int rank) {
