@@ -1,3 +1,5 @@
+package com.ssafy.roCatRun.domain.member.dto.oauth;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

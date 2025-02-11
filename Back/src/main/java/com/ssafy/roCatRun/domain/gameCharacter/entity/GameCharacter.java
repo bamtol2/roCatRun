@@ -1,13 +1,10 @@
 package com.ssafy.roCatRun.domain.gameCharacter.entity;
 
-import com.ssafy.roCatRun.domain.inventory.entity.Inventory;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 게임 캐릭터 정보를 저장하는 엔티티
@@ -68,33 +65,6 @@ public class GameCharacter {
             unique = true                  // 1:1 관계 보장을 위한 unique 제약조건
     )
     private Member member;
-
-    /**
-     * Inventory 엔티티와의 일대다 관계 설정
-     * - mappedBy: Inventory 엔티티의 gameCharacter 필드와 매핑
-     * - cascade: GameCharacter 엔티티의 변경사항이 Inventory 엔티티에도 적용
-     * - orphanRemoval: 연관관계가 끊어진 Inventory 엔티티 자동 삭제
-     */
-    @OneToMany(mappedBy = "gameCharacter", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Inventory> inventories = new ArrayList<>();
-
-    /**
-     * 인벤토리에 아이템 추가
-     * @param inventory 추가할 인벤토리 아이템
-     */
-    public void addInventory(Inventory inventory) {
-        inventories.add(inventory);
-        inventory.setGameCharacter(this);
-    }
-
-    /**
-     * 인벤토리에서 아이템 제거
-     * @param inventory 제거할 인벤토리 아이템
-     */
-    public void removeInventory(Inventory inventory) {
-        inventories.remove(inventory);
-        inventory.setGameCharacter(null);
-    }
 
     /**
      * 새로운 캐릭터를 생성하는 팩토리 메서드

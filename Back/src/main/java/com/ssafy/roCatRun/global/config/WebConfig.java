@@ -13,8 +13,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")  // 모든 경로에 대해
                 // 이 주소들에서의 접근 허용
                 .allowedOrigins(
-                        "http://localhost:8080",
-                        "http://i12e205.p.ssafy.io:8080"
+                        "http://localhost:8081",
+                        "http://i12e205.p.ssafy.io:8081"
                 )
                 // 허용할 HTTP 메서드들
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")

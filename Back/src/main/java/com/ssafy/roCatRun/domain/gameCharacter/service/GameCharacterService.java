@@ -5,8 +5,6 @@ import com.ssafy.roCatRun.domain.gameCharacter.dto.response.RankingListResponse;
 import com.ssafy.roCatRun.domain.gameCharacter.dto.response.RankingResponse;
 import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
 import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
-import com.ssafy.roCatRun.domain.inventory.entity.Inventory;
-import com.ssafy.roCatRun.domain.inventory.repository.InventoryRepository;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.global.exception.ErrorCode;
@@ -31,7 +29,6 @@ import java.util.stream.Collectors;
 public class GameCharacterService {
     private final GameCharacterRepository gameCharacterRepository;
     private final MemberRepository memberRepository;
-    private final InventoryRepository inventoryRepository;
 
     /**
      * 닉네임 중복 여부를 확인합니다.
@@ -44,7 +41,7 @@ public class GameCharacterService {
     }
 
     /**
-     * 새로운 캐릭터를 생성하고 기본 인벤토리를 설정합니다.
+     * 새로운 캐릭터를 생성합니다.
      * @param request 캐릭터 생성 요청 정보
      * @param memberId 회원 ID
      * @return 생성된 캐릭터
@@ -66,26 +63,8 @@ public class GameCharacterService {
         member.setGender(request.getGender());
 
         // 캐릭터 생성 및 저장
-        GameCharacter gameCharacter = GameCharacter.createCharacter(nickname, member);
-        gameCharacterRepository.save(gameCharacter);
-
-        // 기본 인벤토리 생성
-        createDefaultInventory(gameCharacter);
-
-        return gameCharacter;
+        return gameCharacterRepository.save(GameCharacter.createCharacter(nickname, member));
     }
-
-    /**
-     * 새로운 캐릭터의 기본 인벤토리를 생성합니다.
-     * 처음에는 빈 인벤토리로 시작합니다.
-     * @param gameCharacter 인벤토리를 생성할 캐릭터
-     */
-    private void createDefaultInventory(GameCharacter gameCharacter) {
-        // 빈 인벤토리 생성
-        Inventory inventory = Inventory.createInventory(gameCharacter);
-        inventoryRepository.save(inventory);
-    }
-
 
     /**
      * 캐릭터의 닉네임을 수정합니다.

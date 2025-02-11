@@ -41,20 +41,15 @@ public class SecurityConfig {
 
                 // URL별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // "/api/auth/**" 경로는 누구나 접근 가능
                         .requestMatchers("/api/auth/**").permitAll()
-                        // 닉네임 중복 체크도 누구나 가능
+                        .requestMatchers("/domain/members/**").permitAll()
+                        .requestMatchers("/domain/mypage/**").permitAll()
                         .requestMatchers("/domain/characters/**").permitAll()
-                        // Swagger 관련 경로도 누구나 접근 가능
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // 서버 상태 체크는 누구나 가능
                         .requestMatchers("/actuator/health").permitAll()
-                        // 서버 관리 기능은 관리자만 가능
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
-                        // 아이템/인벤토리 API 권한 설정 추가
-                        .requestMatchers("/api/items/**").authenticated()
-                        .requestMatchers("/api/items/draw").authenticated()
                         .requestMatchers("/api/inventory/**").authenticated()
+                        .requestMatchers("/api/items/draw").authenticated()
+                        .requestMatchers("/api/items/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 // JWT 검사하는 필터를 추가
@@ -84,6 +79,10 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost:8080");
         configuration.addAllowedOrigin("https://i12e205.p.ssafy.io:8080");
         configuration.addAllowedOrigin("https://localhost:8080");
+        configuration.addAllowedOrigin("http://localhost:9092");
+        configuration.addAllowedOrigin("https://localhost:9092");
+        configuration.addAllowedOrigin("http://i12e205.p.ssafy.io:9092");
+        configuration.addAllowedOrigin("https://i12e205.p.ssafy.io:9092");
         // 모든 HTTP 메서드 허용 (GET, POST 등)
         configuration.addAllowedMethod("*");
         // 모든 헤더 허용
