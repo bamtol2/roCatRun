@@ -544,10 +544,6 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         )
                         // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
-//
-//                            // 소켓 초기화, 연결
-//                            SocketHandler.initialize(context)
-//                            SocketHandler.connect()
 
                             // 웹소켓 입장 이벤트 호출: 성공하면 LoadingActivity로 이동, 에러면 모달 띄움
                             JoinRoomSocket(inviteCode = inviteCode,
