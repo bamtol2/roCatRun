@@ -48,7 +48,9 @@ import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.socket.SocketHandler
+import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
 
@@ -1222,15 +1224,10 @@ fun singlePlaySocket(
     // 랜덤매치 전송
     SocketHandler.mSocket.emit("randomMatch", singleMatchJson)
 
-    // 방 생성 응답 이벤트 리스너 등록
-    SocketHandler.mSocket.on("gameStart") {
-
-        // JSON 데이터 로그 출력
-        Log.d(
-            "Socket",
-            "On - gameStart"
-        )
-        // 콜백
-        gameStart(bossLevel, 1)
+    SocketHandler.mSocket.on("gameReady"){
+        Log.d("Socket", "On - gameReady")
     }
+
+    // 콜백
+    gameStart(bossLevel, 1)
 }
