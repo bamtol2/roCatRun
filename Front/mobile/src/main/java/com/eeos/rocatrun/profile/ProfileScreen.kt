@@ -1,7 +1,6 @@
 package com.eeos.rocatrun.profile
 
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -28,27 +27,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.login.LoginActivity
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.profile.api.ProfileResponse
 import com.eeos.rocatrun.profile.api.ProfileViewModel
+import com.eeos.rocatrun.profile.api.UpdateProfileRequest
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
-fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileViewModel: ProfileViewModel = viewModel()) {
+fun ProfileDialog(
+    onDismiss: () -> Unit,
+    profileData: ProfileResponse?,
+    profileViewModel: ProfileViewModel = viewModel()
+) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
 
@@ -58,13 +61,15 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
     var nickname by remember { mutableStateOf(profileData?.data?.nickname ?: "") }
     val previousNickname by remember { mutableStateOf(nickname) }
     var isDuplicateChecked by remember { mutableStateOf(false) } // 중복 확인 여부
-    val isNicknameValid = profileViewModel.nicknameCheckResult.observeAsState().value ?: false// 닉네임 사용 가능
+    var isNicknameValid =
+        profileViewModel.nicknameCheckResult.observeAsState().value ?: false// 닉네임 사용 가능
     val maxLength = 8
 
     // 정보 수정 텍스트 필드 변수들
     val age = rememberTextFieldState(profileData?.data?.age.toString() ?: "")
     val height = rememberTextFieldState(profileData?.data?.height.toString() ?: "")
     val weight = rememberTextFieldState(profileData?.data?.weight.toString() ?: "")
+    val isPhysicalInfoValid = age.text.isNotEmpty() && height.text.isNotEmpty() && weight.text.isNotEmpty() // 정보 입력 확인
     val genderOptions = listOf("male", "female")
     val (selectedOption, onOptionSelected) = remember {
         mutableStateOf(
@@ -75,23 +80,17 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
     val femaleImage = painterResource(id = R.drawable.profile_icon_female)
 
     // 저장 관련 변수들
+    val updateProfileResponse by profileViewModel.updateProfileResponse.observeAsState()
     var showToast by remember { mutableStateOf(false) }
-    val isButtonEnabled = isEditing && (if (nickname != previousNickname) {
-        isNicknameValid && isDuplicateChecked
-    } else {
-        true
-    })
+    val isButtonEnabled = isEditing && isPhysicalInfoValid &&
+            (if (nickname != previousNickname) {
+                isNicknameValid && isDuplicateChecked
+            } else {
+                true
+            })
 
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-
-
-    // 저장 버튼 클릭 시 처리
-    fun saveNickname() {
-        showToast = true
-        isEditing = false
-        isDuplicateChecked = false
-    }
 
 
     Dialog(onDismissRequest = onDismiss) {
@@ -205,10 +204,14 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                         if (isEditing) {
                             Button(
                                 onClick = {
-                                    if (nickname != previousNickname) {
+                                    if (nickname == previousNickname) {
+                                        isDuplicateChecked = true
+                                        isNicknameValid = true
+                                    } else {
                                         profileViewModel.checkNicknameAvailability(token, nickname)
                                         isDuplicateChecked = true
-                                    } },
+                                    }
+                                },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                                 modifier = Modifier.align(Alignment.CenterEnd)
                             ) {
@@ -278,6 +281,22 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
+
+                    if (!isPhysicalInfoValid) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 5.dp),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "신체 정보를 모두 입력해주세요",
+                                color = Color.Red,
+                                style = TextStyle(fontSize = 12.sp)
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -405,8 +424,7 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xBDD7D7D7)),
                         shape = RoundedCornerShape(8.dp),
                         onClick = {
-                            val authorization = "Bearer $token"
-                            profileViewModel.fetchLogout(authorization)
+                            profileViewModel.fetchLogout(token)
                             TokenStorage.clearTokens(context)
                             // 로그인 화면으로 이동
                             val intent = Intent(context, LoginActivity::class.java)
@@ -445,7 +463,21 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                 ) {
                     // 저장 버튼
                     Button(
-                        onClick = { saveNickname() },
+                        onClick = {
+                            val profileRequest = UpdateProfileRequest(
+                                nickname = nickname,
+                                height = height.text.toString().toIntOrNull() ?: 0,
+                                weight = weight.text.toString().toIntOrNull() ?: 0,
+                                age = age.text.toString().toIntOrNull() ?: 0,
+                                gender = selectedOption
+                            )
+                            profileViewModel.updateProfile(token, profileRequest)
+                            val intent = Intent(context, HomeActivity::class.java)
+                            context.startActivity(intent) // 메인페이지로 이동
+                            showToast = updateProfileResponse?.success == true
+                            isEditing = false
+                            isDuplicateChecked = false
+                        },
                         enabled = isButtonEnabled,
                         modifier = Modifier
                             .border(2.dp, Color(0xFF00FFCC), RoundedCornerShape(15.dp)),

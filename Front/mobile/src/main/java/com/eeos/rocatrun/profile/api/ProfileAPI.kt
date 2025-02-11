@@ -1,8 +1,10 @@
 package com.eeos.rocatrun.profile.api
 
 import retrofit2.Call
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -20,6 +22,13 @@ interface ProfileAPI {
         @Header("Authorization") authorization: String,
         @Path("nickname") nickname: String
     ): Call<NicknameCheckResponse>
+
+    // 회원 정보 수정
+    @PATCH("/domain/mypage")
+    fun updateProfile(
+        @Header("Authorization") authorization: String,
+        @Body request: UpdateProfileRequest
+    ): Call<UpdateProfileResponse>
 
     // 로그아웃
     @POST("domain/members/logout")

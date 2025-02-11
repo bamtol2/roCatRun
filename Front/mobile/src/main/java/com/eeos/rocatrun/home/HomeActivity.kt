@@ -24,8 +24,7 @@ class HomeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val token = TokenStorage.getAccessToken(this)
-        val authorization = "Bearer $token"
-        homeViewModel.fetchHomeInfo(authorization)
+        homeViewModel.fetchHomeInfo(token)
 
         setContent {
             RoCatRunTheme {

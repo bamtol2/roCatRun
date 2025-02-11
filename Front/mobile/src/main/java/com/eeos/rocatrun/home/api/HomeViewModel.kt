@@ -20,7 +20,7 @@ class HomeViewModel : ViewModel() {
     fun fetchHomeInfo(auth: String?) {
         if (auth != null) {
             Log.d("api", "메인페이지 호출 시작")
-            retrofitInstance.getHomeInfo(auth).enqueue(object : Callback<HomeInfoResponse> {
+            retrofitInstance.getHomeInfo("Bearer $auth").enqueue(object : Callback<HomeInfoResponse> {
                 override fun onResponse(call: Call<HomeInfoResponse>, response: Response<HomeInfoResponse>) {
                     if (response.isSuccessful) {
                         _homeData.value = response.body()
@@ -31,7 +31,7 @@ class HomeViewModel : ViewModel() {
                 }
 
                 override fun onFailure(call: Call<HomeInfoResponse>, t: Throwable) {
-                    Log.d("mock api", t.localizedMessage)
+                    Log.d("api", t.localizedMessage)
                 }
             })
         }

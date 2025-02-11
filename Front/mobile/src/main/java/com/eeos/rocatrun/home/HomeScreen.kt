@@ -82,8 +82,7 @@ fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel 
     LaunchedEffect(profileData) {
         if (profileData == null) {
             val token = TokenStorage.getAccessToken(context)
-            val authorization = "Bearer $token"
-            profileViewModel.fetchProfileInfo(authorization)
+            profileViewModel.fetchProfileInfo(token)
         }
     }
 

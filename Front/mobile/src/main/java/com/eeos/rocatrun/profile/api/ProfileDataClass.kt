@@ -23,3 +23,19 @@ data class NicknameCheckResponse(
     val message: String,
     val data: Boolean
 )
+
+// 회원 정보 수정 응답
+data class UpdateProfileResponse(
+    val success: Boolean,
+    val message: String,
+    val data: Any? = null
+)
+
+// 회원 정보 수정 요청
+data class UpdateProfileRequest(
+    val nickname: String,
+    val height: Int,
+    val weight: Int,
+    val age: Int,
+    val gender: String
+)
