@@ -63,6 +63,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import com.eeos.rocatrun.R
@@ -70,6 +71,7 @@ import com.eeos.rocatrun.component.CircularItemGauge
 import com.eeos.rocatrun.receiver.SensorUpdateReceiver
 import com.eeos.rocatrun.service.LocationForegroundService
 import com.eeos.rocatrun.util.FormatUtils
+import com.eeos.rocatrun.viewmodel.BossHealthRepository
 import com.eeos.rocatrun.viewmodel.GameViewModel
 import com.eeos.rocatrun.viewmodel.MultiUserScreen
 import com.eeos.rocatrun.viewmodel.MultiUserViewModel
@@ -194,11 +196,35 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
         stepCounter?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
             Log.d("StepCounter", "Step counter sensor registered successfully.")
         } ?: Log.w("StepCounter", "No step counter sensor available.")
 
         requestPermissions()
+
+        // 게임 종료 이벤트 구독: RunningActivity의 lifecycleScope를 사용하여 구독
+        lifecycleScope.launchWhenResumed {
+            multiUserViewModel.gameEndEventFlow.collect { gameEnded ->
+                if (gameEnded) {
+                    // 게임 종료 시 센서 및 위치 업데이트 등 정리 작업 수행
+                    gameViewModel.stopFeverTimeEffects()
+                    delay(300)
+                    stopTracking()
+                    // 결과 화면(ResultActivity)으로 전환
+                    navigateToResultActivity(this@RunningActivity)
+                    Log.d("RunningActivity", "게임 종료 이벤트 수신, 결과 화면으로 전환")
+                }
+            }
+        }
+    }
+
+
+    // 결과 화면으로 전환하는 함수
+    private fun navigateToResultActivity(context: Context) {
+        val intent = Intent(context, ResultActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        context.startActivity(intent)
     }
 
     private fun observeStartTrackingState() {
@@ -263,8 +289,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 totalDistance += distanceMoved
                 speed = location.speed * 3.6
 
-                // 게이지 증가: 10m(0.01km) 이상 이동 시 갱신
-                if (totalDistance - lastDistanceUpdate >= 0.01) {
+                // 게이지 증가: 1m 이상 이동 시 갱신(750m를 이동하게 변경 예정)
+                if (totalDistance - lastDistanceUpdate >= 0.001) {
                     val isFeverTime = gameViewModel.feverTimeActive.value
                     val gaugeIncrement = if (isFeverTime) 2 else 1
                     gameViewModel.increaseItemGauge(gaugeIncrement)
@@ -498,13 +524,17 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     fun CircularLayout(gameViewModel: GameViewModel) {
         val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
         val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
+        // BossHealthRepository의 최대 체력 구독 (최초 값이 0이라면 기본값 10000 사용)
+        val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
+        val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
+        val maxGaugeValue = 100
 
         val itemProgress by animateFloatAsState(
-            targetValue = itemGaugeValue.toFloat() / 100,
+            targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
             animationSpec = tween(durationMillis = 500)
         )
         val bossProgress by animateFloatAsState(
-            targetValue = bossGaugeValue.toFloat() / 100,
+            targetValue = bossGaugeValue.toFloat() / effectiveMaxBossHealth,
             animationSpec = tween(durationMillis = 500)
         )
 
@@ -702,38 +732,49 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 }
             }
             Sensor.TYPE_STEP_COUNTER -> {
+                // STEP_COUNTER 센서는 부팅 후 누적 걸음 수를 제공함
                 val currentSteps = event.values[0].toInt()
+                Log.d("StepCounter", "걸음수 : $currentSteps")
                 val currentTime = System.currentTimeMillis()
-
+                Log.d("StepCounter", "Received step counter: $currentSteps at $currentTime")
+                // 최초 이벤트에서 기준값 저장
                 if (initialStepCount == 0) {
                     initialStepCount = currentSteps
-                    lastStepCount = currentSteps
-                    lastStepTimestamp = currentTime
-                } else {
-                    val stepsDelta = currentSteps - lastStepCount
-                    val timeDelta = currentTime - lastStepTimestamp
-
-                    if (stepsDelta > 0 && timeDelta > 0) {
-                        updateStepCount(stepsDelta)
-                        updateCadence(stepsDelta, timeDelta)
-                    }
-                    lastStepCount = currentSteps
-                    lastStepTimestamp = currentTime
+                    Log.d("StepCounter", "체크 : $initialStepCount, $currentSteps")
                 }
+                // 실제 걸음 수는 (현재 센서 값 - 초기 기준값)
+                stepCount = currentSteps - initialStepCount
+                Log.d("StepCounter", "Total steps: $stepCount, $currentSteps,$initialStepCount")
+
+                // 선택: cadence 계산 (이전 이벤트와의 차이를 사용)
+                val stepsDelta = currentSteps - lastStepCount
+                val timeDelta = currentTime - lastStepTimestamp
+                if (stepsDelta > 0 && timeDelta > 0) {
+                    updateCadence(stepsDelta, timeDelta)
+                }
+                lastStepCount = currentSteps
+                lastStepTimestamp = currentTime
+            }
+            Sensor.TYPE_STEP_DETECTOR -> {
+                // STEP_DETECTOR는 한 걸음당 1 이벤트를 발생시키므로,
+                // 만약 STEP_COUNTER 센서가 없다면 대체로 사용 가능
+                stepCount += 1
+                Log.d("StepDetector", "Step detected, total steps: $stepCount")
             }
         }
     }
 
+    // updateStepCount는 STEP_DETECTOR의 경우에만 사용
     private fun updateStepCount(stepsDelta: Int) {
         stepCount += stepsDelta
-        Log.d("StepCounter", "Total steps: $stepCount")
+        Log.d("StepCounter", "Total steps (from detector): $stepCount")
     }
 
+    // cadence 계산: 분당 걸음수 = (걸음 증가량) / (시간 간격(분))
     private fun updateCadence(stepsDelta: Int, timeDelta: Long) {
         val cadence = (stepsDelta.toFloat() / (timeDelta / 60000f)).roundToInt()
-        // 현재 케이던스 업데이트 후, 타임스탬프와 함께 저장
         cadenceData.add(Pair(System.currentTimeMillis(), cadence))
-        Log.d("Cadence", "Current cadence: $cadence steps/min")
+        Log.d("StepCounter", "Current cadence: $cadence steps/min")
     }
 
     private fun calculateAverageCadence(): Int {

@@ -10,11 +10,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.presentation.ItemActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.eeos.rocatrun.presentation.ResultActivity
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -65,11 +65,7 @@ class GameViewModel : ViewModel() {
         _totalItemUsageCount.value++
         Log.d("GameViewModel", "총 아이템 사용 횟수 증가: ${_totalItemUsageCount.value}")
     }
-    // 총 아이템 사용 횟수 초기화 함수
-    fun resetTotalItemUsageCount() {
-        _totalItemUsageCount.value = 0
-        Log.d("GameViewModel", "총 아이템 사용 횟수 초기화")
-    }
+
 
     // 아이템 사용 시 호출하는함수
     fun notifyItemUsage(){
@@ -124,8 +120,8 @@ class GameViewModel : ViewModel() {
     private var vibrator: Vibrator? = null
 
     fun startFeverTime(context: Context) {
-        _feverTimeActive.value = true
 
+        _feverTimeActive.value = true
         // 진동과 소리 재생
         vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(3000, 2000), intArrayOf(100, 0), 0)
@@ -157,13 +153,7 @@ class GameViewModel : ViewModel() {
         mediaPlayer = null
     }
 
-    // 결과 창으로 가는 함수
-//    private fun navigateToResultActivity(context: Context) {
-//        resetTotalItemUsageCount()
-//        val intent = Intent(context, ResultActivity::class.java)
-//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-//        context.startActivity(intent)
-//    }
+
 
     fun observeFeverEvents(viewModel: MultiUserViewModel, context: Context) {
         viewModelScope.launch {

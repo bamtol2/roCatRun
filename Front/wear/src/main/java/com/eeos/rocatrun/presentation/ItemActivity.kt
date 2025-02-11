@@ -27,14 +27,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.component.CircularItemGauge
 import com.eeos.rocatrun.component.FeverTime
-//import android.content.Context
-//import android.os.VibrationEffect
-//import android.os.Vibrator
 import androidx.activity.viewModels
 import com.eeos.rocatrun.viewmodel.BossHealthRepository
 import com.eeos.rocatrun.viewmodel.GameViewModel
 import com.eeos.rocatrun.viewmodel.MultiUserViewModel
-import kotlinx.coroutines.delay
+
 
 
 class ItemActivity : ComponentActivity() {
@@ -51,14 +48,6 @@ class ItemActivity : ComponentActivity() {
     }
 }
 
-
-fun navigateToResultActivity(context: Context) {
-    val intent = Intent(context, ResultActivity::class.java).apply {
-        // 새 작업으로 시작하고 이전 스택을 비우도록 플래그 설정
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-    }
-    context.startActivity(intent)
-}
 
 @Composable
 fun AnimatedGifView(resourceId: Int, modifier: Modifier) {
@@ -92,7 +81,6 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
     val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
     val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
 
-    var itemUsageCount by remember { mutableIntStateOf(0) } // 아이템 사용 횟수 추적
 
     // 피버 이벤트 관찰 시작
     LaunchedEffect(Unit) {
@@ -107,21 +95,6 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
         targetValue = bossGaugeValue.toFloat() / effectiveMaxBossHealth,
         animationSpec = tween(durationMillis = 500)
     )
-
-    // 게임 종료 이벤트 플로우 구독
-    LaunchedEffect(Unit) {
-        multiUserViewModel.gameEndEventFlow.collect { gameEnded ->
-            if (gameEnded) {
-                // 피버 타임 효과 중지 (진동, 소리)
-                gameViewModel.stopFeverTimeEffects()
-                delay(300)
-                navigateToResultActivity(context)
-                Log.d("GameScreen", "게임 종료 이벤트 수신, 결과 화면으로 전환")
-            }
-        }
-    }
-
-
 
 
     Box(

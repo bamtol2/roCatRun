@@ -43,7 +43,7 @@ import com.eeos.rocatrun.R
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import com.eeos.rocatrun.component.CircularItemGauge
-import com.eeos.rocatrun.presentation.ResultActivity
+
 
 
 data class UserData(
