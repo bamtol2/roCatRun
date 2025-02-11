@@ -1,6 +1,6 @@
 package com.ssafy.roCatRun.domain.member.service;
 
-import com.ssafy.roCatRun.domain.character.repository.CharacterRepository;
+import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
 import com.ssafy.roCatRun.domain.member.dto.request.MemberProfileUpdateRequest;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final CharacterRepository characterRepository;
+    private final GameCharacterRepository gameCharacterRepository;
     private final RefreshTokenRedisRepository refreshTokenRedisRepository;
 
     /**
@@ -29,7 +29,7 @@ public class MemberService {
     @Transactional
     public void deleteMember(Long memberId) {
         // 캐릭터 삭제
-        characterRepository.deleteByMember_Id(memberId);
+        gameCharacterRepository.deleteByMember_Id(memberId);
 
         // 리프레시 토큰 삭제
         refreshTokenRedisRepository.deleteByKey(memberId.toString());

@@ -91,6 +91,7 @@ dependencies {
     // coil 추가
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-gif:3.0.4")
+    implementation(libs.androidx.runtime.livedata)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -101,6 +102,12 @@ dependencies {
     implementation(libs.accompanist.pager.indicators)
 
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
+    implementation(libs.ui.graphics.android)
+
+    // composable에서 viewModel 이용
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
+
 
     // socket.io -
     implementation ("io.socket:socket.io-client:2.0.0")
