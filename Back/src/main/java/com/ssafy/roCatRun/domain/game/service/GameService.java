@@ -14,6 +14,7 @@ import com.ssafy.roCatRun.domain.game.entity.raid.RunningData;
 import com.ssafy.roCatRun.domain.game.service.manager.GameTimerManager;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -349,10 +350,10 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         roomResults.put(userId, resultData);
 
         // character 테이블에 코인, 경험치 및 레벨 갱신
-
+        calculateAndDistributeRewards(room, roomResults);
 
         // 게임 결과 데이터 mySQL에 저장, 통계 데이터 저장
-
+        saveGameResults(room, roomResults);
 
         log.info("[Running Result] Received data from User: {}, Room: {}, Current submissions: {}/{}",
                 userId, room.getId(), roomResults.size(), room.getPlayers().size());
@@ -370,6 +371,84 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         }
     }
 
+    private void calculateAndDistributeRewards(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
+        boolean isCleared = room.getBossHealth() <= 0;
+
+        // 아이템 사용 횟수, 거리 순으로 내림차순 정렬
+        List<Map.Entry<String, PlayerRunningResultRequest>> sortedPlayers = results.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    Player p1 = room.getPlayerById(e1.getKey());
+                    Player p2 = room.getPlayerById(e2.getKey());
+                    if (p1.getUsedItemCount() != p2.getUsedItemCount()) {
+                        return p2.getUsedItemCount() - p1.getUsedItemCount();
+                    }
+                    return Double.compare(e2.getValue().getTotalDistance(), e1.getValue().getTotalDistance());
+                })
+                .collect(Collectors.toList());
+
+        // 보스 난이도에 따른 경험치 및 코인 보상
+        int baseExp = room.getBossLevel().getBaseExp();
+        int baseCoin = room.getBossLevel().getBaseCoin();
+
+        // 순위에 따른 경험치 및 코인 보상
+        for (int i = 0; i < sortedPlayers.size(); i++) {
+            Map.Entry<String, PlayerRunningResultRequest> entry = sortedPlayers.get(i);
+            String userId = entry.getKey();
+            Player player = room.getPlayerById(userId);
+            String characterId = player.getCharacterId();
+
+            double rankMultiplier = calculateRankMultiplier(i);
+            double clearMultiplier = isCleared ? 1.5 : 0.5;
+
+            int finalExp = (int) (baseExp * rankMultiplier * clearMultiplier);
+            int finalCoin = (int) (baseCoin * rankMultiplier * clearMultiplier);
+
+            Optional<com.ssafy.roCatRun.domain.character.entity.Character> userCharacter = characterRepository.findById(Long.parseLong(characterId));
+            userCharacter.addExperience(finalExp);
+            userCharacter.addCoin(finalCoin);
+
+            characterRepository.save(userCharacter);
+        }
+    }
+
+    @Transactional
+    private void saveGameResults(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
+        GameResult gameResult = GameResult.builder()
+            .gameRoomId(room.getId())
+            .bossLevel(room.getBossLevel())
+            .isCleared(room.getBossHealth() <= 0)
+            .startTime(room.getGameStartTime())
+            .endTime(System.currentTimeMillis())
+            .playerCount(room.getPlayers().size())
+            .build();
+
+        for (Map.Entry<String, PlayerRunningResultRequest> entry : results.entrySet()) {
+            PlayerGameResult playerResult = PlayerGameResult.builder()
+                .gameResult(gameResult)
+                .playerId(entry.getKey())
+                .runningData(entry.getValue())
+                .build();
+            gameResult.addPlayerResult(playerResult);
+    }
+
+    gameResultRepository.save(gameResult);
+    }
+
+    private double calculateRankMultiplier(int rank) {
+        switch (rank) {
+            case 0: return 1.0;  // 1st place
+            case 1: return 0.8;  // 2nd place
+            case 2: return 0.6;  // 3rd place
+            default: return 0.4; // Other places
+        }
+    }
+
+
+    /**
+     * 유저들의 최종 러닝 데이터를 받아서 순위와 함께 브로드캐스트
+     * @param room 방 정보
+     * @param results 게임 결과
+     */
     private void broadcastFinalResult(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
         List<GameResultResponse.PlayerResult> playerResults = room.getPlayers().stream()
                 .map(player -> {
