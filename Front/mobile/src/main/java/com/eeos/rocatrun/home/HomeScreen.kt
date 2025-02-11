@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,11 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -61,29 +57,38 @@ import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.ranking.RankingDialog
+import com.eeos.rocatrun.ranking.api.RankingViewModel
 import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.components.StrokedText
 
 
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel = viewModel()) {
+fun HomeScreen(homeViewModel: HomeViewModel) {
     val context = LocalContext.current
+    val token = TokenStorage.getAccessToken(context)
 
     // ViewModel에서 가져온 데이터
     val homeInfoData = homeViewModel.homeData.observeAsState()
 
-    // 랭킹 모달 변수
-    var showRanking by remember { mutableStateOf(false) }
-
-    // 프로필 관련 변수
+    // 프로필 관련 변수, 프로필 데이터가 없을 때만 호출
+    val profileViewModel: ProfileViewModel = viewModel()
     var showProfile by remember { mutableStateOf(false) }
     val profileData by profileViewModel.profileData.observeAsState()
 
-    // 프로필 데이터가 없을 때만 호출
     LaunchedEffect(profileData) {
         if (profileData == null) {
-            val token = TokenStorage.getAccessToken(context)
             profileViewModel.fetchProfileInfo(token)
+        }
+    }
+
+    // 랭킹 모달 변수, 랭킹 데이터가 없을 때만 호출
+    val rankingViewModel: RankingViewModel = viewModel()
+    var showRanking by remember { mutableStateOf(false) }
+    val rankingData by rankingViewModel.rankingData.observeAsState()
+
+    LaunchedEffect(rankingData) {
+        if (rankingData == null) {
+            rankingViewModel.fetchRankingInfo(token)
         }
     }
 
@@ -301,15 +306,12 @@ fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel 
 
         // 랭킹 모달 표시
         if (showRanking) {
-            RankingDialog(onDismiss = { showRanking = false })
+            RankingDialog(onDismiss = { showRanking = false }, rankingData = rankingData)
         }
 
         // 프로필 모달 표시
         if (showProfile) {
-            ProfileDialog(
-                onDismiss = { showProfile = false },
-                profileData = profileData
-            )
+            ProfileDialog(onDismiss = { showProfile = false }, profileData = profileData)
         }
 
     }
@@ -393,7 +395,9 @@ fun ReusableInfoBox(
             )
 
             Row(
-                modifier = if (label != "캔코인") { modifier.offset(y = 4.dp) } else modifier,
+                modifier = if (label != "캔코인") {
+                    modifier.offset(y = 4.dp)
+                } else modifier,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
