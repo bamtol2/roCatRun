@@ -256,7 +256,6 @@ fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel 
                                 label = "${characterData.totalGames}판",
                                 iconResId = R.drawable.home_img_game,
                                 mainFontSize = 30,
-                                modifier = Modifier.offset(y = 4.dp)
                             )
                         }
                     }
@@ -428,7 +427,7 @@ fun ReusableInfoBox(
             )
 
             Row(
-                modifier = modifier,
+                modifier = if (label != "캔코인") { modifier.offset(y = 4.dp) } else modifier,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
