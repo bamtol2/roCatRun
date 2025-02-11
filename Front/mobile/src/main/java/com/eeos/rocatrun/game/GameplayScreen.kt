@@ -67,7 +67,7 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
     LaunchedEffect(Unit) {
 
-        // 웹소켓 - 보스체력 이벤트 수신
+        // 웹소켓 - 보스체력 이벤트 수신 -> 워치 송신
         SocketHandler.mSocket.on("gameStatusUpdated") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val responseJson = args[0] as JSONObject
@@ -95,7 +95,7 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
         }
 
-        // 웹소켓 - 피버시작 이벤트 수신
+        // 웹소켓 - 피버시작 이벤트 수신 -> 워치 송신
         SocketHandler.mSocket.on("feverTimeStarted") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val responseJson = args[0] as JSONObject
@@ -124,7 +124,7 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
             }
         }
 
-        // 웹소켓 - 피버종료 이벤트 수신
+        // 웹소켓 - 피버종료 이벤트 수신 -> 워치 송신
         SocketHandler.mSocket.on("feverTimeEnded") {
             Log.d("Socket", "On - feverTimeEnded")
 
@@ -144,7 +144,7 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 }
         }
 
-        // 플레이어들 결과 공유 데이터 수신
+        // 플레이어들 결과 공유 데이터 수신 -> 워치 송신
         SocketHandler.mSocket.on("gameResult") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val responseJson = args[0] as JSONObject
@@ -180,6 +180,25 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
             }
         }
 
+        // 웹소켓 - 게임종료 이벤트 수신 -> 워치 송신
+        SocketHandler.mSocket.on("gameOver") {
+            Log.d("Socket", "On - gameOver")
+
+            // 워치에 게임 종료 메세지 보내기
+            val putDataMapRequest = PutDataMapRequest.create("/game_end")
+            putDataMapRequest.dataMap.apply {
+                putBoolean("gameEnd", true)
+                putLong("timestamp", System.currentTimeMillis())
+            }
+            val request = putDataMapRequest.asPutDataRequest().setUrgent()
+            dataClient.putDataItem(request)
+                .addOnSuccessListener { _ ->
+                    Log.d("Wear", "게임 종료")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Wear", "게임 종료 실패", exception)
+                }
+        }
     }
 
     Box(

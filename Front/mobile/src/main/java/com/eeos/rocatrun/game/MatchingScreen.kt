@@ -80,17 +80,23 @@ fun MatchingScreen(
                 maxUsers = json.optInt("maxPlayers", maxUsers)
             }
         }
-
-        SocketHandler.mSocket.on("gameReady") { args ->
+        //        SocketHandler.mSocket.off("gameReady")
+        SocketHandler.mSocket.on("gameReady") {
+            Log.d("Socket", "On - gameReady")
+        }
+//        SocketHandler.mSocket.off("gameStart")
+        SocketHandler.mSocket.on("gameStart") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject
-                val message = json.optString("message", "")
+                val firstBossHealth = json.optInt("bossHp", 10000)
 
-                Log.d("Socket", "On - gameReady $message")
+                Log.d("Socket", "On - gameStart : $firstBossHealth")
 
                 // GameplayActivity로 이동
                 val intent = Intent(context, GamePlay::class.java)
+                intent.putExtra("firstBossHealth", firstBossHealth)
                 context.startActivity(intent)
+                Log.d("Socket", "firstBossHealth: $firstBossHealth")
             }
         }
     }
@@ -195,6 +201,7 @@ fun MatchingScreen(
 
                     // 매칭취소 이벤트 발생
                     SocketHandler.mSocket.emit("cancelMatch")
+                    Log.d("Socket", "Emit - cancelMatch")
 
                     // 방페이지로 이동
                     val intent = Intent(context, GameRoom::class.java)

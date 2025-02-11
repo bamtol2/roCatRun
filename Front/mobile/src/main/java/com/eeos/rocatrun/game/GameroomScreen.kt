@@ -54,6 +54,7 @@ import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
+import java.net.Socket
 
 
 @Composable
@@ -1121,44 +1122,40 @@ fun JoinRoomSocket(
     // 전송할 JSON 생성
     val joinRoomJson = JSONObject().apply {
         put("inviteCode", inviteCode)
-
     }
-    Log.d("Socket", "Emit - joinRoom")
 
     // 입장 요청
     SocketHandler.mSocket.emit("joinRoom", joinRoomJson)
+    Log.d("Socket", "Emit - joinRoom")
 
     // 입장 응답 이벤트 리스너 등록
-    SocketHandler.mSocket.off("roomJoined") // 중복 등록 방지
+//    SocketHandler.mSocket.off("roomJoined") // 중복 등록 방지
     SocketHandler.mSocket.on("roomJoined") { args ->
         if (args.isNotEmpty() && args[0] is JSONObject) {
 
             val json = args[0] as JSONObject
+            val roomId = json.optString("roomId", "")
+            val extractedInviteCode = json.optString("inviteCode", "")
+            val currentPlayers = json.optInt("currentPlayers", 0)
+            val maxPlayers = json.optInt("maxPlayers", 0)
 
-            // 만약 json에 "error" 키가 있으면 에러 처리
-            if (json.has("error")) {
-                val errorMsg = json.optString("error", "알 수 없는 에러")
-                Log.d("Socket", "Error - roomJoined : $errorMsg")
-                onError(errorMsg)
-            } else
-            {
-                // 정상 응답일 경우
-                val roomId = json.optString("roomId", "")
-                val extractedInviteCode = json.optString("inviteCode", "")
-                val currentPlayers = json.optInt("currentPlayers", 0)
-                val maxPlayers = json.optInt("maxPlayers", 0)
-
-                Log.d(
-                    "Socket",
-                    "On - roomJoined : userId: $roomId, inviteCode: $extractedInviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
-                )
-                // 콜백으로 초대코드, 현재수, 정원수 전달
-                onSuccess(inviteCode, currentPlayers, maxPlayers)
-            }
-        } else {
-           Log.d("Socket", "Error - roomJoined : 잘못된 응답")
+            Log.d(
+                "Socket",
+                "On - roomJoined : userId: $roomId, inviteCode: $extractedInviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+            )
+            // 콜백으로 초대코드, 현재수, 정원수 전달
+            onSuccess(inviteCode, currentPlayers, maxPlayers)
         }
     }
+
+    // 매칭 에러 이벤트 리스너 등록
+//    SocketHandler.mSocket.off("matchError")
+    SocketHandler.mSocket.on("matchError") {
+        Log.d("Socket", "On - matchError")
+
+        onError("잘못된 코드입니다!")
+    }
+
 }
 
 // 랜덤매칭 이벤트
@@ -1198,7 +1195,6 @@ fun RandomMatchSocket(
         }
     }
 }
-
 
 // 싱글플레이 이벤트
 fun singlePlaySocket(

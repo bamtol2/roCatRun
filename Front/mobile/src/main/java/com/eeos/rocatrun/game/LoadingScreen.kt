@@ -95,21 +95,25 @@ fun LoadingScreen(
                 maxUsers = json.optInt("maxPlayers", maxUsers)
             }
         }
-        SocketHandler.mSocket.off("gameReady")
-        SocketHandler.mSocket.on("gameReady") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val json = args[0] as JSONObject
-                val message = json.optString("message", "")
-
-                Log.d("Socket", "On - gameReady $message")
-
-                // GameplayActivity로 이동
-                val intent = Intent(context, GamePlay::class.java)
-                context.startActivity(intent)
-            }
-
+//        SocketHandler.mSocket.off("gameReady")
+        SocketHandler.mSocket.on("gameReady") {
+            Log.d("Socket", "On - gameReady")
         }
+//        SocketHandler.mSocket.off("gameStart")
+        SocketHandler.mSocket.on("gameStart") { args ->
+                if (args.isNotEmpty() && args[0] is JSONObject) {
+                    val json = args[0] as JSONObject
+                    val firstBossHealth = json.optInt("bossHp", 10000)
 
+                    Log.d("Socket", "On - gameStart : $firstBossHealth")
+
+                    // GameplayActivity로 이동
+                    val intent = Intent(context, GamePlay::class.java)
+                    intent.putExtra("firstBossHealth", firstBossHealth)
+                    context.startActivity(intent)
+                    Log.d("Socket", "firstBossHealth: $firstBossHealth")
+                }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -346,6 +350,7 @@ fun LoadingScreen(
 
                     // 매칭취소 이벤트 발생
                     SocketHandler.mSocket.emit("cancelMatch")
+                    Log.d("Socket", "Emit - cancelMatch")
 
                     val intent = Intent(context, GameRoom::class.java)
                     context.startActivity(intent)
