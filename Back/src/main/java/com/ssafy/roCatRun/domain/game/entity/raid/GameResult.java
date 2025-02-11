@@ -39,6 +39,7 @@ public class GameResult {
     private int itemUseCount;
     private int rewardExp;
     private int rewardCoin;
+    private int calories;
 
     @Column(nullable = false)
     private LocalDateTime playedAt;
@@ -52,7 +53,7 @@ public class GameResult {
     public GameResult(GameCharacter character, BossLevel bossLevel, boolean isCleared,
                       Long runningTime, double totalDistance, double paceAvg,
                       double heartRateAvg, double cadenceAvg, int itemUseCount,
-                      int rewardExp, int rewardCoin) {
+                      int rewardExp, int rewardCoin, int calories) {
         this.character = character;
         this.bossLevel = bossLevel;
         this.isCleared = isCleared;
@@ -64,5 +65,6 @@ public class GameResult {
         this.itemUseCount = itemUseCount;
         this.rewardExp = rewardExp;
         this.rewardCoin = rewardCoin;
+        this.calories = calories;
     }
 }

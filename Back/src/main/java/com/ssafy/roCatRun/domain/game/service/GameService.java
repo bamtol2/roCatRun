@@ -11,9 +11,12 @@ import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.service.manager.GameTimerManager;
 import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
 import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
+import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -413,24 +416,31 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
     }
 
     @Transactional
-    private void saveGameResults(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
+    private Map<String, GameResultInfo> saveGameResults(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
         boolean isCleared = room.getBossHealth() <= 0;
+        Map<String, GameResultInfo> resultInfoMap = new HashMap<>();
 
         for (Map.Entry<String, PlayerRunningResultRequest> entry : results.entrySet()) {
             try {
-                String characterId = room.getPlayerById(entry.getKey()).getCharacterId();
-                Long charId = Long.parseLong(characterId);
-                GameCharacter character = characterRepository.findById(charId)
+                String userId = entry.getKey();
+                Long characterId = Long.parseLong(room.getPlayerById(userId).getCharacterId());
+                GameCharacter character = characterRepository.findById(characterId)
                         .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
 
+                Member member = memberRepository.findById(Long.parseLong(userId))
+                        .orElseThrow(() -> new IllegalStateException("Member not found"));
+
                 PlayerRunningResultRequest resultData = entry.getValue();
-                Player player = room.getPlayerById(entry.getKey());
+                Player player = room.getPlayerById(userId);
 
                 // 보상 계산
-                double rankMultiplier = calculateRankMultiplier(getRank(room, entry.getKey()));
+                double rankMultiplier = calculateRankMultiplier(getRank(room, userId));
                 double clearMultiplier = isCleared ? 1.5 : 0.5;
                 int rewardExp = (int) (room.getBossLevel().getBaseExp() * rankMultiplier * clearMultiplier);
                 int rewardCoin = (int) (room.getBossLevel().getBaseCoin() * rankMultiplier * clearMultiplier);
+
+                // 칼로리 계산
+                int calories = calculateCalories(member, resultData.getTotalDistance(), resultData.getRunningTimeSec());
 
                 GameResult gameResult = GameResult.builder()
                         .character(character)
@@ -444,9 +454,14 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         .itemUseCount(player.getUsedItemCount())
                         .rewardExp(rewardExp)
                         .rewardCoin(rewardCoin)
+                        .calories(calories)
                         .build();
 
                 gameResultRepository.save(gameResult);
+
+                // 결과 정보 저장
+                resultInfoMap.put(userId, new GameResultInfo(rewardExp, rewardCoin, calories));
+
 
                 log.info("Game result saved for character {}: cleared={}, exp={}, coin={}",
                         characterId, isCleared, rewardExp, rewardCoin);
@@ -454,6 +469,15 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 log.error("Error saving game result: {}", e.getMessage());
             }
         }
+        return resultInfoMap;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class GameResultInfo {
+        private final int exp;
+        private final int coin;
+        private final int calories;
     }
 
     private int getRank(GameRoom room, String userId) {
@@ -486,6 +510,40 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         }
     }
 
+    /**
+     * 달린 거리에 따른 칼로리 계산
+     * @param member 유저정보
+     * @param distance 러닝 거리
+     * @param runningTimeSec 러닝 시간
+     * @return 소모 칼로리
+     */
+    private int calculateCalories(Member member, double distance, long runningTimeSec) {
+        if (member.getWeight() == null || member.getHeight() == null || member.getGender() == null) {
+            return 0; // 신체 정보가 없는 경우 0 반환
+        }
+
+        // MET(Metabolic Equivalent of Task) 값 계산
+        // 달리기 속도에 따른 MET 값 (approximate values)
+        double paceMinPerKm = (runningTimeSec / 60.0) / distance; // 1km당 몇 분
+        double met;
+        if (paceMinPerKm < 5) met = 11.5;      // 5분 이하/km: 매우 빠른 달리기
+        else if (paceMinPerKm < 6) met = 10.0;  // 5-6분/km: 빠른 달리기
+        else if (paceMinPerKm < 7) met = 9.0;   // 6-7분/km: 보통 달리기
+        else if (paceMinPerKm < 8) met = 8.3;   // 7-8분/km: 조깅
+        else met = 7.0;                         // 8분 이상/km: 가벼운 조깅
+
+        // 칼로리 계산 공식: 칼로리 = MET × 체중(kg) × 시간(hour)
+        double hours = runningTimeSec / 3600.0;
+        double calories = met * member.getWeight() * hours;
+
+        // 성별에 따른 보정
+        if ("women".equals(member.getGender())) {
+            calories *= 0.9; // 여성의 경우 대략 10% 감소
+        }
+
+        return (int) calories;
+    }
+
 
     /**
      * 유저들의 최종 러닝 데이터를 받아서 순위와 함께 브로드캐스트
@@ -493,9 +551,15 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param results 게임 결과
      */
     private void broadcastFinalResult(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
+        // 먼저 게임 결과를 저장하고 보상 정보를 받아옴
+        Map<String, GameResultInfo> rewardInfo = saveGameResults(room, results);
+
         List<GameResultResponse.PlayerResult> playerResults = room.getPlayers().stream()
                 .map(player -> {
                     PlayerRunningResultRequest result = results.get(player.getId());
+                    GameResultInfo rewards = rewardInfo.getOrDefault(player.getId(),
+                            new GameResultInfo(0, 0, 0));
+
                     return new GameResultResponse.PlayerResult(
                             player.getId(),
                             player.getNickname(),
@@ -504,10 +568,10 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                             result.getPaceAvg(),
                             result.getHeartRateAvg(),
                             result.getCadenceAvg(),
-                            0,
+                            rewards.getCalories(),
                             player.getUsedItemCount(),
-                            0,
-                            0
+                            rewards.getExp(),
+                            rewards.getCoin()
                     );
                 })
                 .sorted((p1, p2) -> p2.getItemUseCount() == p1.getItemUseCount() ?
