@@ -24,6 +24,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.ranking.api.Ranking
 import com.eeos.rocatrun.ranking.api.RankingData
 import com.eeos.rocatrun.ranking.api.RankingResponse
+import com.eeos.rocatrun.ui.components.ModalCustomButton
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
@@ -73,27 +74,14 @@ fun RankingDialog(onDismiss: () -> Unit, rankingData: RankingResponse?) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 닫기 버튼
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    modifier = Modifier
-                        .border(
-                            width = 2.dp,
-                            color = Color(0xFF36DBEB),
-                            shape = RoundedCornerShape(15.dp)
-                        ),
-                ) {
-                    Text(
-                        text = "닫기",
-                        style = TextStyle(
-                            fontFamily = MyFontFamily,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
+                ModalCustomButton(
+                    text = "닫기",
+                    borderColor = Color(0xFF00FFCC),
+                    enabled = true,
+                    onClick = { onDismiss() },
+                )
             }
+
         }
     }
 }

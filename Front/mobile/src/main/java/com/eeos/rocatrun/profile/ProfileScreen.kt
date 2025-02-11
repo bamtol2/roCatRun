@@ -44,6 +44,7 @@ import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.profile.api.ProfileResponse
 import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.profile.api.UpdateProfileRequest
+import com.eeos.rocatrun.ui.components.ModalCustomButton
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
@@ -410,7 +411,10 @@ fun ProfileDialog(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // 저장 버튼
-                    Button(
+                    ModalCustomButton(
+                        text = "저장",
+                        borderColor = Color(0xFF00FFCC),
+                        enabled = isButtonEnabled,
                         onClick = {
                             val profileRequest = UpdateProfileRequest(
                                 nickname = nickname.text.toString(),
@@ -426,46 +430,15 @@ fun ProfileDialog(
                             isEditing = false
                             isDuplicateChecked = false
                         },
-                        enabled = isButtonEnabled,
-                        modifier = Modifier
-                            .border(2.dp, Color(0xFF00FFCC), RoundedCornerShape(15.dp)),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent
-                        )
-                    ) {
-                        Text(
-                            text = "저장",
-                            style = TextStyle(
-                                fontFamily = MyFontFamily,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isButtonEnabled) Color.White else Color(0xFF5F5F5F)
-                            )
-                        )
-                    }
+                    )
 
                     // 취소 버튼
-                    Button(
+                    ModalCustomButton(
+                        text = "취소",
+                        borderColor = Color(0xFF00FFCC),
+                        enabled = true,
                         onClick = { onDismiss() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        modifier = Modifier
-                            .border(
-                                width = 2.dp,
-                                color = Color(0xFF00FFCC),
-                                shape = RoundedCornerShape(15.dp)
-                            ),
-                    ) {
-                        Text(
-                            text = "취소",
-                            style = TextStyle(
-                                fontFamily = MyFontFamily,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        )
-                    }
+                    )
                 }
 
                 if (showToast) {
