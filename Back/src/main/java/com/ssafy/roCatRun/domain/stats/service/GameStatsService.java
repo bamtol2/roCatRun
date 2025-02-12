@@ -11,6 +11,7 @@ import com.ssafy.roCatRun.domain.stats.dto.response.MonthlyStatsResponse;
 import com.ssafy.roCatRun.domain.stats.dto.response.StatsResponse;
 import com.ssafy.roCatRun.domain.stats.dto.response.WeeklyStatsResponse;
 import com.ssafy.roCatRun.domain.stats.entity.GameStats;
+import com.ssafy.roCatRun.domain.stats.exception.GameStatsNotFoundException;
 import com.ssafy.roCatRun.domain.stats.repository.GameStatsRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -120,6 +121,9 @@ public class GameStatsService {
     // 일별 통계 조회
     public DailyStatsResponse  getDailyStats(String userId) {
         List<GameStats> dailyGames = gameStatsRepository.findByUserId(userId);
+        if (dailyGames.isEmpty()) {
+            throw new GameStatsNotFoundException("해당 유저의 게임 기록이 존재하지 않습니다: " + userId);
+        }
         // 적절한 응답으로 포맷팅
         return buildDailyStatsResponse(userId, dailyGames);
     }
@@ -135,6 +139,11 @@ public class GameStatsService {
 //                userId, startOfDay, endOfDay);
 
         List<GameStats> dailyGames = gameStatsRepository.findByUserId(userId);
+        if (dailyGames.isEmpty()) {
+            throw new GameStatsNotFoundException(
+                    String.format("해당 유저의 게임 기록이 존재하지 않습니다. (유저 ID: %s)", userId)
+            );
+        }
         // 적절한 응답으로 포맷팅
         return buildDailyStatsResponse(userId, dailyGames);
     }
@@ -198,6 +207,13 @@ public class GameStatsService {
                 endOfWeek.plusDays(1).atStartOfDay()  // 다음날 0시 이전까지
         );
 
+        if (weeklyGames.isEmpty()) {
+            throw new GameStatsNotFoundException(
+                    String.format("해당 주(%s ~ %s)의 게임 기록이 존재하지 않습니다. (유저 ID: %s)",
+                            startOfWeek, endOfWeek, userId)
+            );
+        }
+
         return buildWeeklyStatsResponse(userId, weeklyGames, startOfWeek, endOfWeek);
     }
 
@@ -214,13 +230,12 @@ public class GameStatsService {
                 endOfMonth.plusDays(1).atStartOfDay()  // 다음날 0시 이전까지
         );
 
-        // 조회된 데이터 로깅
-        log.debug("Found {} games for user {} in {}",
-                monthlyGames.size(), userId, yearMonth);
-        monthlyGames.forEach(game ->
-                log.debug("Game date: {}, distance: {}",
-                        game.getDate(), game.getDetails().getDistance())
-        );
+        if (monthlyGames.isEmpty()) {
+            throw new GameStatsNotFoundException(
+                    String.format("해당 월(%s)의 게임 기록이 존재하지 않습니다. (유저 ID: %s)",
+                            yearMonth, userId)
+            );
+        }
 
         return buildMonthlyStatsResponse(userId, monthlyGames, startOfMonth, endOfMonth);
     }
