@@ -25,6 +25,8 @@ import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 @Composable
 fun DetailDialog(date: String, details: GameDetails, onDismiss: () -> Unit) {
+    val dateWithoutTime = date.substringBefore("T").replace("-", "/")
+
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -49,7 +51,7 @@ fun DetailDialog(date: String, details: GameDetails, onDismiss: () -> Unit) {
             ) {
                 // 모달 Title (날짜)
                 Text(
-                    text = date,
+                    text = dateWithoutTime,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -62,8 +64,8 @@ fun DetailDialog(date: String, details: GameDetails, onDismiss: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     StatColumn(label = "페이스", value = details.pace)
-                    StatColumn(label = "칼로리", value = details.calories)
-                    StatColumn(label = "케이던스", value = details.cadence)
+                    StatColumn(label = "칼로리", value = "${details.calories}kcal")
+                    StatColumn(label = "케이던스", value = "${details.cadence}spm")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -71,8 +73,8 @@ fun DetailDialog(date: String, details: GameDetails, onDismiss: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatColumn(label = "거리", value = details.distance)
-                    StatColumn(label = "시간", value = details.time)
+                    StatColumn(label = "거리", value = "${details.distance}spm")
+                    StatColumn(label = "시간", value = details.runningTime)
                 }
                 Spacer(modifier = Modifier.height(30.dp))
 

@@ -1,7 +1,6 @@
 package com.eeos.rocatrun.stats
 
 import android.content.Intent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -11,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.eeos.rocatrun.R
-import com.google.accompanist.pager.*
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,7 +24,6 @@ import com.eeos.rocatrun.stats.api.StatsViewModel
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun StatsScreen(statsViewModel: StatsViewModel) {
     val context = LocalContext.current

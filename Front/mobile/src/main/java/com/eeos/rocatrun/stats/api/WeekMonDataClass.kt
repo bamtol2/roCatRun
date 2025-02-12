@@ -3,6 +3,7 @@ package com.eeos.rocatrun.stats.api
 // Week, Mon Data class
 data class WeekMonStatsResponse(
     val status: String,
+    val nickName: String?,
     val data: WeekMonStatsData
 )
 

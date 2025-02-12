@@ -1,6 +1,6 @@
 package com.eeos.rocatrun.stats
 
-import android.util.Log
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -17,7 +17,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import com.eeos.rocatrun.R
@@ -48,12 +48,17 @@ import ir.ehsannarmani.compose_charts.models.LineProperties
 import ir.ehsannarmani.compose_charts.models.StrokeStyle
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.stats.api.WeekMonStatsResponse
 import com.eeos.rocatrun.ui.components.StrokedText
 import ir.ehsannarmani.compose_charts.models.PopupProperties
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
+    val context = LocalContext.current
+    val token = TokenStorage.getAccessToken(context)
+
     val statsViewModel: StatsViewModel = viewModel()
 
     // 다이얼로그의 표시 여부 상태
@@ -125,7 +130,8 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
             LaunchedEffect(selectedDate) {
                 if (selectedDate != previousDate) {
                     val (selectedYear, selectedMonth, selectedWeek) = parseYearMonthWeek(selectedDate)
-                    statsViewModel.fetchWeekStats(selectedYear, selectedMonth, selectedWeek)
+                    val dateString = String.format("%04d-%02d", selectedYear, selectedMonth)
+                    statsViewModel.fetchWeekStats(token, dateString, selectedWeek)
                     previousDate = selectedDate
                 }
             }
