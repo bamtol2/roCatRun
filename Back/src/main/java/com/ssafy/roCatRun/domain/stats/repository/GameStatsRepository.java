@@ -12,6 +12,4 @@ import java.util.List;
 public interface GameStatsRepository extends MongoRepository<GameStats, String> {
     List<GameStats> findByUserIdAndDateBetween(String userId, LocalDateTime start, LocalDateTime end);
     List<GameStats> findByUserId(String userId);
-    @Query("{'userId': ?0, 'date': {'$gte': ?1, '$lt': ?2}}")
-    List<GameStats> findByUserIdAndDateRange(String userId, LocalDateTime start, LocalDateTime end);
 }

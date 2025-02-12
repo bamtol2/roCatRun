@@ -23,6 +23,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -195,46 +196,39 @@ public class GameStatsService {
     }
 
     public WeeklyStatsResponse getWeeklyStats(String userId, YearMonth yearMonth, int week) {
-        log.info("weekly 조회");
-        // 해당 월의 1일 구하기
+        // 해당 월의 첫 날과 마지막 날 구하기
         LocalDate firstDayOfMonth = yearMonth.atDay(1);
-
-        // 5주차로 나누기 위해 매월 1일부터 시작하도록 수정
-        LocalDate startOfWeek = firstDayOfMonth.plusWeeks(week - 1);
-        LocalDate endOfWeek = startOfWeek.plusDays(6);
-
-        // 만약 다음 달로 넘어가는 주차라면, 해당 월의 마지막 날짜로 제한
         LocalDate lastDayOfMonth = yearMonth.atEndOfMonth();
+
+        // 주차 계산 (월요일 기준)
+        LocalDate firstMondayOfMonth = firstDayOfMonth.with(TemporalAdjusters.firstInMonth(DayOfWeek.MONDAY)); // yearMonth의 첫 월요일
+        LocalDate startOfWeek = firstMondayOfMonth.plusWeeks(week - 1);
+
+        // 시작일이 해당 월보다 이전이면 조정
+        if (startOfWeek.isBefore(firstDayOfMonth)) {
+            startOfWeek = firstDayOfMonth;
+        }
+
+        LocalDate endOfWeek = startOfWeek.plusDays(6);
+        // 종료일이 해당 월을 넘어가면 조정
         if (endOfWeek.isAfter(lastDayOfMonth)) {
             endOfWeek = lastDayOfMonth;
         }
 
-        // 조회 시간 로깅 추가
         LocalDateTime startDateTime = startOfWeek.atStartOfDay();
-        LocalDateTime endDateTime = endOfWeek.plusDays(1).atStartOfDay();
+        LocalDateTime endDateTime = endOfWeek.atTime(23, 59, 59);
 
-        log.debug("Searching for games between: {} and {}", startDateTime, endDateTime);
-        log.debug("User ID: {}", userId);
+        List<GameStats> weeklyGames = gameStatsRepository.findByUserIdAndDateBetween(
+                userId, startDateTime, endDateTime);
 
-        // weeklyStats 메소드 수정
-        List<GameStats> weeklyGames = gameStatsRepository.findByUserIdAndDateRange(
-                userId,
-                startDateTime,
-                endDateTime
-        );
-
-        // 조회된 게임 데이터 로깅
-        log.debug("Found {} games", weeklyGames.size());
-        weeklyGames.forEach(game ->
-                log.debug("Game date: {}, Room ID: {}", game.getDate(), game.getRoomId())
-        );
-
+        // 데이터가 없는 경우 빈 통계 반환
         if (weeklyGames.isEmpty()) {
             throw new GameStatsNotFoundException(
                     String.format("%s년 %s월 %d주차의 게임 기록이 존재하지 않습니다. (유저 ID: %s)",
                             yearMonth.getYear(), yearMonth.getMonth(), week, userId)
             );
         }
+
 
         return buildWeeklyStatsResponse(userId, weeklyGames, startOfWeek, endOfWeek);
     }
@@ -255,7 +249,7 @@ public class GameStatsService {
         log.debug("Searching for games between: {} and {}", startDateTime, endDateTime);
 
         // 해당 기간의 게임 기록 조회
-        List<GameStats> monthlyGames = gameStatsRepository.findByUserIdAndDateRange(
+        List<GameStats> monthlyGames = gameStatsRepository.findByUserIdAndDateBetween(
                 userId,
                 startDateTime,
                 endDateTime
