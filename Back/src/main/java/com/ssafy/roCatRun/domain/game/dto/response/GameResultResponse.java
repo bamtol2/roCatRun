@@ -9,14 +9,17 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public class GameResultResponse {
-    private boolean isCleared;
-    private List<PlayerResult> playerResults;
+    private final boolean isCleared;
+    private final PlayerDetailResult myResult;      // 현재 유저의 상세 결과
+    private final List<PlayerResult> playerResults; // 모든 플레이어의 순위 정보
+    private final int myRank;
 
     @Getter
     @AllArgsConstructor
-    public static class PlayerResult {
+    public static class PlayerDetailResult { // 유저의 러닝 상세
         private String userId;
         private String nickName;
+        private String characterImage;
         private Long runningTime;
         private double totalDistance;
         private double paceAvg;
@@ -26,5 +29,17 @@ public class GameResultResponse {
         private int itemUseCount;
         private int rewardExp;
         private int rewardCoin;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class PlayerResult { // 다른 유저들 데이터 포함
+        private final String userId;
+        private final String nickname;
+        private final String characterImage;
+        private final double totalDistance;
+        private final int itemUseCount;
+        private final int rewardExp;
+        private final int rewardCoin;
     }
 }

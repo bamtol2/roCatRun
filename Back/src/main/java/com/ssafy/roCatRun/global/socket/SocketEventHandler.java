@@ -132,6 +132,7 @@ public class SocketEventHandler {
         String userId = client.get("userId");
         String characterId = client.get("characterId");
         String nickname = client.get("nickname");
+        String characterImage = client.get("characterImage");
 
         if(userId==null){
             client.sendEvent("error", "Not authenticated");
@@ -139,7 +140,7 @@ public class SocketEventHandler {
         }
 
         try{
-            GameRoom room = gameService.joinRoomByInviteCode(userId, request.getInviteCode(), characterId, nickname);
+            GameRoom room = gameService.joinRoomByInviteCode(userId, request.getInviteCode(), characterId, nickname, characterImage, client.getSessionId());
             client.joinRoom(room.getId());
 
             // 방 참여 성공 응답
@@ -169,6 +170,7 @@ public class SocketEventHandler {
         String userId = client.get("userId");
         String characterId = client.get("characterId");
         String nickname = client.get("nickname");
+        String characterImage = client.get("characterImage");
 
         if(userId==null){
             client.sendEvent("error", "Not authenticated");
@@ -176,7 +178,8 @@ public class SocketEventHandler {
         }
 
         try{
-            GameRoom room = gameService.createPrivateRoom(userId, request, characterId, nickname);
+            GameRoom room = gameService.createPrivateRoom(
+                    userId, request, characterId, nickname, characterImage, client.getSessionId());
             client.joinRoom(room.getId());
 
 
@@ -220,8 +223,8 @@ public class SocketEventHandler {
 //            boolean reconnected = disconnectionManager.handlePlayerReconnection(userId, client);
 
 //            if (!reconnected) {
-                // 일반적인 새 연결 처리
-                handleNormalAuthentication(client, userId);
+            // 일반적인 새 연결 처리
+            handleNormalAuthentication(client, userId);
 //            }
 
             client.sendEvent("authenticated", new AuthResponse(true, null));
@@ -236,6 +239,7 @@ public class SocketEventHandler {
         String userId = client.get("userId");
         String characterId = client.get("characterId");
         String nickname = client.get("nickname");
+        String characterImage = client.get("characterImage");
 
         if (userId == null) {
             client.sendEvent("matchError", "Not authenticated");
@@ -243,7 +247,8 @@ public class SocketEventHandler {
         }
 
         try {
-            GameRoom room = gameService.findOrCreateRandomMatch(userId, request, characterId, nickname);
+            GameRoom room = gameService.findOrCreateRandomMatch(
+                    userId, request, characterId, nickname, characterImage, client.getSessionId());
             client.joinRoom(room.getId());
 
             // 매칭 상태 전송
@@ -366,7 +371,7 @@ public class SocketEventHandler {
         if(characterByMemberId!=null) {
             client.set("characterId", Long.toString(characterByMemberId.getId()));
             client.set("nickname", characterByMemberId.getNickname());
-            client.set("level", characterByMemberId.getLevel());
+            client.set("characterImage", characterByMemberId.getCharacterImage());
         }
     }
 

@@ -6,6 +6,7 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -13,6 +14,8 @@ public class Player {
     private String id;
     private String nickname;
     private String characterId;
+    private UUID sessionId;
+    private String characterImage;
     private RunningData runningData = new RunningData();
     private List<Item> items = new ArrayList<>();
     private int usedItemCount = 0;
@@ -26,10 +29,12 @@ public class Player {
         this.itemCountForFever=0;
     }
 
-    public Player(String id, String characterId, String nickname) {
+    public Player(String id, String characterId, String nickname, String characterImage, UUID seesionId) {
         this.id = id;
         this.nickname = nickname;
         this.characterId = characterId;
+        this.characterImage = characterImage;
+        this.sessionId = seesionId;
         this.items = new ArrayList<>();
         this.runningData = new RunningData();
         this.usedItemCount=0;
