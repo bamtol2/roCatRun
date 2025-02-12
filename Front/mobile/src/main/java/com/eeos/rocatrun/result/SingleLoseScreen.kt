@@ -42,10 +42,9 @@ import com.eeos.rocatrun.home.HomeActivity
 import kotlinx.coroutines.delay
 
 @Composable
-fun SingleLoseScreen(playerResult: GamePlay.PlayersResultData?) {
+fun SingleLoseScreen(myResult: GamePlay.MyResultData?) {
     // Thunder GIF 표시 여부 상태
     var showThunder by remember { mutableStateOf(true) }
-
     val context = LocalContext.current
 
     // 모달이 시작되면 2초 뒤에 gif 숨김
@@ -102,7 +101,7 @@ fun SingleLoseScreen(playerResult: GamePlay.PlayersResultData?) {
                         .fillMaxWidth()
                         .height(250.dp),
                 ) {
-                    FirstResultPage(playerResult = playerResult)
+                    FirstResultPage(myResult = myResult)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -147,7 +146,7 @@ fun SingleLoseScreen(playerResult: GamePlay.PlayersResultData?) {
 }
 
 @Composable
-private fun FirstResultPage(playerResult: GamePlay.PlayersResultData?) {
+private fun FirstResultPage(myResult: GamePlay.MyResultData?) {
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
@@ -171,16 +170,16 @@ private fun FirstResultPage(playerResult: GamePlay.PlayersResultData?) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(23.dp)
                 ) {
-                    ResultItem("거리", "${playerResult?.totalDistance?.let { "%.1f".format(it) }}km")
-                    ResultItem("시간", formatTime(playerResult?.runningTime ?: 0))
+                    ResultItem("거리", "${myResult?.totalDistance?.let { "%.1f".format(it) }}km")
+                    ResultItem("시간", formatTime(myResult?.runningTime ?: 0))
                 }
                 Spacer(modifier = Modifier.height(25.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(23.dp)
                 ) {
-                    ResultItem("페이스", formatPace(playerResult?.paceAvg ?: 0.0))
-                    ResultItem("칼로리", "${playerResult?.calories ?: 0}kcal")
+                    ResultItem("페이스", formatPace(myResult?.paceAvg ?: 0.0))
+                    ResultItem("칼로리", "${myResult?.calories ?: 0}kcal")
                 }
 
                 Spacer(modifier = Modifier.height(15.dp))
@@ -194,11 +193,11 @@ private fun FirstResultPage(playerResult: GamePlay.PlayersResultData?) {
                 )
 
                 Spacer(modifier = Modifier.height(15.dp))
-                ResultRow("공격 횟수", "${playerResult?.itemUseCount ?: 0}번")
+                ResultRow("공격 횟수", "${myResult?.itemUseCount ?: 0}번")
                 Spacer(modifier = Modifier.height(10.dp))
-                ResultRow("획득 경험치", "+${playerResult?.rewardExp ?: 0}exp")
+                ResultRow("획득 경험치", "+${myResult?.rewardExp ?: 0}exp")
                 Spacer(modifier = Modifier.height(10.dp))
-                ResultRow("획득 코인", "+${playerResult?.rewardCoin ?: 0}코인")
+                ResultRow("획득 코인", "+${myResult?.rewardCoin ?: 0}코인")
             }
         }
     }

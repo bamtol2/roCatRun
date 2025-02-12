@@ -90,33 +90,16 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         val rewardCoin: Int
     )
 
-    // 웹소켓에서 받아오는 나의 게임 결과 데이터
+    // 유저들 게임 결과 데이터
     data class PlayersResultData(
         val userId: String,
-        val nickName: String,
+        val nickname: String,
         val characterImage: String,  // 유저의 프로필 이미지 파일 경로
-        val runningTime: Long,
         val totalDistance: Double,
-        val paceAvg: Double,
-        val heartRateAvg: Double,
-        val cadenceAvg: Double,
-        val calories: Int,
         val itemUseCount: Int,
         val rewardExp: Int,
         val rewardCoin: Int
     )
-
-    // 유저들 게임 결과 데이터
-
-//    data class playersResultData(
-//        val userId: String,
-//        val nickName: String,
-//        val characterImage: String,  // 유저의 프로필 이미지 파일 경로
-//        val totalDistance: Double,
-//        val itemUseCount: Int,
-//        val rewardExp: Int,
-//        val rewardCoin: Int
-//    )
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -168,9 +151,6 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
 
         // 메세지 보내기
         startWatchApp(this)
-
-        // 웹소켓 유저들 러닝데이터 수신
-//        playerDataUpdatedSocket()
 
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(

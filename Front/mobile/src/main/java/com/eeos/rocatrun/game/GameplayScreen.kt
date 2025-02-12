@@ -60,12 +60,14 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
     val context = LocalContext.current
     val dataClient = Wearable.getDataClient(context)
 
-
-    var playersResult by remember { mutableStateOf<List<GamePlay.PlayersResultData>>(emptyList())}
+    // 게임결과 저장 변수들
+    var myResult by remember { mutableStateOf<GamePlay.MyResultData?>(null) }
+    var playerResults by remember { mutableStateOf<List<GamePlay.PlayersResultData>>(emptyList()) }
+    var myRank by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
 
-        // 서버에서 updateRunningData 응답 받기
+        // 서버에서 playerDataUpdated 응답 받기
         SocketHandler.mSocket.on("playerDataUpdated") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val responseJson = args[0] as JSONObject
@@ -73,15 +75,8 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 val returnedDistance = responseJson.optDouble("distance", 0.0)
                 val itemUseCount = responseJson.optInt("itemUseCount", 0)
                 Log.d(
-                    "Socket", "On - updateRunningData: " +
+                    "Socket", "On - playerDataUpdated: " +
                             "nickName: $nickName, distance: $returnedDistance, itemUseCount: $itemUseCount"
-                )
-
-                // 워치에 보낼 playersData 에 위 정보 넣어서 그대로 보내기
-                var playersData = PlayersData(
-                    nickName = nickName,
-                    totalDistance = returnedDistance,
-                    totalItemUsage = itemUseCount
                 )
 
                 // 업데이트된 playersData를 워치에 전송하기 위해 PutDataMapRequest 생성
@@ -99,7 +94,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                     .addOnFailureListener { exception ->
                         Log.e("Wear", "플레이어들 데이터 전송 실패", exception)
                     }
-
             }
         }
 
@@ -205,9 +199,28 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 val responseJson = args[0] as JSONObject
                 // 클리어/페일
                 val cleared = responseJson.optBoolean("cleared", false)
-                // 플레이어 결과 배열에 저장
+
+                // myResult 파싱
+                responseJson.optJSONObject("myResult")?.let { myResultJson ->
+                    myResult = GamePlay.MyResultData(
+                        userId = myResultJson.optString("userId", "unknown"),
+                        nickName = myResultJson.optString("nickName", "unknown"),
+                        characterImage = myResultJson.optString("characterImage", ""),
+                        runningTime = myResultJson.optLong("runningTime", 0),
+                        totalDistance = myResultJson.optDouble("totalDistance", 0.0),
+                        paceAvg = myResultJson.optDouble("paceAvg", 0.0),
+                        heartRateAvg = myResultJson.optDouble("heartRateAvg", 0.0),
+                        cadenceAvg = myResultJson.optDouble("cadenceAvg", 0.0),
+                        calories = myResultJson.optInt("calories", 0),
+                        itemUseCount = myResultJson.optInt("itemUseCount", 0),
+                        rewardExp = myResultJson.optInt("rewardExp", 0),
+                        rewardCoin = myResultJson.optInt("rewardCoin", 0)
+                    )
+                }
+
+                // playerResults 파싱
                 val playerResultsArray = responseJson.optJSONArray("playerResults")
-                val playerResults = mutableListOf<GamePlay.PlayersResultData>()
+                val newPlayerResults = mutableListOf<GamePlay.PlayersResultData>()
 
                 if (playerResultsArray != null) {
                     for (i in 0 until playerResultsArray.length()) {
@@ -215,41 +228,36 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                         playerObj?.let {
                             val result = GamePlay.PlayersResultData(
                                 userId = it.optString("userId", "unknown"),
-                                nickName = it.optString("nickName", "unknown"),
+                                nickname = it.optString("nickname", "unknown"),
                                 characterImage = it.optString("characterImage", ""),
-                                runningTime = it.optLong("runningTime", 0),
                                 totalDistance = it.optDouble("totalDistance", 0.0),
-                                paceAvg = it.optDouble("paceAvg", 0.0),
-                                heartRateAvg = it.optDouble("heartRateAvg", 0.0),
-                                cadenceAvg = it.optDouble("cadenceAvg", 0.0),
-                                calories = it.optInt("calories", 0),
                                 itemUseCount = it.optInt("itemUseCount", 0),
                                 rewardExp = it.optInt("rewardExp", 0),
                                 rewardCoin = it.optInt("rewardCoin", 0)
                             )
-                            playerResults.add(result)
+                            newPlayerResults.add(result)
                         }
                     }
-                }
 
-                Log.d(
-                    "Socket",
-                    "On - gameResult: cleared: $cleared, playerResults: $playerResults"
-                )
-                
-                // 싱글/멀티, 승리/패비 모달 분기처리
+                    myRank = responseJson.optInt("myRank", 0)
+                    playerResults = newPlayerResults
 
-                playersResult = playerResults
+                    Log.d(
+                        "Socket",
+                        "On - gameResult: cleared: $cleared, myResult: $myResult"
+                    )
 
-                if (cleared) {
-                    when {
-                        playerResults.size == 1 -> { showSingleWinDialog = true }
-                        playerResults.size > 1 -> { showMultiWinDialog = true }
-                    }
-                } else {
-                    when {
-                        playerResults.size == 1 -> { showSingleLoseDialog = true }
-                        playerResults.size > 1 -> { showMultiLoseDialog = true }
+                    // 싱글/멀티, 승리/패비 모달 분기처리
+                    if (cleared) {
+                        when (playerResults.size) {
+                            1 -> showSingleWinDialog = true
+                            else -> showMultiWinDialog = true
+                        }
+                    } else {
+                        when (playerResults.size) {
+                            1 -> showSingleLoseDialog = true
+                            else -> showMultiLoseDialog = true
+                        }
                     }
                 }
             }
@@ -397,16 +405,16 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
         // 모달 표시
         if (showMultiWinDialog) {
-            MultiWinScreen(playersResult = playersResult)
+            MultiWinScreen(myResult = myResult, myRank = myRank, playerResults = playerResults)
         }
         else if (showMultiLoseDialog) {
-            MultiLoseScreen(playersResult = playersResult)
+            MultiLoseScreen(myResult = myResult, myRank = myRank, playerResults = playerResults)
         }
         else if (showSingleWinDialog) {
-            SingleWinScreen(playerResult = playersResult.firstOrNull())
+            SingleWinScreen(myResult = myResult)
         }
         else if (showSingleLoseDialog) {
-            SingleLoseScreen(playerResult = playersResult.firstOrNull())
+            SingleLoseScreen(myResult = myResult)
         }
     }
 }
