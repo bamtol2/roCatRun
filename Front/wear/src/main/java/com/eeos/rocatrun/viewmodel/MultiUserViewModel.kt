@@ -162,9 +162,9 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     // /players_data 이벤트: 실시간 데이터 업데이트 → Map에 저장
     private fun processPlayersData(dataItem: DataItem) {
         val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
-        val nickname = dataMap.getString("nickname") ?: "Unknown"
+        val nickname = dataMap.getString("nickName") ?: "Unknown"
         val distance = dataMap.getDouble("distance")
-        val itemCount = dataMap.getInt("itemUsed")
+        val itemCount = dataMap.getInt("itemUseCount")
         val newData = PlayersData(nickname, distance, itemCount)
         _playersDataMap.value = _playersDataMap.value.toMutableMap().apply {
             put(nickname, newData)
