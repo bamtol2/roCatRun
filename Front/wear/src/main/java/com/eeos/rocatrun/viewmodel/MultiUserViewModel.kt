@@ -173,7 +173,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             playersData = PlayersData(
                 nickname = getString("nickName") ?: "Unknown",
                 distance = getDouble("distance"),
-                itemCount = getInt("itemUsedCount")
+                itemCount = getInt("itemUseCount")
             )
         }
         Log.d("MultiUserViewModel", "사용자 데이터 받는중 : $playersData")
