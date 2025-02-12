@@ -113,7 +113,7 @@ fun RankingItem(rankData: Ranking, highlight: Boolean) {
         Text(text = rankData.nickname, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textColor)
         Spacer(modifier = Modifier.weight(1f))
 
-        Text(text = rankData.level.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFC107))
+        Text(text = "Lv.${rankData.level}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFC107))
     }
 
     if (!highlight) {
