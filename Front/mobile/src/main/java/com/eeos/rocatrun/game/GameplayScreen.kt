@@ -66,7 +66,7 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
     LaunchedEffect(Unit) {
 
         // 서버에서 updateRunningData 응답 받기
-        SocketHandler.mSocket.on("updateRunningData") { args ->
+        SocketHandler.mSocket.on("playerDataUpdated") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val responseJson = args[0] as JSONObject
                 val nickName = responseJson.optString("nickName", "unknown")

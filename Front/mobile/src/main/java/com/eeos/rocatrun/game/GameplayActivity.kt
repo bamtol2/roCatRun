@@ -337,11 +337,11 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         val runDataJson = JSONObject().apply {
             put("runningData", runningDataPayload)
         }
-        Log.d("Socket", "Emit - updateRunningData: $runDataJson")
 
         // updateRunningData 실시간 러닝 데이터 전송
         SocketHandler.mSocket.emit("updateRunningData", runDataJson)
 
+        Log.d("Socket", "Emit - updateRunningData: $runDataJson")
     }
 
     // 웹소켓 - 플레이어들 실시간 데이터 수신
