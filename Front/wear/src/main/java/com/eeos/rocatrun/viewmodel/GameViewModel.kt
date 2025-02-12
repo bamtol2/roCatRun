@@ -78,12 +78,16 @@ class GameViewModel : ViewModel() {
     }
 
     // 아이템 게이지 증가
-    fun increaseItemGauge(amount : Int) {
-        // 현재 게이지 값에 양을 추가하며, 최대 100을 넘지 않도록 제한
-        _itemGaugeValue.value = (_itemGaugeValue.value + amount).coerceAtMost(100)
-        Log.d("아이템 게이지", "현재 게이지 값: ${_itemGaugeValue.value}, 증가량: $amount")
-//        Log.i("아이템 사용 횟수 ", "횟수 : ${_itemUsageCount.value}")
+//    fun increaseItemGauge(amount : Int) {
+//        // 현재 게이지 값에 양을 추가하며, 최대 100을 넘지 않도록 제한
+//        _itemGaugeValue.value = (_itemGaugeValue.value + amount).coerceAtMost(100)
+//        Log.d("아이템 게이지", "현재 게이지 값: ${_itemGaugeValue.value}, 증가량: $amount")
+//    }
+    fun setItemGauge(value: Int) {
+        _itemGaugeValue.value = value.coerceIn(0, 100)
+        Log.d("GameViewModel", "Item gauge set to ${_itemGaugeValue.value}")
     }
+
 
     /**
      * 아이템 게이지가 가득 찼을 때 호출되는 함수.

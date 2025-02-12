@@ -284,7 +284,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     private var lastDistanceUpdate = 0.0  // 마지막 게이지 업데이트 시점
-
+    private var segmentDistance = 0.0 // 아이템 게이지 채우기 위한 이동 거리
     // 위치 업데이트 후 거리 계산
     private fun updateLocation(location: Location) {
         lastLocation?.let {
@@ -293,16 +293,16 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 totalDistance += distanceMoved
                 speed = location.speed * 3.6
 
-                // 게이지 증가: 1m 이상 이동 시 갱신(750m를 이동하게 변경 예정)
-                if (totalDistance - lastDistanceUpdate >= 0.001) {
-                    val isFeverTime = gameViewModel.feverTimeActive.value
-                    val gaugeIncrement = if (isFeverTime) 2 else 1
-                    gameViewModel.increaseItemGauge(gaugeIncrement)
-                    lastDistanceUpdate = totalDistance
-                    if (gameViewModel.itemGaugeValue.value == 100) {
-                        gameViewModel.handleGaugeFull(this)
-                    }
+                // 현재 세그먼트 진행률 계산 (테스트용 100m)
+                if (segmentDistance >= 0.1) {
+                    // 10m 이상 이동
+                    gameViewModel.handleGaugeFull(this)
+                    segmentDistance -= 0.1
                 }
+                // 현재 세그먼트 비율(0~100) 계산
+                val gaugePercentage = ((segmentDistance / 0.1) * 100).toInt()
+                // GameViewModel에 현재 게이지 값을 직접 설정
+                gameViewModel.setItemGauge(gaugePercentage)
             }
         }
         lastLocation = location
@@ -349,6 +349,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         stepCount = 0
 
         // 새 운동 시작 시 이전 데이터 초기화
+        segmentDistance = 0.0
+
         locationList.clear()
         heartRateData.clear()
         cadenceData.clear()
