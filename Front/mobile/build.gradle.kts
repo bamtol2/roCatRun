@@ -62,10 +62,6 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
 
-    // 이미지 선택 coil
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-gif:3.0.4")
-
     // Data Layer API
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
     implementation(libs.androidx.core.ktx)
@@ -91,6 +87,7 @@ dependencies {
     // coil 추가
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-gif:3.0.4")
+    implementation(libs.androidx.runtime.livedata)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -100,8 +97,18 @@ dependencies {
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
 
+    // 통계 차트
     implementation ("io.github.ehsannarmani:compose-charts:0.1.1")
 
-    // 이미지 저장하기 위한 캡쳐 라이브러리
+    // composable에서 viewModel 이용
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
+    implementation(libs.ui.graphics.android)
+
+
+    // socket.io -
+    implementation ("io.socket:socket.io-client:2.0.0")
+
+    // 캡쳐 라이브러리
     implementation ("dev.shreyaspatil:capturable:2.1.0")
 }

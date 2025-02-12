@@ -1,6 +1,9 @@
 package com.eeos.rocatrun.game
 
+//import com.eeos.rocatrun.socket.SocketHandler
+import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,9 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,10 +38,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +47,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.socket.SocketHandler
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
+import org.json.JSONObject
 
 
 @Composable
@@ -123,17 +130,17 @@ fun TopNavigation(
     }
 }
 
-// 메인 버튼 3개
+// 메인 버튼 4개
 @Composable
 fun MainButtons() {
-    val context = LocalContext.current
+
     var selectedButton by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(30.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         // 방 만들기 버튼
         if (selectedButton == "create") {
@@ -163,27 +170,49 @@ fun MainButtons() {
             )
         }
 
-        // 랜덤 찾기 버튼
-        CustomButton(
-            buttonImage = R.drawable.game_btn_darkblue,
-            buttonText = "랜덤 찾기",
-            iconImage = R.drawable.game_icon_random,
-            // 클릭하면 랜덤 찾는중 화면 이동
-            onClick = {
-                // 랜덤 매칭중 페이지로 이동
-                val intent = Intent(context, Matching::class.java)
-                context.startActivity(intent)
-            }
-        )
+        // 랜덤 플레이 버튼
+        if (selectedButton == "random") {
+            RandomContent(
+                onBack = { selectedButton = null }
+            )
+        } else {
+            CustomButton(
+                buttonImage = R.drawable.game_btn_darkblue,
+                buttonText = "랜덤 플레이",
+                iconImage = R.drawable.game_icon_random,
+                // 클릭하면 랜덤 찾는중 화면 이동
+                onClick = { selectedButton = "random" }
+            )
+        }
+
+        // 싱글 플레이 버튼
+        if (selectedButton == "single") {
+            SingleContent (
+                onBack = { selectedButton = null }
+            )
+        } else {
+            CustomButton(
+                buttonImage = R.drawable.game_btn_darkdarkpink,
+                buttonText = "싱글 플레이",
+                iconImage = R.drawable.game_icon_single,
+                onClick = {
+                    selectedButton = "single"
+                }
+            )
+        }
+
     }
 }
 
 // 방 생성 extend 창
 @Composable
 fun CreateRoomContent(onBack: () -> Unit) {
+    val context = LocalContext.current
     var selectedDifficulty by remember { mutableStateOf("") }
     var selectedPeople by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf<String?>(null) }
+
+    // 두 항목 모두 선택되어야 생성 버튼이 활성화됨
+    val isGenerateEnabled = selectedDifficulty.isNotBlank() && selectedPeople.isNotBlank()
 
     Box(
         modifier = Modifier
@@ -251,16 +280,19 @@ fun CreateRoomContent(onBack: () -> Unit) {
                     SelectableText(
                         text = "상",
                         isSelected = selectedDifficulty == "상",
+                        color = Color(0xFFFF00CC),
                         onClick = { selectedDifficulty = "상" }
                     )
                     SelectableText(
                         text = "중",
                         isSelected = selectedDifficulty == "중",
+                        color = Color(0xFFFF00CC),
                         onClick = { selectedDifficulty = "중" }
                     )
                     SelectableText(
                         text = "하",
                         isSelected = selectedDifficulty == "하",
+                        color = Color(0xFFFF00CC),
                         onClick = { selectedDifficulty = "하" }
                     )
                 }
@@ -295,37 +327,64 @@ fun CreateRoomContent(onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     SelectableText(
-                        text = "1인",
-                        isSelected = selectedPeople == "1인",
-                        onClick = { selectedPeople = "1인" }
-                    )
-                    SelectableText(
                         text = "2인",
                         isSelected = selectedPeople == "2인",
+                        color = Color(0xFFFF00CC),
                         onClick = { selectedPeople = "2인" }
                     )
                     SelectableText(
                         text = "3인",
                         isSelected = selectedPeople == "3인",
+                        color = Color(0xFFFF00CC),
                         onClick = { selectedPeople = "3인" }
                     )
                     SelectableText(
                         text = "4인",
                         isSelected = selectedPeople == "4인",
+                        color = Color(0xFFFF00CC),
                         onClick = { selectedPeople = "4인" }
                     )
                 }
             }
 
-            // 코드 생성
+            // 코드 생성 및 소켓 요청 전송
             Box(
                 modifier = Modifier.padding(bottom = 20.dp)
             ){
                 CodeGenerationSection(
-                    generatedCode = code,
+                    enabled = isGenerateEnabled,
+
                     onGenerateClick = {
-                        // 여기에 코드 생성 로직 추가
-                        code = "TK38NBBF" // 임시로 하드코딩
+
+//                        // 소켓 초기화, 연결
+//                        SocketHandler.initialize(context)
+//                        SocketHandler.connect()
+
+                        // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
+                        val bossLevel = when (selectedDifficulty) {
+                            "상" -> "HARD"
+                            "중" -> "NORMAL"
+                            "하" -> "EASY"
+                            else -> "EASY" // 기본값 설정
+                        }
+
+                        // 인원 수 변환: "1인" -> 1, "2인" -> 2, …
+                        val roomPlayers = when (selectedPeople) {
+                            "2인" -> 2
+                            "3인" -> 3
+                            "4인" -> 4
+                            else -> 2 // 기본값 설정
+                        }
+
+                        // 방생성 - 웹소켓
+                        CreateRoomSocket(bossLevel, roomPlayers) { inviteCode, currentPlayers, maxPlayers ->
+
+                            val intent = Intent(context, Loading::class.java)
+                            intent.putExtra("inviteCode", inviteCode)
+                            intent.putExtra("currentPlayers", currentPlayers)
+                            intent.putExtra("maxPlayers", maxPlayers)
+                            context.startActivity(intent)
+                        }
                     }
                 )
             }
@@ -333,92 +392,42 @@ fun CreateRoomContent(onBack: () -> Unit) {
     }
 }
 
-// 코드 생성
+// 방 생성 버튼
 @Composable
 fun CodeGenerationSection(
-    generatedCode: String? = null,
+    enabled: Boolean,
     onGenerateClick: () -> Unit
 ) {
-    val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
+    val borderColor = if (enabled) Color(0xFFFF00CC) else Color.Gray // 활성/비활성 보더 색상
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 코드 생성 버튼
+        // 방 생성 버튼
         Box(
             modifier = Modifier
                 .border(
                     width = 2.dp,
-                    color = Color(0xFFFF00CC),
+                    color = borderColor,
                     shape = RoundedCornerShape(10.dp)
                 )
-                .clickable { onGenerateClick() }
+                // 버튼이 활성화되었을 때만 클릭 이벤트 반응
+                .then(if (enabled) Modifier
+                    .clickable {
+                        onGenerateClick()
+                    } else Modifier)
+
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Text(
-                "코드 생성",
+                "방 생성",
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 20.sp
-                )
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp)
             )
-        }
-
-        // 코드 표시 영역과 복사 버튼
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.width(160.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(120.dp)
-                    .height(30.dp)
-            ) {
-                if (generatedCode != null) {
-                    Text(
-                        text = generatedCode,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontSize = 25.sp
-                        ),
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(2.dp)
-                            .background(Color.White)
-                            .align(Alignment.BottomCenter)
-                    )
-                }
-            }
-            // 복사 버튼
-            IconButton(
-                onClick = {
-                    generatedCode?.let {
-                        clipboardManager.setText(AnnotatedString(it))
-                        Toast.makeText(
-                            context,
-                            "코드가 복사되었습니다",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                },
-                modifier = Modifier.size(24.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.game_icon_copy),
-                    contentDescription = "Copy code",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
     }
 }
@@ -428,7 +437,11 @@ fun CodeGenerationSection(
 fun InviteCodeContent(onBack: () -> Unit) {
     val context = LocalContext.current
     var inviteCode by remember { mutableStateOf("") }
-    val maxLength = 8
+    // 코드 최대 글자
+    val maxLength = 6
+
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -529,9 +542,31 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         )
                         // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
-                            // Loading으로 이동. 근데 여기서 코드 있는건지 없는건지 확인해서 예외처리 작업 필요함
-                            val intent = Intent(context, Loading::class.java)
-                            context.startActivity(intent)
+//
+//                            // 소켓 초기화, 연결
+//                            SocketHandler.initialize(context)
+//                            SocketHandler.connect()
+
+                            // 웹소켓 입장 이벤트 호출: 성공하면 LoadingActivity로 이동, 에러면 모달 띄움
+                            JoinRoomSocket(inviteCode = inviteCode,
+                                onSuccess = { rInviteCode, currentPlayers, maxPlayers ->
+
+                                    // 성공하면 LoadingActivity로 이동
+                                    val intent = Intent(context, Loading::class.java).apply {
+                                        putExtra("inviteCode", rInviteCode)
+                                        putExtra("currentPlayers", currentPlayers)
+                                        putExtra("maxPlayers", maxPlayers)
+                                    }
+
+                                    context.startActivity(intent)
+                                },
+                                onError = { error ->
+
+                                    // 실패하면 모달 띄우기
+                                    errorMessage = error
+                                    showErrorDialog = true
+                                }
+                            )
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
@@ -548,11 +583,423 @@ fun InviteCodeContent(onBack: () -> Unit) {
             }
         }
     }
+
+    // 에러가 발생했을 때 모달 다이얼로그 표시
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = { Text("에러 발생") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { showErrorDialog = false }) {
+                    Text("확인")
+                }
+            }
+        )
+    }
 }
 
-// 메인 3개 버튼 양식
+// 랜덤 찾기 extend 창
 @Composable
-fun CustomButton(
+fun RandomContent(onBack: () -> Unit) {
+    val context = LocalContext.current
+    var randomDifficulty by remember { mutableStateOf("") }
+    var randomPeople by remember { mutableStateOf("") }
+
+    // 두 항목 모두 선택되어야 생성 버튼이 활성화됨
+    val isRandomMatchEnabled = randomDifficulty.isNotBlank() && randomPeople.isNotBlank()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 3.dp,
+                color = Color(0xFF6A00F4)
+            )
+            .background(color = Color(0xB2000000))
+            .height(320.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(25.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF6A00F4))
+                    .height(50.dp)
+            ){
+                Text(
+                    text = "랜덤 찾기",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = Color.Black,
+                        fontSize = 30.sp
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 난이도 선택
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 25.dp)
+                ) {
+                    Text(
+                        text = ">> ",
+                        color = Color(0xFF6A00F4),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Text(
+                        text = "난이도를 선택해 주세요",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp
+                        )
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    SelectableText(
+                        text = "상",
+                        isSelected = randomDifficulty == "상",
+                        color = Color(0xFF6A00F4),
+                        onClick = { randomDifficulty = "상" }
+                    )
+                    SelectableText(
+                        text = "중",
+                        isSelected = randomDifficulty == "중",
+                        color = Color(0xFF6A00F4),
+                        onClick = { randomDifficulty = "중" }
+                    )
+                    SelectableText(
+                        text = "하",
+                        isSelected = randomDifficulty == "하",
+                        color = Color(0xFF6A00F4),
+                        onClick = { randomDifficulty = "하" }
+                    )
+                }
+            }
+
+            // 인원 선택
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 25.dp)
+                ) {
+                    Text(
+                        text = ">> ",
+                        color = Color(0xFF6A00F4),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp
+                        )
+                    )
+                    Text(
+                        text = "인원을 선택해 주세요",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp
+                        )
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    SelectableText(
+                        text = "2인",
+                        isSelected = randomPeople == "2인",
+                        color = Color(0xFF6A00F4),
+                        onClick = { randomPeople = "2인" }
+                    )
+                    SelectableText(
+                        text = "3인",
+                        isSelected = randomPeople == "3인",
+                        color = Color(0xFF6A00F4),
+                        onClick = { randomPeople = "3인" }
+                    )
+                    SelectableText(
+                        text = "4인",
+                        isSelected = randomPeople == "4인",
+                        color = Color(0xFF6A00F4),
+                        onClick = { randomPeople = "4인" }
+                    )
+                }
+            }
+            // 입장 버튼
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 20.dp)
+            ){
+                RandomMatchSection(
+                    enabled = isRandomMatchEnabled,
+                    onRandomMatchClick = {
+//
+//                        // 소켓 초기화, 연결
+//                        SocketHandler.initialize(context)
+//                        SocketHandler.connect()
+
+                        // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
+                        val bossLevel = when (randomDifficulty) {
+                            "상" -> "HARD"
+                            "중" -> "NORMAL"
+                            "하" -> "EASY"
+                            else -> "EASY" // 기본값 설정 - 2가지 선택 안되면 생성 버튼 비활성화 시켜야 될 듯
+                        }
+
+                        // 인원 수 변환: "1인" -> 1, "2인" -> 2, …
+                        val roomPlayers = when (randomPeople) {
+                            "2인" -> 2
+                            "3인" -> 3
+                            "4인" -> 4
+                            else -> 2 // 기본값 설정
+                        }
+
+                        RandomMatchSocket(bossLevel, roomPlayers) { currentPlayers, maxPlayers ->
+                            // Matching으로 이동
+                            val intent = Intent(context, Matching::class.java)
+                            intent.putExtra("currentPlayers", currentPlayers)
+                            intent.putExtra("maxPlayers", maxPlayers)
+                            context.startActivity(intent)
+                        }
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(15.dp))
+        }
+    }
+}
+
+// 랜덤 찾기 버튼
+@Composable
+fun RandomMatchSection(
+    enabled: Boolean,
+    onRandomMatchClick: () -> Unit
+) {
+    val borderColor = if (enabled) Color(0xFF6A00F4) else Color.Gray // 활성/비활성 보더 색상
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 방 생성 버튼
+        Box(
+            modifier = Modifier
+                .border(
+                    width = 2.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(10.dp)
+                )
+                // 버튼이 활성화되었을 때만 클릭 이벤트 반응
+                .then(if (enabled) Modifier
+                    .clickable {
+                        onRandomMatchClick()
+                    } else Modifier)
+
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Text(
+                "입장",
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp)
+            )
+        }
+    }
+}
+
+// 싱글플레이 extend 창
+@Composable
+fun SingleContent(onBack: () -> Unit) {
+    val context = LocalContext.current
+    var singleDifficulty by remember { mutableStateOf("") }
+
+    // 선택되어야 입장 버튼이 활성화됨
+    val isSingleEnabled = singleDifficulty.isNotBlank()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 3.dp,
+                color = Color(0xFFF20089)
+            )
+            .background(color = Color(0xB2000000))
+            .height(225.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(25.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF20089))
+                    .height(50.dp)
+            ){
+                Text(
+                    text = "싱글 플레이",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = Color.Black,
+                        fontSize = 30.sp
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 난이도 선택
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 25.dp)
+                ) {
+                    Text(
+                        text = ">> ",
+                        color = Color(0xFFF20089),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Text(
+                        text = "난이도를 선택해 주세요",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp
+                        )
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    SelectableText(
+                        text = "상",
+                        isSelected = singleDifficulty == "상",
+                        color = Color(0xFFF20089),
+                        onClick = { singleDifficulty = "상" }
+                    )
+                    SelectableText(
+                        text = "중",
+                        isSelected = singleDifficulty == "중",
+                        color = Color(0xFFF20089),
+                        onClick = { singleDifficulty = "중" }
+                    )
+                    SelectableText(
+                        text = "하",
+                        isSelected = singleDifficulty == "하",
+                        color = Color(0xFFF20089),
+                        onClick = { singleDifficulty = "하" }
+                    )
+                }
+            }
+
+            // 입장 버튼
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 20.dp)
+            ){
+                SingleSection(
+                    enabled = isSingleEnabled,
+                    onSingleClick = {
+
+//                        // 소켓 초기화, 연결
+//                        SocketHandler.initialize(context)
+//                        SocketHandler.connect()
+
+                        // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
+                        val bossLevel = when (singleDifficulty) {
+                            "상" -> "HARD"
+                            "중" -> "NORMAL"
+                            "하" -> "EASY"
+                            else -> "EASY" // 기본값 설정
+                        }
+
+                        singlePlaySocket(bossLevel, 1) { bossLevel, playerNum ->
+                            val intent = Intent(context, GamePlay::class.java)
+                            intent.putExtra("bossLevel", bossLevel)
+                            intent.putExtra("playerNum", playerNum)
+                            context.startActivity(intent)
+                        }
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(15.dp))
+        }
+    }
+}
+
+// 싱글 플레이 버튼
+@Composable
+fun SingleSection(
+    enabled: Boolean,
+    onSingleClick: () -> Unit
+) {
+    val borderColor = if (enabled) Color(0xFFF20089) else Color.Gray // 활성/비활성 보더 색상
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 방 생성 버튼
+        Box(
+            modifier = Modifier
+                .border(
+                    width = 2.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(10.dp)
+                )
+                // 버튼이 활성화되었을 때만 클릭 이벤트 반응
+                .then(if (enabled) Modifier
+                    .clickable {
+                        onSingleClick()
+                    } else Modifier)
+
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Text(
+                "입장",
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp)
+            )
+        }
+    }
+}
+
+// 메인 4개 버튼 양식
+@Composable
+private fun CustomButton(
     buttonImage: Int,
     buttonText: String,
     iconImage: Int,
@@ -568,7 +1015,7 @@ fun CustomButton(
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp),
+                .height(130.dp),
             contentScale = ContentScale.FillBounds
         )
 
@@ -597,9 +1044,10 @@ fun CustomButton(
 
 // 선택한 텍스트 색 변경
 @Composable
-fun SelectableText(
+private fun SelectableText(
     text: String,
     isSelected: Boolean,
+    color: Color,
     onClick: () -> Unit
 ) {
     Box(
@@ -608,7 +1056,7 @@ fun SelectableText(
         // Stroke 텍스트
         Text(
             text = text,
-            color = if (isSelected) Color(0xFFFF00CC) else Color(0xFF796D76),
+            color = if (isSelected) color else Color(0xFF796D76),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontSize = 25.sp,
                 drawStyle = Stroke(
@@ -625,5 +1073,164 @@ fun SelectableText(
                 fontSize = 25.sp
             )
         )
+    }
+}
+
+// 웹소켓 방 생성 이벤트
+fun CreateRoomSocket(
+    bossLevel: String,
+    roomPlayers: Int,
+    onRoomCreated: (inviteCode: String,
+                    currentPlayers: Int,
+                    maxPlayers: Int) -> Unit)
+{
+    // 전송할 JSON 생성
+    val createRoomJson = JSONObject().apply {
+        put("bossLevel", bossLevel)    // or "MEDIUM", "HARD"
+        put("maxPlayers", roomPlayers)        // 1-4 사이의 숫자
+        put("isPrivate", true)      // 비밀 방 여부(초대코드 생성 여부)
+    }
+    Log.d("Socket", "Emit - createRoom")
+
+    // 방 생성 전송
+    SocketHandler.mSocket.emit("createRoom", createRoomJson)
+
+    // 방 생성 응답 이벤트 리스너 등록
+    SocketHandler.mSocket.on("roomCreated") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+            val roomId = json.optString("roomId", "")
+            val inviteCode = json.optString("inviteCode", "")
+            val currentPlayers = json.optInt("currentPlayers", 0)
+            val maxPlayers = json.optInt("maxPlayers", 0)
+
+            // JSON 데이터 로그 출력
+            Log.d(
+                "Socket",
+                "On - roomCreated: roomId: $roomId, inviteCode: $inviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+            )
+
+            // 콜백으로 초대코드, 현재수, 정원수 전달
+            onRoomCreated(inviteCode, currentPlayers, maxPlayers)
+        }
+    }
+}
+
+// 웹소켓 입장 이벤트
+fun JoinRoomSocket(
+    inviteCode: String,
+    onSuccess: (inviteCode: String,
+                   currentPlayers: Int,
+                   maxPlayers: Int) -> Unit,
+    onError: (String) -> Unit)
+{
+    // 전송할 JSON 생성
+    val joinRoomJson = JSONObject().apply {
+        put("inviteCode", inviteCode)
+
+    }
+    Log.d("Socket", "Emit - joinRoom")
+
+    // 입장 요청
+    SocketHandler.mSocket.emit("joinRoom", joinRoomJson)
+
+    // 입장 응답 이벤트 리스너 등록
+    SocketHandler.mSocket.off("roomJoined") // 중복 등록 방지
+    SocketHandler.mSocket.on("roomJoined") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+
+            val json = args[0] as JSONObject
+
+            // 만약 json에 "error" 키가 있으면 에러 처리
+            if (json.has("error")) {
+                val errorMsg = json.optString("error", "알 수 없는 에러")
+                Log.d("Socket", "Error - roomJoined : $errorMsg")
+                onError(errorMsg)
+            } else
+            {
+                // 정상 응답일 경우
+                val roomId = json.optString("roomId", "")
+                val extractedInviteCode = json.optString("inviteCode", "")
+                val currentPlayers = json.optInt("currentPlayers", 0)
+                val maxPlayers = json.optInt("maxPlayers", 0)
+
+                Log.d(
+                    "Socket",
+                    "On - roomJoined : userId: $roomId, inviteCode: $extractedInviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+                )
+                // 콜백으로 초대코드, 현재수, 정원수 전달
+                onSuccess(inviteCode, currentPlayers, maxPlayers)
+            }
+        } else {
+           Log.d("Socket", "Error - roomJoined : 잘못된 응답")
+        }
+    }
+}
+
+// 랜덤매칭 이벤트
+fun RandomMatchSocket(
+    bossLevel: String,
+    roomPlayers: Int,
+    matchCreated: (currentPlayers: Int,
+                    maxPlayers: Int) -> Unit)
+{
+    // 전송할 JSON 생성
+    val randomMatchJson = JSONObject().apply {
+        put("bossLevel", bossLevel)    // or "MEDIUM", "HARD"
+        put("maxPlayers", roomPlayers)        // 1-4 사이의 숫자
+    }
+    Log.d("Socket", "Emit - randomMatch")
+
+    // 랜덤매치 전송
+    SocketHandler.mSocket.emit("randomMatch", randomMatchJson)
+
+    // 매치 상황 이벤트 리스너 등록
+    SocketHandler.mSocket.on("matchStatus") { args ->
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+            val roomId = json.optString("userId", "")
+            val currentPlayers = json.optInt("currentPlayers", 0)
+            val maxPlayers = json.optInt("maxPlayers", 0)
+
+            // JSON 데이터 로그 출력
+            Log.d(
+                "Socket",
+                "On - matchStatus: roomId: $roomId, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+            )
+
+            // 콜백으로 초대코드, 현재수, 정원수 전달
+            matchCreated(currentPlayers, maxPlayers)
+        }
+    }
+}
+
+
+// 싱글플레이 이벤트
+fun singlePlaySocket(
+    bossLevel: String,
+    roomPlayers: Int,
+    gameStart: (bossLevel: String,
+                   playerNum: Int) -> Unit)
+{
+    // 전송할 JSON 생성
+    val singleMatchJson = JSONObject().apply {
+        put("bossLevel", bossLevel)    // "EASY" "MEDIUM", "HARD"
+        put("maxPlayers", roomPlayers)        // 1
+    }
+    Log.d("Socket", "Emit - singleRandomMatch")
+
+    // 랜덤매치 전송
+    SocketHandler.mSocket.emit("randomMatch", singleMatchJson)
+
+    // 방 생성 응답 이벤트 리스너 등록
+    SocketHandler.mSocket.on("gameStart") {
+
+        // JSON 데이터 로그 출력
+        Log.d(
+            "Socket",
+            "On - gameStart"
+        )
+        // 콜백
+        gameStart(bossLevel, 1)
     }
 }

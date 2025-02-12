@@ -8,6 +8,15 @@ object TokenStorage {
     private const val PREF_NAME = "rocatrun_prefs"
     private const val ACCESS_TOKEN_KEY = "access_token"
     private const val REFRESH_TOKEN_KEY = "refresh_token"
+
+    // SharedPreferences 객체
+    private lateinit var preferences: SharedPreferences
+
+    // 초기화 메서드 (앱 시작 시 한 번만 호출 필요)
+    fun init(context: Context) {
+        preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    }
+
     // MODE_PRIVATE로 해당 앱만 접근할 수 있게 설정
     private fun getPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -26,6 +35,11 @@ object TokenStorage {
 
     fun getRefreshToken(context: Context): String? {
         return getPreferences(context).getString(REFRESH_TOKEN_KEY, null)
+    }
+
+    // 저장된 토큰 값 불러오기 (context 필요 없음)
+    fun getAccessTokenWithOutContext(): String? {
+        return preferences.getString(ACCESS_TOKEN_KEY, null)
     }
 
     // 토큰 값 삭제하는 함수(로그아웃시 사용)

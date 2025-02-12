@@ -23,7 +23,7 @@ class KakaoWebViewLoginActivity : Activity() {
     companion object {
         private const val KAKAO_AUTH_URL = "https://kauth.kakao.com/oauth/authorize"
         private const val CLIENT_ID = "08554835b2f79b10c4673f267862ac7f"
-        private const val REDIRECT_URI = "http://i12e205.p.ssafy.io:8080/api/auth/callback/kakao"
+        private const val REDIRECT_URI = "https://i12e205.p.ssafy.io:8080/api/auth/callback/kakao"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

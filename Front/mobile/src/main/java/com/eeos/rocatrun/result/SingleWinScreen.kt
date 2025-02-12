@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.game
+package com.eeos.rocatrun.result
 
 import android.content.Intent
 import androidx.compose.foundation.Image
@@ -19,6 +19,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,11 +35,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.game.GifImage
 import com.eeos.rocatrun.home.HomeActivity
+import kotlinx.coroutines.delay
 
 @Composable
-fun SingleLoseScreen() {
+fun SingleWinScreen() {
+    // confetti GIF 표시 여부 상태
+    var showConfetti by remember { mutableStateOf(true) }
     val context = LocalContext.current
+
+    // 모달이 시작되면 3초 후에 confetti 숨김
+    LaunchedEffect(Unit) {
+        delay(4000L)
+        showConfetti = false
+    }
 
     Dialog(
         onDismissRequest = { /**/ },
@@ -66,19 +81,19 @@ fun SingleLoseScreen() {
                 Spacer(modifier = Modifier.height(60.dp))
 
                 Text(
-                    text = "다음 기회에",
+                    text = "정복 완료",
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = Color.White,
                         fontSize = 32.sp
                     )
                 )
                 Image(
-                    painter = painterResource(id = R.drawable.game_img_losecat),
+                    painter = painterResource(id = R.drawable.game_img_wincat),
                     contentDescription = null,
                     modifier = Modifier
                         .size(130.dp)
                 )
-
+                
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -112,6 +127,14 @@ fun SingleLoseScreen() {
                         )
                     )
                 }
+            }
+
+            // confetti GIF
+            if (showConfetti) {
+                GifImage(
+                    modifier = Modifier.width(360.dp),
+                    gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.game_gif_confetti}"
+                )
             }
         }
     }

@@ -1,12 +1,7 @@
 package com.eeos.rocatrun.closet
 
-import android.content.ContentValues
-import android.content.Context
+
 import android.content.Intent
-import android.graphics.Bitmap
-import android.os.Environment
-import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,10 +25,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ExperimentalComposeApi
@@ -47,9 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -57,11 +46,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.game.InfoScreen
-import com.eeos.rocatrun.game.MainButtons
-import com.eeos.rocatrun.game.TopNavigation
+import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 import dev.shreyaspatil.capturable.capturable
 import dev.shreyaspatil.capturable.controller.rememberCaptureController
@@ -87,8 +76,9 @@ data class WearableItem(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeApi::class)
 @Composable
 fun ClosetScreen() {
-    // 상단 홈 아이콘 버튼
     val context = LocalContext.current
+    val token = TokenStorage.getAccessToken(context)
+    val closetViewModel: ClosetViewModel = viewModel()
 
     // 이미지 캡쳐 변수
     val captureController = rememberCaptureController()
@@ -156,14 +146,14 @@ fun ClosetScreen() {
                     val bitmapAsync = captureController.captureAsync()
                     try {
                         val bitmap = bitmapAsync.await()
-                        saveImageToDownloads(context, bitmap)
+                        saveImageToDownloads(context, bitmap, closetViewModel, token)
                     } catch (error: Throwable) {
                         Toast.makeText(context, "이미지 저장 실패: ${error.message}", Toast.LENGTH_SHORT)
                             .show()
                     }
                 }
             }) {
-            Text(text = "다운로드", fontFamily = MyFontFamily, color = Color.White)
+            Text(text = "프로필 저장", fontFamily = MyFontFamily, color = Color.White)
         }
 
 
@@ -441,30 +431,5 @@ fun CharacterWithItems(wornItems: List<WearableItem>) {
                     .offset(item.position.x.dp, item.position.y.dp)
             )
         }
-    }
-}
-
-
-// 이미지 저장 함수 (폰에 저장됨)
-fun saveImageToDownloads(context: Context, imageBitmap: ImageBitmap) {
-    val bitmap = imageBitmap.asAndroidBitmap()
-    val fileName = "captured_image_${System.currentTimeMillis()}.png"
-
-    val resolver = context.contentResolver
-    val contentValues = ContentValues().apply {
-        put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-    }
-
-    val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-    if (uri != null) {
-        resolver.openOutputStream(uri)?.use { outputStream ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            Toast.makeText(context, "Pictures 폴더에 저장됨: $fileName", Toast.LENGTH_SHORT).show()
-        } ?: Toast.makeText(context, "파일 저장 실패 (OutputStream null)", Toast.LENGTH_SHORT).show()
-    } else {
-        Toast.makeText(context, "파일 저장 실패 (URI null)", Toast.LENGTH_SHORT).show()
     }
 }

@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.game
+package com.eeos.rocatrun.result
 
 
 import android.content.Intent
@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,13 +42,23 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.game.GifImage
 import com.eeos.rocatrun.home.HomeActivity
+import kotlinx.coroutines.delay
 
 @Composable
 fun MultiLoseScreen() {
+    // Thunder GIF 표시 여부 상태
+    var showThunder by remember { mutableStateOf(true) }
 
     val pagerState = rememberPagerState(pageCount = {2})
     val context = LocalContext.current
+
+    // 모달이 시작되면 2초 뒤에 gif 숨김
+    LaunchedEffect(Unit) {
+        delay(2000L)
+        showThunder = false
+    }
 
     Dialog(
         onDismissRequest = { /**/ },
@@ -88,7 +104,6 @@ fun MultiLoseScreen() {
                 )
 
                 // 게임 결과 정보 HorizontalPager
-
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
@@ -145,6 +160,17 @@ fun MultiLoseScreen() {
                         )
                     )
                 }
+            }
+
+            // thunder GIF
+            if (showThunder) {
+                GifImage(
+                    modifier = Modifier
+                        .height(220.dp)
+                        .align(Alignment.TopCenter)
+                        .offset(y = 35.dp),
+                    gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.game_gif_thunder}"
+                )
             }
         }
     }

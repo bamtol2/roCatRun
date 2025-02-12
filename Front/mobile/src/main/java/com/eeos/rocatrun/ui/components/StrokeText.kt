@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.stats
+package com.eeos.rocatrun.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
