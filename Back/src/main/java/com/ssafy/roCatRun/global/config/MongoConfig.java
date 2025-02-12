@@ -22,14 +22,14 @@ public class MongoConfig {
     private static class DateToLocalDateTimeConverter implements Converter<Date, LocalDateTime> {
         @Override
         public LocalDateTime convert(Date source) {
-            return source == null ? null : LocalDateTime.ofInstant(source.toInstant(), ZoneOffset.UTC);
+            return source == null ? null : LocalDateTime.ofInstant(source.toInstant(), ZoneOffset.of("+09:00"));
         }
     }
 
     private static class LocalDateTimeToDateConverter implements Converter<LocalDateTime, Date> {
         @Override
         public Date convert(LocalDateTime source) {
-            return source == null ? null : Date.from(source.toInstant(ZoneOffset.UTC));
+            return source == null ? null : Date.from(source.toInstant(ZoneOffset.of("+09:00")));
         }
     }
 }

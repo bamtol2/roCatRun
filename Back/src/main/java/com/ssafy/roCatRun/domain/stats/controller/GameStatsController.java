@@ -52,32 +52,35 @@ public class GameStatsController {
     /**
      * 주별 통계 조회
      * @param authentication 현재 인증된 사용자 정보
-     * @param date 해당 주가 포함하는 날짜(YYYY-MM-DD)
+     * @param date 조회할 연월(YYYY-MM)
+     * @param week 주차 (1~5)
      */
     @GetMapping("/weekly")
     public ResponseEntity<WeeklyStatsResponse> getWeeklyStats(
             Authentication authentication,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth date,
+            @RequestParam int week) {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new IllegalStateException("인증 정보가 없습니다.");
         }
+
         String userId = authentication.getPrincipal().toString();
-        return ResponseEntity.ok(gameStatsService.getWeeklyStats(userId, date));
+        return ResponseEntity.ok(gameStatsService.getWeeklyStats(userId, date, week));
     }
 
     /**
      * 월별 통계 조회
      * @param authentication 현재 인증된 사용자 정보
-     * @param yearMonth 조회할 연월(YYYY-MM)
+     * @param date 조회할 연월(YYYY-MM)
      */
     @GetMapping("/monthly")
     public ResponseEntity<MonthlyStatsResponse> getMonthlyStats(
             Authentication authentication,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth date) {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new IllegalStateException("인증 정보가 없습니다.");
         }
         String userId = authentication.getPrincipal().toString();
-        return ResponseEntity.ok(gameStatsService.getMonthlyStats(userId, yearMonth));
+        return ResponseEntity.ok(gameStatsService.getMonthlyStats(userId, date));
     }
 }
