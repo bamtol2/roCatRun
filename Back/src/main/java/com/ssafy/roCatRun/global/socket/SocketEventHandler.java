@@ -140,7 +140,7 @@ public class SocketEventHandler {
         }
 
         try{
-            GameRoom room = gameService.joinRoomByInviteCode(userId, request.getInviteCode(), characterId, nickname, characterImage);
+            GameRoom room = gameService.joinRoomByInviteCode(userId, request.getInviteCode(), characterId, nickname, characterImage, client.getSessionId());
             client.joinRoom(room.getId());
 
             // 방 참여 성공 응답
@@ -178,7 +178,8 @@ public class SocketEventHandler {
         }
 
         try{
-            GameRoom room = gameService.createPrivateRoom(userId, request, characterId, nickname, characterImage);
+            GameRoom room = gameService.createPrivateRoom(
+                    userId, request, characterId, nickname, characterImage, client.getSessionId());
             client.joinRoom(room.getId());
 
 
@@ -246,7 +247,8 @@ public class SocketEventHandler {
         }
 
         try {
-            GameRoom room = gameService.findOrCreateRandomMatch(userId, request, characterId, nickname, characterImage);
+            GameRoom room = gameService.findOrCreateRandomMatch(
+                    userId, request, characterId, nickname, characterImage, client.getSessionId());
             client.joinRoom(room.getId());
 
             // 매칭 상태 전송

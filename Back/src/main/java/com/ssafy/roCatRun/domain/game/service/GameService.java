@@ -66,14 +66,14 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param request 매칭 요청 정보 (보스 레벨, 최대 인원 등)
      * @return 입장한 또는 생성된 게임방
      */
-    public GameRoom findOrCreateRandomMatch(String userId, MatchRequest request, String characterId, String nickname, String characterImage) {
+    public GameRoom findOrCreateRandomMatch(String userId, MatchRequest request, String characterId, String nickname, String characterImage, UUID sessionId) {
         // 1. 먼저 적합한 방이 있는지 찾기
         Optional<GameRoom> existingRoom = gameRoomManager.findRandomRoom(request.getBossLevel(), request.getMaxPlayers());
 
         // 기존 방이 있으면 해당 방에 입장
         if (existingRoom.isPresent()) {
             GameRoom room = existingRoom.get();
-            handlePlayerJoin(room, userId, characterId, nickname, characterImage); // handlePlayerJoin 사용
+            handlePlayerJoin(room, userId, characterId, nickname, characterImage, sessionId); // handlePlayerJoin 사용
             return room;
         }
 
@@ -86,7 +86,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         );
 
         gameRoomManager.addRoom(newRoom);
-        handlePlayerJoin(newRoom, userId, characterId, nickname, characterImage); // handlePlayerJoin 사용
+        handlePlayerJoin(newRoom, userId, characterId, nickname, characterImage, sessionId); // handlePlayerJoin 사용
         return newRoom;
     }
 
@@ -111,7 +111,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param request 방 정보(보스 레벨, 참여 인원)
      * @return
      */
-    public GameRoom createPrivateRoom(String userId, CreateRoomRequest request, String characterId, String nickname, String characterImage){
+    public GameRoom createPrivateRoom(String userId, CreateRoomRequest request, String characterId, String nickname, String characterImage, UUID sessionId){
         // 새로운 방 생성
         GameRoom newRoom = new GameRoom(
                 UUID.randomUUID().toString(),
@@ -126,7 +126,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         newRoom.setInviteCode(inviteCode);
 
         gameRoomManager.addRoom(newRoom);
-        handlePlayerJoin(newRoom, userId, characterId, nickname, characterImage); // handlePlayerJoin 사용
+        handlePlayerJoin(newRoom, userId, characterId, nickname, characterImage, sessionId); // handlePlayerJoin 사용
         return newRoom;
     }
 
@@ -152,7 +152,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param inviteCode 초대코드
      * @return
      */
-    public GameRoom joinRoomByInviteCode(String userId, String inviteCode, String characterId, String nickname, String characterImage){
+    public GameRoom joinRoomByInviteCode(String userId, String inviteCode, String characterId, String nickname, String characterImage, UUID sessionId){
         String roomId = inviteCodes.get(inviteCode);
         if(roomId==null){
             throw new IllegalArgumentException("Invalid invite code");
@@ -161,7 +161,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         GameRoom room = gameRoomManager.getRoom(roomId)
                 .orElseThrow(()->new IllegalArgumentException("Room not found"));
 
-        handlePlayerJoin(room, userId, characterId, nickname, characterImage);
+        handlePlayerJoin(room, userId, characterId, nickname, characterImage, sessionId);
         return room;
     }
 
@@ -170,7 +170,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param room 방 정보
      * @param userId 유저 식별자
      */
-    public void handlePlayerJoin(GameRoom room, String userId, String characterId, String nickname, String characterImage) {
+    public void handlePlayerJoin(GameRoom room, String userId, String characterId, String nickname, String characterImage, UUID sessionId) {
         // 게임 중이면 입장 불가
         if (room.getStatus() != GameStatus.WAITING) {
             throw new IllegalStateException("Game is already in progress");
@@ -182,7 +182,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         }
 
         // 플레이어 추가
-        Player player = new Player(userId, characterId, nickname, characterImage);
+        Player player = new Player(userId, characterId, nickname, characterImage, sessionId);
         room.addPlayer(player);
 
         gameRoomManager.updateRoom(room);
@@ -567,12 +567,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                             player.getId(),
                             player.getNickname(),
                             player.getCharacterImage(),
-                            result.getRunningTimeSec(),
                             result.getTotalDistance(),
-                            result.getPaceAvg(),
-                            result.getHeartRateAvg(),
-                            result.getCadenceAvg(),
-                            rewards.getCalories(),
                             player.getUsedItemCount(),
                             rewards.getExp(),
                             rewards.getCoin()
@@ -583,12 +578,45 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         Integer.compare(p2.getItemUseCount(),p1.getItemUseCount()))
                 .collect(Collectors.toList());
 
-        GameResultResponse finalResult = new GameResultResponse(
-                room.getBossHealth() <= 0,
-                playerResults
-        );
+        for(Player player : room.getPlayers()){
+            PlayerRunningResultRequest playerResult = results.get(player.getId());
+            GameResultInfo rewards = rewardInfo.get(player.getId());
 
-        server.getRoomOperations(room.getId()).sendEvent("gameResult", finalResult);
+            // 현재 플레이어의 상세 결과 생성
+            GameResultResponse.PlayerDetailResult myDetailResult = new GameResultResponse.PlayerDetailResult(
+                    player.getId(),
+                    player.getNickname(),
+                    player.getCharacterImage(),
+                    playerResult.getRunningTimeSec(),
+                    playerResult.getTotalDistance(),
+                    playerResult.getPaceAvg(),
+                    playerResult.getHeartRateAvg(),
+                    playerResult.getCadenceAvg(),
+                    rewards.getCalories(),
+                    player.getUsedItemCount(),
+                    rewards.getExp(),
+                    rewards.getCoin()
+            );
+
+            // 현재 플레이어의 순위 계산
+            int myRank = 0;
+            for (int i = 0; i < playerResults.size(); i++) {
+                if (playerResults.get(i).getUserId().equals(player.getId())) {
+                    myRank = i + 1;
+                    break;
+                }
+            }
+
+            // 개별 플레이어에게 결과 전송
+            GameResultResponse finalResult = new GameResultResponse(
+                    room.getBossHealth() <= 0,
+                    myDetailResult,
+                    playerResults,
+                    myRank
+            );
+
+            server.getClient(player.getSessionId()).sendEvent("gameResult", finalResult);
+        }
     }
 
     private void cleanupRoom(GameRoom room) {
