@@ -35,6 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -447,6 +449,9 @@ fun InviteCodeContent(onBack: () -> Unit) {
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    // 포커스 관리를 위한 FocusRequester 추가
+    val focusRequester = remember { FocusRequester() }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -528,7 +533,9 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         }
                     },
                     modifier = Modifier
+                        .focusRequester(focusRequester)
                         .fillMaxWidth()
+                        .clickable { focusRequester.requestFocus() }
                         .size(0.dp), // TextField의 크기를 0으로 설정
                     textStyle = TextStyle(color = Color.White),
                     singleLine = true
@@ -548,7 +555,9 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         .clickable {
 
                             // 웹소켓 입장 이벤트 호출: 성공하면 LoadingActivity로 이동, 에러면 모달 띄움
-                            JoinRoomSocket(context = context, inviteCode = inviteCode,
+                            JoinRoomSocket(
+                                context = context,
+                                inviteCode = inviteCode,
                                 onSuccess = { rInviteCode, currentPlayers, maxPlayers ->
 
                                     // 성공하면 LoadingActivity로 이동
@@ -586,9 +595,19 @@ fun InviteCodeContent(onBack: () -> Unit) {
 
     // 에러가 발생했을 때 모달창 표시
     if (showErrorDialog) {
-        AlertScreen(errorMessage, onDismissRequest = {
-            showErrorDialog = false
+        AlertScreen(
+            errorMessage,
+            onDismissRequest = {
+                showErrorDialog = false
+                // 모달이 닫힐 때 텍스트 필드 초기화 및 포커스 요청
+                inviteCode = ""
+                focusRequester.requestFocus()
         })
+    }
+
+    // 컴포넌트가 처음 표시될 때 포커스 요청
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 }
 

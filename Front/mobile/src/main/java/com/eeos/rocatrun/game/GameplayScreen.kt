@@ -175,6 +175,10 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
 
         // 웹소켓 - 게임종료 이벤트 수신 -> 워치 송신
         SocketHandler.mSocket.on("gameOver") {
+            
+            // 게임 종료시 실시간으로 보내는 러닝 데이터 종료시키기
+            SocketHandler.mSocket.off("updateRunningData")
+            
             Log.d("Socket", "On - gameOver")
 
             // 워치에 게임 종료 메세지 보내기
