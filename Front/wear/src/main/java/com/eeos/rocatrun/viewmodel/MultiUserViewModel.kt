@@ -171,9 +171,9 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private fun processPlayersData(dataItem: DataItem) {
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
             playersData = PlayersData(
-                nickname = getString("nickname") ?: "Unknown",
+                nickname = getString("nickName") ?: "Unknown",
                 distance = getDouble("distance"),
-                itemCount = getInt("itemUsed")
+                itemCount = getInt("itemUsedCount")
             )
         }
         Log.d("MultiUserViewModel", "사용자 데이터 받는중 : $playersData")
