@@ -77,6 +77,13 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                             "nickName: $nickName, distance: $returnedDistance, itemUseCount: $itemUseCount"
                 )
 
+                // 워치에 보낼 playersData 에 위 정보 넣어서 그대로 보내기
+                var playersData = PlayersData(
+                    nickName = nickName,
+                    totalDistance = returnedDistance,
+                    totalItemUsage = itemUseCount
+                )
+
                 // 업데이트된 playersData를 워치에 전송하기 위해 PutDataMapRequest 생성
                 val putDataMapRequest = PutDataMapRequest.create("/players_data")
                 putDataMapRequest.dataMap.apply {

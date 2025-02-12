@@ -64,7 +64,7 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         val totalItemUsage: Int,
     )
 
-    // 본인 결과 데이터
+    // 워치에서 받아오는 본인 결과 데이터
     data class ResultData(
         val totalDistance: Double,
         val elapsedTime: Long,
@@ -74,7 +74,23 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
 //        val totalItemUsage: Int,
     )
 
-    // 유저들 게임 결과 데이터
+    // 웹소켓에서 받아오는 나의 게임 결과 데이터
+    data class MyResultData(
+        val userId: String,
+        val nickName: String,
+        val characterImage: String,  // 유저의 프로필 이미지 파일 경로
+        val runningTime: Long,
+        val totalDistance: Double,
+        val paceAvg: Double,
+        val heartRateAvg: Double,
+        val cadenceAvg: Double,
+        val calories: Int,
+        val itemUseCount: Int,
+        val rewardExp: Int,
+        val rewardCoin: Int
+    )
+
+    // 웹소켓에서 받아오는 나의 게임 결과 데이터
     data class PlayersResultData(
         val userId: String,
         val nickName: String,
@@ -89,6 +105,19 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         val rewardExp: Int,
         val rewardCoin: Int
     )
+
+    // 유저들 게임 결과 데이터
+
+//    data class playersResultData(
+//        val userId: String,
+//        val nickName: String,
+//        val characterImage: String,  // 유저의 프로필 이미지 파일 경로
+//        val totalDistance: Double,
+//        val itemUseCount: Int,
+//        val rewardExp: Int,
+//        val rewardCoin: Int
+//    )
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
