@@ -28,9 +28,6 @@ import com.eeos.rocatrun.ui.components.StrokedText
 
 @Composable
 fun DayStatsScreen(games: List<Game>) {
-    // 세부 모달 변수
-//    var showDetail by remember { mutableStateOf(false) }
-
     // 세부 모달을 위한 상태: 클릭한 게임의 데이터를 저장
     var selectedGame by remember { mutableStateOf<Game?>(null) }
 
@@ -40,7 +37,7 @@ fun DayStatsScreen(games: List<Game>) {
             .verticalScroll(rememberScrollState())
     ) {
         if (games.isEmpty()) {
-            Text("게임 데이터가 없습니다.")
+            Text(text = "게임 데이터가 없습니다.", color = Color.White, textAlign = TextAlign.Center)
         } else {
             games.forEach { game ->
                 DayStatCard(
@@ -88,6 +85,8 @@ fun DayStatCard(
     bossImg: Painter,
     onClick: () -> Unit,
 ) {
+    val dateWithoutTime = date.substringBefore("T").replace("-", "/")
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -123,7 +122,7 @@ fun DayStatCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     StrokedText(
-                        text = date,
+                        text = dateWithoutTime,
                         color = Color.White,
                         strokeColor = Color.Black,
                         fontSize = 25,
@@ -231,10 +230,10 @@ fun DayStatCard(
                             modifier = Modifier.weight(1.5f)
                         )
                         Text(
-                            text = player.distance,
+                            text = player.distance.toString(),
                             color = Color.White,
                             fontSize = 14.sp,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(0.5f)
                         )
                         Image(
                             painter = painterResource(id = R.drawable.stats_img_can),
@@ -251,7 +250,7 @@ fun DayStatCard(
                             modifier = Modifier.weight(0.2f)
                         )
                         Text(
-                            text = player.attackCount,
+                            text = player.attackCount.toString(),
                             color = Color.White,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
