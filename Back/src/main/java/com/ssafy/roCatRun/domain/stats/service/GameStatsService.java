@@ -105,6 +105,10 @@ public class GameStatsService {
 
     // 특정 플레이어의 순위 계산
     private int getRank(List<Player> sortedPlayers, String userId) {
+        if (sortedPlayers.size() == 1) {
+            return -1; // -1을 반환하여 후에 rank+1 했을 때 0이 되도록 함
+        }
+
         for (int i = 0; i < sortedPlayers.size(); i++) {
             if (sortedPlayers.get(i).getId().equals(userId)) {
                 return i;

@@ -7,6 +7,7 @@ import com.ssafy.roCatRun.domain.stats.service.GameStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -20,37 +21,49 @@ public class GameStatsController {
 
     /**
      * 일별 통계 조회
-     * @param userId 유저 ID
+     * @param authentication 현재 인증된 사용자 정보
      * @param date 조회할 날짜(YYYY-MM-DD)
      */
-    @GetMapping("/daily/{userId}")
+    @GetMapping("/daily")
     public ResponseEntity<DailyStatsResponse> getDailyStats(
-            @PathVariable String userId,
+            Authentication authentication,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+        String userId = authentication.getPrincipal().toString();
         return ResponseEntity.ok(gameStatsService.getDailyStats(userId, date));
     }
 
     /**
      * 주별 통계 조회
-     * @param userId 유저 ID
+     * @param authentication 현재 인증된 사용자 정보
      * @param date 해당 주가 포함하는 날짜(YYYY-MM-DD)
      */
-    @GetMapping("/weekly/{userId}")
+    @GetMapping("/weekly")
     public ResponseEntity<WeeklyStatsResponse> getWeeklyStats(
-            @PathVariable String userId,
+            Authentication authentication,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+        String userId = authentication.getPrincipal().toString();
         return ResponseEntity.ok(gameStatsService.getWeeklyStats(userId, date));
     }
 
     /**
      * 월별 통계 조회
-     * @param userId 유저 ID
+     * @param authentication 현재 인증된 사용자 정보
      * @param yearMonth 조회할 연월(YYYY-MM)
      */
-    @GetMapping("/monthly/{userId}")
+    @GetMapping("/monthly")
     public ResponseEntity<MonthlyStatsResponse> getMonthlyStats(
-            @PathVariable String userId,
+            Authentication authentication,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+        String userId = authentication.getPrincipal().toString();
         return ResponseEntity.ok(gameStatsService.getMonthlyStats(userId, yearMonth));
     }
 }
