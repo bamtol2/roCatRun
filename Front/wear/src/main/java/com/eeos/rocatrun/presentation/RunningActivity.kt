@@ -293,16 +293,18 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 totalDistance += distanceMoved
                 speed = location.speed * 3.6
 
-                // 현재 세그먼트 진행률 계산 (테스트용 100m)
+
+                segmentDistance += distanceMoved
+                // 현재 거리 진행률 계산 (테스트용 100m)
                 if (segmentDistance >= 0.1) {
-                    // 10m 이상 이동
+                    // 100m 이상 이동
                     gameViewModel.handleGaugeFull(this)
                     segmentDistance -= 0.1
+                } else {
+                    // 현재 거리 비율(0~100) 계산
+                    val gaugePercentage = ((segmentDistance / 0.1) * 100).toInt()
+                    gameViewModel.setItemGauge(gaugePercentage)
                 }
-                // 현재 세그먼트 비율(0~100) 계산
-                val gaugePercentage = ((segmentDistance / 0.1) * 100).toInt()
-                // GameViewModel에 현재 게이지 값을 직접 설정
-                gameViewModel.setItemGauge(gaugePercentage)
             }
         }
         lastLocation = location
