@@ -57,6 +57,10 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private lateinit var dataClient: DataClient
     private val _userList = MutableStateFlow<List<UserData>>(emptyList())
 
+    // 플레이어 리스트
+    private val _playerList = MutableStateFlow<List<PlayerData>>(emptyList())
+    val playerList: StateFlow<List<PlayerData>> get() = _playerList
+
     private var playersData by mutableStateOf<PlayersData?>(null)
     private var bossHealthData by mutableStateOf<BossHealthData?>(null)
     private var feverEndData by mutableStateOf<FeverEndData?>(null)
@@ -93,6 +97,11 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     // 게임 종료 데이터
     data class GameEndData(
         val gameEnd: Boolean
+    )
+
+    // 게임 시작시 받아오는 사용자들 데이터
+    data class PlayerData(
+        val nickname: String
     )
 
     // 피버 이벤트 플로우
@@ -208,6 +217,14 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             // 이 값을 최대 체력으로 사용하고, 동시에 현재 체력으로도 반영
             bossHealthData = BossHealthData(bossHealth = health)
             BossHealthRepository.updateBossHealth(health)
+            val nicknames = getStringArrayList("playerNicknames")
+            if (nicknames != null) {
+                val players = nicknames.map { PlayerData(it) }
+                _playerList.value = players
+                Log.d("MultiUserViewModel", "플레이어 목록 업데이트: $players")
+            } else {
+                Log.w("MultiUserViewModel", "playerNicknames 데이터가 null 입니다.")
+            }
         }
         Log.d("MultiUserViewModel", "보스 초기 체력 데이터 : $firstBossHealthData")
     }
