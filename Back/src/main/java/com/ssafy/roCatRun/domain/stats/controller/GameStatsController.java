@@ -22,17 +22,31 @@ public class GameStatsController {
     /**
      * 일별 통계 조회
      * @param authentication 현재 인증된 사용자 정보
-     * @param date 조회할 날짜(YYYY-MM-DD)
      */
     @GetMapping("/daily")
     public ResponseEntity<DailyStatsResponse> getDailyStats(
+            Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+        String userId = authentication.getPrincipal().toString();
+        return ResponseEntity.ok(gameStatsService.getDailyStats(userId));
+    }
+
+    /**
+     * 특정일 통계 조회
+     * @param authentication 현재 인증된 사용자 정보
+     * @param date 조회할 날짜(YYYY-MM-DD)
+     */
+    @GetMapping("/day")
+    public ResponseEntity<DailyStatsResponse> getDayStats(
             Authentication authentication,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new IllegalStateException("인증 정보가 없습니다.");
         }
         String userId = authentication.getPrincipal().toString();
-        return ResponseEntity.ok(gameStatsService.getDailyStats(userId, date));
+        return ResponseEntity.ok(gameStatsService.getDayStats(userId, date));
     }
 
     /**

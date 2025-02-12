@@ -118,14 +118,23 @@ public class GameStatsService {
     }
 
     // 일별 통계 조회
-    public DailyStatsResponse getDailyStats(String userId, LocalDate date) {
+    public DailyStatsResponse  getDailyStats(String userId) {
+        List<GameStats> dailyGames = gameStatsRepository.findByUserId(userId);
+        // 적절한 응답으로 포맷팅
+        return buildDailyStatsResponse(userId, dailyGames);
+    }
+
+    // 특정일 통계 조회
+    public DailyStatsResponse  getDayStats(String userId, LocalDate date) {
         // 해당 날짜의 시작과 끝 시간 설정
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
 
         // 해당 기간의 게임 기록 조회
-        List<GameStats> dailyGames = gameStatsRepository.findByUserIdAndDateBetween(
-                userId, startOfDay, endOfDay);
+//        List<GameStats> dailyGames = gameStatsRepository.findByUserIdAndDateBetween(
+//                userId, startOfDay, endOfDay);
+
+        List<GameStats> dailyGames = gameStatsRepository.findByUserId(userId);
         // 적절한 응답으로 포맷팅
         return buildDailyStatsResponse(userId, dailyGames);
     }
