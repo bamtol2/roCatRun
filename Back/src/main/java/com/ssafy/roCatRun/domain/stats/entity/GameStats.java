@@ -26,6 +26,7 @@ public class GameStats {
     private List<PlayerStats> players; // 해당 게임의 유저 정보들
     private GameDetails details; // 게임 상세 정보
 
+
     @Data
     @Builder
     public static class PlayerStats {
