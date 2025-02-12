@@ -47,9 +47,9 @@ public class SecurityConfig {
                         .requestMatchers("/domain/characters/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
-                        .requestMatchers("/api/inventory/**").authenticated()
-                        .requestMatchers("/api/items/draw").authenticated()
-                        .requestMatchers("/api/items/**").authenticated()
+                        .requestMatchers("/domain/inventory/**").authenticated()
+                        .requestMatchers("/domain/items/draw").authenticated()
+                        .requestMatchers("/domain/items/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 // JWT 검사하는 필터를 추가

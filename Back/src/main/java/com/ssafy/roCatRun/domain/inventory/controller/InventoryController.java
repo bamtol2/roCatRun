@@ -3,6 +3,7 @@ package com.ssafy.roCatRun.domain.inventory.controller;
 import com.ssafy.roCatRun.domain.inventory.dto.response.InventoryResponse;
 import com.ssafy.roCatRun.domain.inventory.dto.response.ItemSellResponse;
 import com.ssafy.roCatRun.domain.inventory.service.InventoryService;
+import com.ssafy.roCatRun.domain.item.entity.Item;
 import com.ssafy.roCatRun.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,24 +15,48 @@ import java.util.List;
  * 로그인한 회원의 액세스 토큰을 기반으로 처리
  */
 @RestController
-@RequestMapping("/api/inventory")
+@RequestMapping("/domain/inventory")
 @RequiredArgsConstructor
 public class InventoryController {
     private final InventoryService inventoryService;
 
     /**
-     * 보유 아이템 조회 (전체 또는 카테고리별)
-     * @param category 카테고리 (null일 경우 전체 조회)
+     * 보유 아이템 조회 API
+     * - category 파라미터가 없으면 전체 아이템 조회
+     * - category 파라미터가 있으면 해당 카테고리의 아이템만 조회
+     *
+     * @param category 조회할 카테고리 (effect/balloon/headband/paint)
+     * @return 인벤토리 아이템 목록
      */
     @GetMapping("/items")
     public ApiResponse<List<InventoryResponse>> getInventoryItems(
             @RequestParam(required = false) String category) {
-        List<InventoryResponse> items = (category == null)
-                ? inventoryService.getInventoryItems()
-                : inventoryService.getInventoryItemsByCategory(category);
+        List<InventoryResponse> items;
+        String message;
 
-        String message = category == null ? "인벤토리 전체 조회 성공" : "카테고리별 아이템 조회 성공";
+        if (category == null) {
+            items = inventoryService.getInventoryItems();
+            message = "인벤토리 전체 조회 성공";
+        } else {
+            // 카테고리 값 검증
+            validateCategory(category);
+            items = inventoryService.getInventoryItemsByCategory(category);
+            message = category + " 카테고리 아이템 조회 성공";
+        }
+
         return ApiResponse.success(message, items);
+    }
+
+    /**
+     * 카테고리 값 검증
+     * 잘못된 카테고리가 입력되면 예외 발생
+     */
+    private void validateCategory(String category) {
+        try {
+            Item.Category.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("잘못된 카테고리입니다. (effect/balloon/headband/paint)");
+        }
     }
 
     /**

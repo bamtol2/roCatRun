@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
  * 아이템 뽑기 관련 API를 처리하는 컨트롤러
  */
 @RestController
-@RequestMapping("/api/items")
+@RequestMapping("/domain/items")
 @RequiredArgsConstructor
 public class ItemController {
     private final ItemService itemService;

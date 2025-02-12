@@ -34,6 +34,7 @@ public class InventoryService {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         return inventoryRepository.findByGameCharacter_Member_Id(memberId)
                 .stream()
+                .filter(inventory -> inventory.getItem() != null)  // 아이템이 있는 인벤토리만 필터링
                 .map(InventoryResponse::from)
                 .collect(Collectors.toList());
     }
@@ -53,6 +54,7 @@ public class InventoryService {
                         Item.Category.valueOf(category.toUpperCase())
                 )
                 .stream()
+                .filter(inventory -> inventory.getItem() != null)  // 아이템이 있는 인벤토리만 필터링
                 .map(InventoryResponse::from)
                 .collect(Collectors.toList());
     }
