@@ -548,7 +548,7 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         .clickable {
 
                             // 웹소켓 입장 이벤트 호출: 성공하면 LoadingActivity로 이동, 에러면 모달 띄움
-                            JoinRoomSocket(inviteCode = inviteCode,
+                            JoinRoomSocket(context = context, inviteCode = inviteCode,
                                 onSuccess = { rInviteCode, currentPlayers, maxPlayers ->
 
                                     // 성공하면 LoadingActivity로 이동
@@ -764,7 +764,7 @@ fun RandomContent(onBack: () -> Unit) {
                             else -> 2 // 기본값 설정
                         }
 
-                        RandomMatchSocket(bossLevel, roomPlayers) { currentPlayers, maxPlayers ->
+                        RandomMatchSocket(context, bossLevel, roomPlayers) { currentPlayers, maxPlayers ->
                             // Matching으로 이동
                             val intent = Intent(context, Matching::class.java)
                             intent.putExtra("currentPlayers", currentPlayers)
@@ -1107,12 +1107,14 @@ fun CreateRoomSocket(
 
 // 웹소켓 입장 이벤트
 fun JoinRoomSocket(
+    context: Context,
     inviteCode: String,
     onSuccess: (inviteCode: String,
                    currentPlayers: Int,
                    maxPlayers: Int) -> Unit,
     onError: (String) -> Unit)
 {
+
     // 전송할 JSON 생성
     val joinRoomJson = JSONObject().apply {
         put("inviteCode", inviteCode)
@@ -1148,10 +1150,48 @@ fun JoinRoomSocket(
         onError("잘못된 코드입니다!")
     }
 
+    // 만약 마지막 참여자여서 바로 게임스타트 이벤트가 온다면, 바로 받기
+    SocketHandler.mSocket.off("gameReady")
+    SocketHandler.mSocket.on("gameReady") {
+        Log.d("Socket", "On - gameReady")
+    }
+    SocketHandler.mSocket.off("gameStart")
+    SocketHandler.mSocket.on("gameStart") { args ->
+
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+
+            val firstBossHealth = json.optInt("bossHp", 10000)
+
+            val playerNicknames = arrayListOf<String>()
+            val playersArray = json.optJSONArray("players")
+            if (playersArray != null) {
+                for (i in 0 until playersArray.length()) {
+                    val playerObj = playersArray.optJSONObject(i)
+                    playerObj?.let {
+                        val nickname = it.optString("nickname", "")
+                        if (nickname.isNotEmpty()) {
+                            playerNicknames.add(nickname)
+                        }
+                    }
+                }
+            }
+
+            Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+
+            // GameplayActivity로 이동
+            val intent = Intent(context, GamePlay::class.java)
+            intent.putExtra("firstBossHealth", firstBossHealth)
+            intent.putStringArrayListExtra("playerNicknames", playerNicknames)
+            context.startActivity(intent)
+        }
+    }
+
 }
 
 // 랜덤매칭 이벤트
 fun RandomMatchSocket(
+    context: Context,
     bossLevel: String,
     roomPlayers: Int,
     matchCreated: (currentPlayers: Int,
@@ -1184,6 +1224,43 @@ fun RandomMatchSocket(
 
             // 콜백으로 초대코드, 현재수, 정원수 전달
             matchCreated(currentPlayers, maxPlayers)
+        }
+    }
+
+    // 만약 마지막 참여자여서 바로 게임스타트 이벤트가 온다면, 바로 받기
+    SocketHandler.mSocket.off("gameReady")
+    SocketHandler.mSocket.on("gameReady") {
+        Log.d("Socket", "On - gameReady")
+    }
+    SocketHandler.mSocket.off("gameStart")
+    SocketHandler.mSocket.on("gameStart") { args ->
+
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+
+            val firstBossHealth = json.optInt("bossHp", 10000)
+
+            val playerNicknames = arrayListOf<String>()
+            val playersArray = json.optJSONArray("players")
+            if (playersArray != null) {
+                for (i in 0 until playersArray.length()) {
+                    val playerObj = playersArray.optJSONObject(i)
+                    playerObj?.let {
+                        val nickname = it.optString("nickname", "")
+                        if (nickname.isNotEmpty()) {
+                            playerNicknames.add(nickname)
+                        }
+                    }
+                }
+            }
+
+            Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+
+            // GameplayActivity로 이동
+            val intent = Intent(context, GamePlay::class.java)
+            intent.putExtra("firstBossHealth", firstBossHealth)
+            intent.putStringArrayListExtra("playerNicknames", playerNicknames)
+            context.startActivity(intent)
         }
     }
 }

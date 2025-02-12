@@ -141,7 +141,7 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         startWatchApp(this)
 
         // 웹소켓 유저들 러닝데이터 수신
-        playerDataUpdatedSocket()
+//        playerDataUpdatedSocket()
 
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
@@ -345,46 +345,46 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
     }
 
     // 웹소켓 - 플레이어들 실시간 데이터 수신
-    private fun playerDataUpdatedSocket(){
-
-        // 서버에서 updateRunningData 응답 받기
-        SocketHandler.mSocket.on("updateRunningData") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val responseJson = args[0] as JSONObject
-                val nickName = responseJson.optString("nickName", "unknown")
-                val returnedDistance = responseJson.optDouble("distance", 0.0)
-                val itemUseCount = responseJson.optInt("itemUseCount", 0)
-                Log.d(
-                    "Socket", "On - updateRunningData: " +
-                            "nickName: $nickName, distance: $returnedDistance, itemUseCount: $itemUseCount"
-                )
-
-                // 워치에 보낼 playersData 에 위 정보 넣어서 그대로 보내기
-                playersData = PlayersData(
-                    nickName = nickName,
-                    totalDistance = returnedDistance,
-                    totalItemUsage = itemUseCount
-                )
-
-                // 업데이트된 playersData를 워치에 전송하기 위해 PutDataMapRequest 생성
-                val putDataMapRequest = PutDataMapRequest.create("/players_data")
-                putDataMapRequest.dataMap.apply {
-                    putString("nickName", nickName)
-                    putDouble("distance", returnedDistance)
-                    putInt("itemUseCount", itemUseCount)
-                }
-                val request = putDataMapRequest.asPutDataRequest().setUrgent()
-                dataClient.putDataItem(request)
-                    .addOnSuccessListener { _ ->
-                        Log.d("Wear", "플레이어들 데이터 전송 완료")
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("Wear", "플레이어들 데이터 전송 실패", exception)
-                    }
-
-            }
-        }
-    }
+//    private fun playerDataUpdatedSocket(){
+//
+//        // 서버에서 updateRunningData 응답 받기
+//        SocketHandler.mSocket.on("updateRunningData") { args ->
+//            if (args.isNotEmpty() && args[0] is JSONObject) {
+//                val responseJson = args[0] as JSONObject
+//                val nickName = responseJson.optString("nickName", "unknown")
+//                val returnedDistance = responseJson.optDouble("distance", 0.0)
+//                val itemUseCount = responseJson.optInt("itemUseCount", 0)
+//                Log.d(
+//                    "Socket", "On - updateRunningData: " +
+//                            "nickName: $nickName, distance: $returnedDistance, itemUseCount: $itemUseCount"
+//                )
+//
+//                // 워치에 보낼 playersData 에 위 정보 넣어서 그대로 보내기
+//                playersData = PlayersData(
+//                    nickName = nickName,
+//                    totalDistance = returnedDistance,
+//                    totalItemUsage = itemUseCount
+//                )
+//
+//                // 업데이트된 playersData를 워치에 전송하기 위해 PutDataMapRequest 생성
+//                val putDataMapRequest = PutDataMapRequest.create("/players_data")
+//                putDataMapRequest.dataMap.apply {
+//                    putString("nickName", nickName)
+//                    putDouble("distance", returnedDistance)
+//                    putInt("itemUseCount", itemUseCount)
+//                }
+//                val request = putDataMapRequest.asPutDataRequest().setUrgent()
+//                dataClient.putDataItem(request)
+//                    .addOnSuccessListener { _ ->
+//                        Log.d("Wear", "플레이어들 데이터 전송 완료")
+//                    }
+//                    .addOnFailureListener { exception ->
+//                        Log.e("Wear", "플레이어들 데이터 전송 실패", exception)
+//                    }
+//
+//            }
+//        }
+//    }
 
     // 웹소켓 - 게임 결과 데이터 송신
     private fun submitRunningResultSocket(
