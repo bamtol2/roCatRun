@@ -15,85 +15,100 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import java.util.Arrays;
 
-@Configuration  // 스프링의 설정 클래스임을 표시
-@EnableWebSecurity  // 스프링 시큐리티 기능을 활성화
-@RequiredArgsConstructor  // final 필드의 생성자를 자동으로 만들어줌
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    // JWT 토큰 관련 기능을 가진 클래스를 가져옴
     private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF: 웹 사이트 간 공격을 막는 기능인데,
-                // REST API는 필요없어서 끔
+                // CSRF 비활성화
                 .csrf(csrf -> csrf.disable())
 
-                // CORS: 다른 도메인(주소)에서의 접근 규칙을 설정
+                // CORS 설정 적용
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 세션 설정: JWT를 사용하므로 세션은 사용하지 않음
+                // 세션 설정
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // URL별 접근 권한 설정
+                // URL별 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        // 인증 없이 접근 가능
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/domain/members/**").permitAll()
                         .requestMatchers("/domain/mypage/**").permitAll()
                         .requestMatchers("/domain/characters/**").permitAll()
+                        .requestMatchers("/domain/upload/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+
+                        // 관리자 권한 필요
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
+
+                        // 인증 필요
                         .requestMatchers("/domain/inventory/**").authenticated()
                         .requestMatchers("/domain/items/draw").authenticated()
                         .requestMatchers("/domain/items/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                // JWT 검사하는 필터를 추가
+
+                // JWT 필터 추가
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // URL에  특수문자 허용 설정
+    // URL 특수문자 허용 설정
     @Bean
     public HttpFirewall allowUrlEncodedSlashHttpFirewall() {
         StrictHttpFirewall firewall = new StrictHttpFirewall();
-        // URL에 인코딩된 특수문자 허용
         firewall.setAllowUrlEncodedPercent(true);
         firewall.setAllowSemicolon(true);
         firewall.setAllowUrlEncodedSlash(true);
         return firewall;
     }
 
-    // CORS 상세 설정
+    // CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 접근 허용할 프론트엔드 주소들
-        configuration.addAllowedOrigin("http://i12e205.p.ssafy.io:8080");
-        configuration.addAllowedOrigin("http://localhost:8080");
-        configuration.addAllowedOrigin("https://i12e205.p.ssafy.io:8080");
-        configuration.addAllowedOrigin("https://localhost:8080");
-        configuration.addAllowedOrigin("http://localhost:9092");
-        configuration.addAllowedOrigin("https://localhost:9092");
-        configuration.addAllowedOrigin("http://i12e205.p.ssafy.io:9092");
-        configuration.addAllowedOrigin("https://i12e205.p.ssafy.io:9092");
-        // 모든 HTTP 메서드 허용 (GET, POST 등)
-        configuration.addAllowedMethod("*");
-        // 모든 헤더 허용
+
+        // 허용할 오리진 목록
+        String[] allowedOrigins = {
+                "http://i12e205.p.ssafy.io:8080",
+                "http://localhost:8080",
+                "https://i12e205.p.ssafy.io:8080",
+                "https://localhost:8080",
+                "http://localhost:9092",
+                "https://localhost:9092",
+                "http://i12e205.p.ssafy.io:9092",
+                "https://i12e205.p.ssafy.io:9092",
+                "http://localhost:8081",
+                "http://i12e205.p.ssafy.io:8081"
+        };
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+
+        // HTTP 메서드 설정
+        String[] allowedMethods = {"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"};
+        configuration.setAllowedMethods(Arrays.asList(allowedMethods));
+
+        // 헤더 설정
         configuration.addAllowedHeader("*");
-        // 쿠키 사용 허용
-        configuration.setAllowCredentials(true);
-        // 브라우저에서 Authorization 헤더 접근 허용
         configuration.addExposedHeader("Authorization");
 
+        // 인증 설정
+        configuration.setAllowCredentials(true);
+
+        // pre-flight 요청 캐시 시간
+        configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 모든 경로에 위의 설정 적용
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
