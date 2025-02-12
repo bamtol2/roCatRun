@@ -310,15 +310,22 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
     // GameViewModel에서 가져온 게이지 값
     val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
     val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
+    val maxGaugeValue = 100
+
+    // BossHealthRepository의 최대 체력 구독 (최초 값이 0이라면 기본값 10000 사용)
+    val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
+    val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
+
 
     val itemProgress by animateFloatAsState(
-        targetValue = itemGaugeValue.toFloat() / 100,
+        targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
         animationSpec = tween(durationMillis = 500)
     )
     val bossProgress by animateFloatAsState(
-        targetValue = bossGaugeValue.toFloat() / 100,
+        targetValue = bossGaugeValue.toFloat() / effectiveMaxBossHealth,
         animationSpec = tween(durationMillis = 500)
     )
+
 
 
     Box(
