@@ -45,21 +45,18 @@ import kotlinx.coroutines.flow.SharedFlow
 import com.eeos.rocatrun.component.CircularItemGauge
 
 
-
-data class UserData(
-    val nickname: String,
-    val distance: Double,
-    val itemCount: Int
-)
 // ViewModel 정의
 class MultiUserViewModel(application: Application) : AndroidViewModel(application), DataClient.OnDataChangedListener {
 
     private lateinit var dataClient: DataClient
-    private val _userList = MutableStateFlow<List<UserData>>(emptyList())
 
     // 플레이어 리스트
     private val _playerList = MutableStateFlow<List<PlayerData>>(emptyList())
     val playerList: StateFlow<List<PlayerData>> get() = _playerList
+    // 실시간 플레이어 데이터(닉네임을 key로 관리)
+    private val _playersDataMap = MutableStateFlow<Map<String, PlayersData>>(emptyMap())
+    val playersDataMap: StateFlow<Map<String, PlayersData>> get() = _playersDataMap
+
 
     private var playersData by mutableStateOf<PlayersData?>(null)
     private var bossHealthData by mutableStateOf<BossHealthData?>(null)
@@ -72,7 +69,10 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
     // 데이터 클래스 정의
 
-    // 실시간 유저 러닝 데이터
+    data class PlayerData(
+        val nickname: String
+    )
+
     data class PlayersData(
         val nickname: String,
         val distance: Double,
@@ -99,10 +99,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         val gameEnd: Boolean
     )
 
-    // 게임 시작시 받아오는 사용자들 데이터
-    data class PlayerData(
-        val nickname: String
-    )
+
 
     // 피버 이벤트 플로우
     private val _feverEventFlow = MutableSharedFlow<Boolean>()
@@ -115,7 +112,6 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val context = application.applicationContext
 
-    val userList: StateFlow<List<UserData>> get() = _userList
 
     // 테스트용 데이터 주기적 업데이트
     init {
@@ -136,11 +132,6 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.e("MultiUserViewModel", "캐시된 데이터 조회 실패", exception)
             }
 
-            while (true) {
-                delay(1000)  // 1초마다 데이터 갱신
-                val updatedList = generateMockData()
-                _userList.emit(updatedList)
-            }
         }
     }
 
@@ -168,15 +159,17 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
     // 실시간 유저 데이터
+    // /players_data 이벤트: 실시간 데이터 업데이트 → Map에 저장
     private fun processPlayersData(dataItem: DataItem) {
-        DataMapItem.fromDataItem(dataItem).dataMap.apply {
-            playersData = PlayersData(
-                nickname = getString("nickName") ?: "Unknown",
-                distance = getDouble("distance"),
-                itemCount = getInt("itemUseCount")
-            )
+        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+        val nickname = dataMap.getString("nickname") ?: "Unknown"
+        val distance = dataMap.getDouble("distance")
+        val itemCount = dataMap.getInt("itemUsed")
+        val newData = PlayersData(nickname, distance, itemCount)
+        _playersDataMap.value = _playersDataMap.value.toMutableMap().apply {
+            put(nickname, newData)
         }
-        Log.d("MultiUserViewModel", "사용자 데이터 받는중 : $playersData")
+        Log.d("MultiUserViewModel", "실시간 플레이어 데이터 업데이트: $newData")
     }
 
     // 실시간 보스 체력 데이터 (Repository에 업데이트)
@@ -243,24 +236,13 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         }
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
-
-    private fun generateMockData(): List<UserData> {
-        val users = listOf("마이애미", "과즙가람", "타노스")
-        return users.map {
-            UserData(
-                nickname = it,
-                distance = Random.nextDouble(4.0, 5.0),
-                itemCount = Random.nextInt(1, 5)
-            )
-        }
-    }
 }
 
 
 
 // 사용자 정보를 표시하는 카드 컴포저블
 @Composable
-fun UserInfoCard(user: UserData) {
+fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserViewModel.PlayersData) {
     Column(
         modifier = Modifier
             .width(160.dp)
@@ -275,7 +257,7 @@ fun UserInfoCard(user: UserData) {
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
-                text = user.nickname,
+                text = player.nickname,
                 color = Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
@@ -284,7 +266,7 @@ fun UserInfoCard(user: UserData) {
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "${"%.1f".format(user.distance)}km",
+                text = "${"%.1f".format(realTimeData.distance)}km",
                 color = Color.White,
                 fontSize = 16.sp,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
@@ -305,7 +287,7 @@ fun UserInfoCard(user: UserData) {
                     .padding(end = 4.dp)
             )
             Text(
-                text = "x ${user.itemCount}",
+                text = "x ${realTimeData.itemCount}",
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
                 fontSize = 20.sp
@@ -319,7 +301,11 @@ fun UserInfoCard(user: UserData) {
 // 여러 사용자 정보를 표시하는 메인 화면 컴포저블
 @Composable
 fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel) {
-    val userList by viewModel.userList.collectAsState()
+    // 플레이어들 데이터
+    val playerList by viewModel.playerList.collectAsState()
+    val playersDataMap by viewModel.playersDataMap.collectAsState()
+
+
 
     // GameViewModel에서 가져온 게이지 값
     val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
@@ -353,9 +339,12 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            items(userList) { user ->
-                UserInfoCard(user)
-                Spacer(modifier = Modifier.height(8.dp))
+            items(playerList) { player ->
+                val realTimeData = playersDataMap[player.nickname]
+                if (realTimeData != null) {
+                    UserInfoCard(player= player, realTimeData = realTimeData)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
             }
         }
     }
