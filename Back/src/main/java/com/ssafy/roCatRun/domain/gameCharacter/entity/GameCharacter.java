@@ -4,6 +4,7 @@ import com.ssafy.roCatRun.domain.inventory.entity.Inventory;
 import com.ssafy.roCatRun.domain.item.entity.Item;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,6 +26,7 @@ import java.util.List;
                 )
         }
 )
+
 @Getter @Setter
 @NoArgsConstructor
 public class GameCharacter {
@@ -36,8 +38,9 @@ public class GameCharacter {
     @Column(nullable = false, unique = true, length = 10)
     private String nickname;                   // 캐릭터 닉네임
 
-    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
-    private Integer level = 1;                 // 캐릭터 레벨 (기본값 1)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "level", referencedColumnName = "level")
+    private Level levelInfo;                    // level 엔티티와 관계 추가
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     private Integer experience = 0;            // 현재 보유 경험치 (기본값 0)
@@ -82,9 +85,14 @@ public class GameCharacter {
         gameCharacter.setMember(member);
         member.setGameCharacter(gameCharacter);
 
+        // 초기 레벨(1) 설정
+        Level initialLevel = Level.createLevel(1, 500);
+        gameCharacter.setLevelInfo(initialLevel);
+
         // 초기 인벤토리 생성
         Inventory initialInventory = Inventory.createInitialInventory(gameCharacter);
         gameCharacter.getInventories().add(initialInventory);
+
 
         return gameCharacter;
     }
@@ -92,24 +100,27 @@ public class GameCharacter {
     /**
      * 경험치를 추가하고 레벨업 체크를 수행하는 메서드
      * @param exp 추가할 경험치량
+     * @return 레벨업 결과 정보
      */
-    public void addExperience(int exp) {
+    public LevelUpResult addExperience(int exp) {
+        int oldLevel = this.levelInfo.getLevel();
         this.experience += exp;
-        checkLevelUp();
+        return new LevelUpResult(oldLevel, this.experience);
     }
 
-    /**
-     * 현재 경험치를 기반으로 레벨업 조건을 체크하고 처리하는 메서드
-     * Level 엔티티와 연동되어 처리됨
-     */
-    private void checkLevelUp() {
-        // 이 메서드는 나중에 Level 엔티티와 연동하여 구현될 예정
-        int experienceForLevel = 100;
-        while (this.experience >= experienceForLevel) {
-            this.level += 1;
-            this.experience -= experienceForLevel;
-        }
-    }
+//    /**
+//     * 현재 경험치를 기반으로 레벨업 조건을 체크하고 처리하는 메서드
+//     * Level 엔티티와 연동되어 처리됨
+//     */
+//    private void checkLevelUp() {
+//        // 현재 레벨의 필요 경험치와 비교
+//        while(this.experience >= this.levelInfo.getRequiredExp()){
+//            // 현재 레벨의 필요 경험치만큼 차감
+//            this.experience -= this.levelInfo.getRequiredExp();
+//
+//            this.level++;// 레벨 증가
+//        }
+//    }
 
     /**
      * 코인을 추가하는 메서드
@@ -147,5 +158,12 @@ public class GameCharacter {
         this.inventories.stream()
                 .filter(inv -> inv.getCategory() == category && inv.getIsEquipped())
                 .forEach(inv -> inv.setIsEquipped(false));
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class LevelUpResult {
+        private final int oldLevel;
+        private final int currentExp;
     }
 }
