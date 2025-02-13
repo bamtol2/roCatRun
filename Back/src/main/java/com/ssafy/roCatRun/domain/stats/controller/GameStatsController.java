@@ -4,6 +4,8 @@ import com.ssafy.roCatRun.domain.stats.dto.response.DailyStatsResponse;
 import com.ssafy.roCatRun.domain.stats.dto.response.MonthlyStatsResponse;
 import com.ssafy.roCatRun.domain.stats.dto.response.WeeklyStatsResponse;
 import com.ssafy.roCatRun.domain.stats.service.GameStatsService;
+import com.ssafy.roCatRun.global.exception.CustomException;
+import com.ssafy.roCatRun.global.exception.ExceptionCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +28,7 @@ public class GameStatsController {
     @GetMapping("/daily")
     public ResponseEntity<DailyStatsResponse> getDailyStats(
             Authentication authentication) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
-        }
+        validateAuthentication(authentication);
         String userId = authentication.getPrincipal().toString();
         return ResponseEntity.ok(gameStatsService.getDailyStats(userId));
     }
@@ -42,9 +42,8 @@ public class GameStatsController {
     public ResponseEntity<DailyStatsResponse> getDayStats(
             Authentication authentication,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
-        }
+        validateAuthentication(authentication);
+        validateDate(date);
         String userId = authentication.getPrincipal().toString();
         return ResponseEntity.ok(gameStatsService.getDayStats(userId, date));
     }
@@ -60,9 +59,9 @@ public class GameStatsController {
             Authentication authentication,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth date,
             @RequestParam int week) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
-        }
+        validateAuthentication(authentication);
+        validateWeek(week);
+        validateYearMonth(date);
 
         String userId = authentication.getPrincipal().toString();
         return ResponseEntity.ok(gameStatsService.getWeeklyStats(userId, date, week));
@@ -77,10 +76,39 @@ public class GameStatsController {
     public ResponseEntity<MonthlyStatsResponse> getMonthlyStats(
             Authentication authentication,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth date) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
-        }
+        validateAuthentication(authentication);
+        validateYearMonth(date);
         String userId = authentication.getPrincipal().toString();
         return ResponseEntity.ok(gameStatsService.getMonthlyStats(userId, date));
+    }
+
+    private void validateAuthentication(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new CustomException(ExceptionCode.UNAUTHORIZED);
+        }
+    }
+
+    private void validateDate(LocalDate date) {
+        if (date == null) {
+            throw new CustomException(ExceptionCode.INVALID_INPUT_VALUE, "날짜 정보가 없습니다.");
+        }
+        if (date.isAfter(LocalDate.now())) {
+            throw new CustomException(ExceptionCode.FUTURE_DATE_NOT_ALLOWED);
+        }
+    }
+
+    private void validateWeek(int week) {
+        if (week < 1 || week > 5) {
+            throw new CustomException(ExceptionCode.INVALID_WEEK_VALUE);
+        }
+    }
+
+    private void validateYearMonth(YearMonth yearMonth) {
+        if (yearMonth == null) {
+            throw new CustomException(ExceptionCode.INVALID_INPUT_VALUE, "연월 정보가 없습니다.");
+        }
+        if (yearMonth.isAfter(YearMonth.now())) {
+            throw new CustomException(ExceptionCode.FUTURE_DATE_NOT_ALLOWED);
+        }
     }
 }

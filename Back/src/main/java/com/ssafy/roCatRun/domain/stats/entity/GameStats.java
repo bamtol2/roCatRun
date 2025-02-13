@@ -47,6 +47,4 @@ public class GameStats {
         private double distance; // 총 러닝 거리
         private long runningTime; // 총 러닝 시간(초)
     }
-
-
 }

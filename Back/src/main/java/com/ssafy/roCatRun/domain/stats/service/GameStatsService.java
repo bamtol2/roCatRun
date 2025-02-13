@@ -123,7 +123,10 @@ public class GameStatsService {
     public DailyStatsResponse  getDailyStats(String userId) {
         List<GameStats> dailyGames = gameStatsRepository.findByUserId(userId);
         if (dailyGames.isEmpty()) {
-            throw new GameStatsNotFoundException("해당 유저의 게임 기록이 존재하지 않습니다: " + userId);
+            throw new GameStatsNotFoundException(
+                    String.format("해당 유저의 게임 기록이 존재하지 않습니다. (유저 ID: %s)", userId)
+            );
+//            throw new GameStatsNotFoundException("해당 유저의 게임 기록이 존재하지 않습니다: " + userId);
         }
         // 적절한 응답으로 포맷팅
         return buildDailyStatsResponse(userId, dailyGames);
@@ -234,10 +237,6 @@ public class GameStatsService {
     }
 
     public MonthlyStatsResponse getMonthlyStats(String userId, YearMonth yearMonth) {
-        // 디버깅용 로그 추가
-        log.info("monthly 조회");
-        log.debug("Fetching monthly stats for user: {} in {}", userId, yearMonth);
-
         // 해당 월의 시작일과 마지막일 구하기
         LocalDate startOfMonth = yearMonth.atDay(1);
         LocalDate endOfMonth = yearMonth.atEndOfMonth();
@@ -246,8 +245,6 @@ public class GameStatsService {
         LocalDateTime startDateTime = startOfMonth.atStartOfDay();
         LocalDateTime endDateTime = endOfMonth.plusDays(1).atStartOfDay();
 
-        log.debug("Searching for games between: {} and {}", startDateTime, endDateTime);
-
         // 해당 기간의 게임 기록 조회
         List<GameStats> monthlyGames = gameStatsRepository.findByUserIdAndDateBetween(
                 userId,
@@ -255,16 +252,11 @@ public class GameStatsService {
                 endDateTime
         );
 
-        // 조회된 게임 데이터 로깅
-        log.debug("Found {} games", monthlyGames.size());
-        monthlyGames.forEach(game ->
-                log.debug("Game date: {}, Room ID: {}", game.getDate(), game.getRoomId())
-        );
 
         if (monthlyGames.isEmpty()) {
             throw new GameStatsNotFoundException(
-                    String.format("해당 월(%s)의 게임 기록이 존재하지 않습니다. (유저 ID: %s)",
-                            yearMonth, userId)
+                    String.format("%s년 %s월의 게임 기록이 존재하지 않습니다. (유저 ID: %s)",
+                            yearMonth.getYear(), yearMonth.getMonth(), userId)
             );
         }
 
