@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.input.maxLength
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -27,77 +28,72 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.login.LoginActivity
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.profile.api.ProfileResponse
 import com.eeos.rocatrun.profile.api.ProfileViewModel
+import com.eeos.rocatrun.profile.api.UpdateProfileRequest
+import com.eeos.rocatrun.ui.components.ModalCustomButton
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
-fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileViewModel: ProfileViewModel = viewModel()) {
+fun ProfileDialog(
+    onDismiss: () -> Unit,
+    profileData: ProfileResponse?,
+    profileViewModel: ProfileViewModel = viewModel()
+) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
 
     var isEditing by remember { mutableStateOf(false) } // 수정 모드 여부
 
     // 닉네임 관련 변수들
-    var nickname by remember { mutableStateOf(profileData?.data?.nickname ?: "") }
-    val previousNickname by remember { mutableStateOf(nickname) }
+    val nickname = rememberTextFieldState(profileData?.data?.nickname ?: "")
+    val previousNickname by remember { mutableStateOf(nickname.text.toString()) }
     var isDuplicateChecked by remember { mutableStateOf(false) } // 중복 확인 여부
-    var isNicknameValid by remember { mutableStateOf(true) } // 닉네임 유효성
-    val maxLength = 8
+    var isNicknameValid = profileViewModel.nicknameCheckResult.observeAsState().value ?: false // 닉네임 사용 가능
+    LaunchedEffect(nickname.text) {
+        isDuplicateChecked = false
+    }
+    val social = rememberTextFieldState(profileData?.data?.socialType ?: "")
 
     // 정보 수정 텍스트 필드 변수들
     val age = rememberTextFieldState(profileData?.data?.age.toString() ?: "")
     val height = rememberTextFieldState(profileData?.data?.height.toString() ?: "")
     val weight = rememberTextFieldState(profileData?.data?.weight.toString() ?: "")
-    val genderOptions = listOf("Male", "Female")
+    val isPhysicalInfoValid = age.text.isNotEmpty() && height.text.isNotEmpty() && weight.text.isNotEmpty() // 정보 입력 확인
+    val genderOptions = listOf("male", "female")
     val (selectedOption, onOptionSelected) = remember {
         mutableStateOf(
-            profileData?.data?.gender ?: "Male"
+            profileData?.data?.gender ?: "male"
         )
     }
     val maleImage = painterResource(id = R.drawable.profile_icon_male)
     val femaleImage = painterResource(id = R.drawable.profile_icon_female)
 
     // 저장 관련 변수들
+    val updateProfileResponse by profileViewModel.updateProfileResponse.observeAsState()
     var showToast by remember { mutableStateOf(false) }
-    val isButtonEnabled = isEditing && (if (nickname != previousNickname) {
-        isNicknameValid && isDuplicateChecked
-    } else {
-        true
-    })
+    val isButtonEnabled = isEditing && isPhysicalInfoValid &&
+            (if (nickname.text.toString() != previousNickname) {
+                isNicknameValid && isDuplicateChecked
+            } else {
+                true
+            })
 
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-
-    // 중복 확인 처리
-    fun checkNickname() {
-        isNicknameValid = nickname != "벤츠남"
-        isDuplicateChecked = true
-    }
-
-    // 저장 버튼 클릭 시 처리
-    fun saveNickname() {
-        showToast = true
-        isEditing = false
-        isDuplicateChecked = false
-    }
-
-
+    // UI
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -165,50 +161,24 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                     Box(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        TextField(
-                            value = nickname,
-                            onValueChange = { newNickname ->
-                                if (newNickname.length <= maxLength) {
-                                    nickname = newNickname
-                                }
-                                if (isDuplicateChecked) {
-                                    isDuplicateChecked = false
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .padding(vertical = 0.dp)
-                                .border(1.dp, Color.White, RoundedCornerShape(8.dp))
-                                .focusRequester(focusRequester),
-                            textStyle = TextStyle(
-                                fontSize = 14.sp,
-                                fontFamily = MyFontFamily
-                            ),
-                            colors = TextFieldDefaults.colors(
-                                unfocusedContainerColor = if (isEditing) Color(0xBDACA8A8) else Color(
-                                    0xBD555151
-                                ),
-                                focusedContainerColor = if (isEditing) Color(0xBDACA8A8) else Color(
-                                    0xBD555151
-                                ),
-                                disabledContainerColor = Color(0xBD555151),
-                                unfocusedIndicatorColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent,
-                            ),
-                            shape = RoundedCornerShape(8.dp),
+                        CustomTextFieldLarge(
+                            state = nickname,
                             enabled = isEditing,
-                            singleLine = true,
-                            keyboardActions = KeyboardActions(onDone = { // 완료 키 클릭 시 키보드 안 사라짐 issue
-                                focusManager.clearFocus(force = true)
-                            }),
                         )
 
                         // 중복 확인 버튼
                         if (isEditing) {
                             Button(
-                                onClick = { checkNickname() },
+                                onClick = {
+                                    if (nickname.text.toString() == previousNickname) {
+                                        isDuplicateChecked = true
+                                        isNicknameValid = true
+                                    } else {
+                                        profileViewModel.checkNicknameAvailability(token, nickname.text.toString())
+                                        Log.d("api", "${isNicknameValid}")
+                                        isDuplicateChecked = true
+                                    }
+                                },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                                 modifier = Modifier.align(Alignment.CenterEnd)
                             ) {
@@ -242,27 +212,9 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                 }
                 Spacer(modifier = Modifier.height(10.dp))
 
-                TextField(
-                    value = profileData?.data?.socialType ?: "",
-                    onValueChange = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .padding(vertical = 0.dp)
-                        .border(1.dp, Color.White, RoundedCornerShape(8.dp))
-                        .focusRequester(focusRequester),
-                    textStyle = TextStyle(
-                        fontSize = 14.sp,
-                        fontFamily = MyFontFamily
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        disabledContainerColor = Color(0xBD555151),
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    enabled = false
+                CustomTextFieldLarge(
+                    state = social,
+                    enabled = false,
                 )
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -278,6 +230,22 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
+
+                    if (!isPhysicalInfoValid) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 5.dp),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "신체 정보를 모두 입력해주세요",
+                                color = Color.Red,
+                                style = TextStyle(fontSize = 12.sp)
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -286,7 +254,7 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                         .fillMaxWidth()
                         .height(110.dp)
                         .border(1.dp, Color.White, RoundedCornerShape(8.dp))
-                        .background(Color(0xBD555151)),
+                        .background(if (isEditing) Color(0xBDACA8A8) else Color(0xBD555151), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Column {
@@ -324,7 +292,7 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                                             ),
                                     ) {
                                         Image(
-                                            painter = if (text == "Male") maleImage else femaleImage,
+                                            painter = if (text == "male") maleImage else femaleImage,
                                             contentDescription = text,
                                             modifier = Modifier
                                                 .size(32.dp)
@@ -405,8 +373,7 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xBDD7D7D7)),
                         shape = RoundedCornerShape(8.dp),
                         onClick = {
-                            val authorization = "Bearer $token"
-                            profileViewModel.fetchLogout(authorization)
+                            profileViewModel.fetchLogout(token)
                             TokenStorage.clearTokens(context)
                             // 로그인 화면으로 이동
                             val intent = Intent(context, LoginActivity::class.java)
@@ -444,48 +411,34 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // 저장 버튼
-                    Button(
-                        onClick = { saveNickname() },
+                    ModalCustomButton(
+                        text = "저장",
+                        borderColor = Color(0xFF00FFCC),
                         enabled = isButtonEnabled,
-                        modifier = Modifier
-                            .border(2.dp, Color(0xFF00FFCC), RoundedCornerShape(15.dp)),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent
-                        )
-                    ) {
-                        Text(
-                            text = "저장",
-                            style = TextStyle(
-                                fontFamily = MyFontFamily,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isButtonEnabled) Color.White else Color(0xFF5F5F5F)
+                        onClick = {
+                            val profileRequest = UpdateProfileRequest(
+                                nickname = nickname.text.toString(),
+                                height = height.text.toString().toIntOrNull() ?: 0,
+                                weight = weight.text.toString().toIntOrNull() ?: 0,
+                                age = age.text.toString().toIntOrNull() ?: 0,
+                                gender = selectedOption
                             )
-                        )
-                    }
+                            profileViewModel.updateProfile(token, profileRequest)
+                            val intent = Intent(context, HomeActivity::class.java)
+                            context.startActivity(intent) // 메인페이지로 이동
+                            showToast = updateProfileResponse?.success == true
+                            isEditing = false
+                            isDuplicateChecked = false
+                        },
+                    )
 
                     // 취소 버튼
-                    Button(
+                    ModalCustomButton(
+                        text = "취소",
+                        borderColor = Color(0xFF00FFCC),
+                        enabled = true,
                         onClick = { onDismiss() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        modifier = Modifier
-                            .border(
-                                width = 2.dp,
-                                color = Color(0xFF00FFCC),
-                                shape = RoundedCornerShape(15.dp)
-                            ),
-                    ) {
-                        Text(
-                            text = "취소",
-                            style = TextStyle(
-                                fontFamily = MyFontFamily,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        )
-                    }
+                    )
                 }
 
                 if (showToast) {
@@ -496,6 +449,50 @@ fun ProfileDialog(onDismiss: () -> Unit, profileData: ProfileResponse?, profileV
             }
         }
     }
+}
+
+@Composable
+fun CustomTextFieldLarge(
+    state: TextFieldState,
+    enabled: Boolean,
+    focusRequester: FocusRequester = FocusRequester(),
+    maxLength: Int = 8,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val textColor = when {
+        !enabled -> Color(0xBDACA8A8) // Disabled 상태
+        interactionSource.collectIsFocusedAsState().value -> Color(0xFFFFFFFF) // Focused 상태
+        else -> Color(0xFFDCE3E5) // 일반 상태
+    }
+
+    BasicTextField(
+        state = state,
+        enabled = enabled,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        inputTransformation = InputTransformation.maxLength(maxLength),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(vertical = 0.dp)
+            .border(1.dp, Color.White, RoundedCornerShape(8.dp))
+            .focusRequester(focusRequester),
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            fontFamily = MyFontFamily,
+            color = textColor
+        ),
+        interactionSource = interactionSource,
+        decorator = { innerTextField ->
+            Box(
+                modifier = Modifier
+                    .background(if (enabled) Color(0xBDACA8A8) else Color(0xBD555151), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 13.dp, vertical = 15.dp)
+                    .fillMaxWidth()
+            ) {
+                innerTextField()
+            }
+        }
+    )
 }
 
 
@@ -516,7 +513,7 @@ fun CustomTextField(
     val textColor = when {
         !isEditing -> Color(0xBDACA8A8) // Disabled 상태
         interactionSource.collectIsFocusedAsState().value -> Color(0xFFFFFFFF) // Focused 상태
-        else -> Color(0xFFA7B5BD) // 일반 상태
+        else -> Color(0xFFDCE3E5) // 일반 상태
     }
 
     BasicTextField(

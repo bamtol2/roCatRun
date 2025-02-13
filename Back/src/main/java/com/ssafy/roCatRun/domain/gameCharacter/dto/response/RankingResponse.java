@@ -13,15 +13,13 @@ public class RankingResponse {
     private String characterImage;    // 캐릭터 이미지
     private String nickname;          // 닉네임
     private Integer level;            // 레벨
-    private boolean isCurrentUser;    // 현재 사용자 여부
 
-    public static RankingResponse from(GameCharacter gameCharacter, Long rank, boolean isCurrentUser) {
+    public static RankingResponse from(GameCharacter gameCharacter, Long rank) {  // isCurrentUser 파라미터 제거
         return new RankingResponse(
                 rank,
                 gameCharacter.getCharacterImage(),
                 gameCharacter.getNickname(),
-                gameCharacter.getLevel(),
-                isCurrentUser
+                gameCharacter.getLevel()
         );
     }
 }

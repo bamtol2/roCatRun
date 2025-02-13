@@ -6,7 +6,6 @@ import retrofit2.http.Header
 
 interface HomeAPI {
 
-//    @GET("api/home/info")
     @GET("domain/characters/me")
     fun getHomeInfo(
         @Header("Authorization") authorization: String,

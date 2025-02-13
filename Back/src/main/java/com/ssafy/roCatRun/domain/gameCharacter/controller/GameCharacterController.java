@@ -106,13 +106,13 @@ public class GameCharacterController {
     }
 
     @GetMapping("/rankings")
-    public ApiResponse<RankingListResponse> getRankings(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "7") int size
-    ) {
-        Long memberId = Long.parseLong(userDetails.getUsername());
-        RankingListResponse response = gameCharacterService.getRankings(memberId, page, size);
+    public ApiResponse<RankingListResponse> getRankings(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+
+        String memberId = authentication.getPrincipal().toString();
+        RankingListResponse response = gameCharacterService.getRankings(Long.parseLong(memberId));
         return ApiResponse.success(response);
     }
 }

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,9 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -52,6 +49,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
+import coil3.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
@@ -59,29 +58,38 @@ import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.ranking.RankingDialog
+import com.eeos.rocatrun.ranking.api.RankingViewModel
 import com.eeos.rocatrun.stats.StatsActivity
+import com.eeos.rocatrun.ui.components.StrokedText
 
 
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel = viewModel()) {
+fun HomeScreen(homeViewModel: HomeViewModel) {
     val context = LocalContext.current
+    val token = TokenStorage.getAccessToken(context)
 
     // ViewModel에서 가져온 데이터
     val homeInfoData = homeViewModel.homeData.observeAsState()
 
-    // 랭킹 모달 변수
-    var showRanking by remember { mutableStateOf(false) }
-
-    // 프로필 관련 변수
+    // 프로필 관련 변수, 프로필 데이터가 없을 때만 호출
+    val profileViewModel: ProfileViewModel = viewModel()
     var showProfile by remember { mutableStateOf(false) }
     val profileData by profileViewModel.profileData.observeAsState()
 
-    // 프로필 데이터가 없을 때만 호출
     LaunchedEffect(profileData) {
         if (profileData == null) {
-            val token = TokenStorage.getAccessToken(context)
-            val authorization = "Bearer $token"
-            profileViewModel.fetchProfileInfo(authorization)
+            profileViewModel.fetchProfileInfo(token)
+        }
+    }
+
+    // 랭킹 모달 변수, 랭킹 데이터가 없을 때만 호출
+    val rankingViewModel: RankingViewModel = viewModel()
+    var showRanking by remember { mutableStateOf(false) }
+    val rankingData by rankingViewModel.rankingData.observeAsState()
+
+    LaunchedEffect(rankingData) {
+        if (rankingData == null) {
+            rankingViewModel.fetchRankingInfo(token)
         }
     }
 
@@ -180,13 +188,24 @@ fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel 
                 )
 
                 // 캐릭터 이미지
+                val painter = rememberAsyncImagePainter(model = characterData.characterImage)
                 Image(
-                    painter = painterResource(id = R.drawable.all_img_whitecat),
+                    painter = painter,
                     contentDescription = "Cat Character",
                     modifier = Modifier
                         .size(230.dp)
                         .offset(x = 20.dp)
                 )
+
+//                AsyncImage(
+//                    model = characterData.characterImage,
+//                    contentDescription = "Cat Character",
+//                    modifier = Modifier
+//                        .size(230.dp)
+//                        .offset(x = 20.dp)
+//                        .fillMaxWidth()
+//                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 정보
@@ -256,7 +275,6 @@ fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel 
                                 label = "${characterData.totalGames}판",
                                 iconResId = R.drawable.home_img_game,
                                 mainFontSize = 30,
-                                modifier = Modifier.offset(y = 4.dp)
                             )
                         }
                     }
@@ -299,54 +317,14 @@ fun HomeScreen(homeViewModel: HomeViewModel, profileViewModel: ProfileViewModel 
 
         // 랭킹 모달 표시
         if (showRanking) {
-            RankingDialog(onDismiss = { showRanking = false })
+            RankingDialog(onDismiss = { showRanking = false }, rankingData = rankingData)
         }
 
         // 프로필 모달 표시
         if (showProfile) {
-            ProfileDialog(
-                onDismiss = { showProfile = false },
-                profileData = profileData
-            )
+            ProfileDialog(onDismiss = { showProfile = false }, profileData = profileData)
         }
 
-    }
-}
-
-
-// 스트로크 글씨 함수
-@Composable
-fun StrokedText(
-    text: String,
-    fontSize: Int,
-    strokeWidth: Float = 10f,
-    color: Color = Color.White,
-    strokeColor: Color = Color.Black,
-    letterSpacing: Float = 0f
-) {
-    Box {
-        // Stroke 텍스트
-        Text(
-            text = text,
-            color = strokeColor,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = fontSize.sp,
-                drawStyle = Stroke(
-                    width = strokeWidth,
-                    join = StrokeJoin.Round
-                ),
-                letterSpacing = letterSpacing.sp,
-            ),
-        )
-        // 일반 텍스트
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleLarge.copy(
-                color = color,
-                fontSize = fontSize.sp,
-                letterSpacing = letterSpacing.sp,
-            )
-        )
     }
 }
 
@@ -428,7 +406,9 @@ fun ReusableInfoBox(
             )
 
             Row(
-                modifier = modifier,
+                modifier = if (label != "캔코인") {
+                    modifier.offset(y = 4.dp)
+                } else modifier,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(

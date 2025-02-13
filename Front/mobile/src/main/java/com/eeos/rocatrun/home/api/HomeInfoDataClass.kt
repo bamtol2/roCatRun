@@ -1,6 +1,5 @@
 package com.eeos.rocatrun.home.api
 
-
 data class HomeInfoResponse(
     val status: Boolean,
     val message: String,
