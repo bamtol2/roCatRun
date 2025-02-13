@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.StateFlow
+import android.speech.tts.TextToSpeech
 
 /**
  * 게임의 상태 관리하는 ViewModel 클래스
@@ -40,6 +41,9 @@ class GameViewModel : ViewModel() {
 
     // 총 아이템 사용 횟수
     private var _totalItemUsageCount = MutableStateFlow(0)
+
+    // 사용가능한 아이템 횟수
+    private var _avaliableItemCount = MutableStateFlow(0)
 
     // 외부에서 읽기 전용으로 사용할 수 있는 상태 흐름 (StateFlow).
     val itemGaugeValue: StateFlow<Int> get() = _itemGaugeValue
@@ -99,22 +103,38 @@ class GameViewModel : ViewModel() {
 
         isHandlingGauge = true
         viewModelScope.launch {
-            notifyItemUsage()
+//            notifyItemUsage()
+            _avaliableItemCount.value++
             _itemUsageCount.value++
             _showItemGif.value = true
             delay(1000)
             _showItemGif.value = false
+            vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(1000), intArrayOf(100), -1)
+            vibrator?.vibrate(vibrationEffect)
+            var tts: TextToSpeech? = null
+            tts = TextToSpeech(context) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    val result = tts?.setLanguage(java.util.Locale.KOREAN)
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "한국어 TTS를 지원하지 않습니다.")
+                    } else {
+                        // 사용 가능한 아이템 개수를 알림
+                        val text = "사용 가능한 아이템 개수는 ${_avaliableItemCount.value}개 입니다."
+                        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+                } else {
+                    Log.e("TTS", "TTS 초기화 실패")
+                }
+            }
+//            delay(1000)
+//            tts.shutdown()
+
+
+
+
 
             _itemGaugeValue.value = 0
-//            _bossGaugeValue.value = (_bossGaugeValue.value - 20).coerceAtLeast(0)
-//
-////            if (_bossGaugeValue.value == 0) {
-////                stopFeverTimeEffects()  // 효과 중지
-////                navigateToResultActivity(context)  // 결과 액티비티로 이동
-////                return@launch
-////            }
-
-
             isHandlingGauge = false
         }
     }

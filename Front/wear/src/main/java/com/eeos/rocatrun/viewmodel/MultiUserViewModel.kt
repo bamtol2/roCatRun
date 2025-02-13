@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.zIndex
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -39,17 +40,24 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import androidx.lifecycle.AndroidViewModel
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.items
 import com.eeos.rocatrun.R
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import com.eeos.rocatrun.component.CircularItemGauge
 
-
+data class UserData(
+    val nickname: String,
+    val distance: Double,
+    val itemCount: Int
+)
 // ViewModel 정의
 class MultiUserViewModel(application: Application) : AndroidViewModel(application), DataClient.OnDataChangedListener {
 
     private lateinit var dataClient: DataClient
-
+    private val _userList = MutableStateFlow<List<UserData>>(emptyList())
+    val userList: StateFlow<List<UserData>> get() = _userList
     // 플레이어 리스트
     private val _playerList = MutableStateFlow<List<PlayerData>>(emptyList())
     val playerList: StateFlow<List<PlayerData>> get() = _playerList
@@ -130,6 +138,11 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 dataItemBuffer.release()
             }.addOnFailureListener { exception ->
                 Log.e("MultiUserViewModel", "캐시된 데이터 조회 실패", exception)
+            }
+            while (true) {
+                delay(1000)  // 1초마다 데이터 갱신
+                val updatedList = generateMockData()
+                _userList.emit(updatedList)
             }
 
         }
@@ -236,6 +249,16 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         }
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
+    private fun generateMockData(): List<UserData> {
+        val users = listOf("마이애미", "과즙가람", "타노스")
+        return users.map {
+            UserData(
+                nickname = it,
+                distance = Random.nextDouble(4.0, 5.0),
+                itemCount = Random.nextInt(1, 5)
+            )
+        }
+    }
 }
 
 
@@ -245,10 +268,10 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserViewModel.PlayersData) {
     Column(
         modifier = Modifier
-            .width(160.dp)
-            .height(130.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .background(Color.DarkGray, shape = RoundedCornerShape(16.dp))
+            .width(150.dp)
+            .height(110.dp)
+            .padding(horizontal = 12.dp, vertical = 14.dp)
+            .background(Color(0xFF1C1C1C), shape = RoundedCornerShape(16.dp))
             .padding(16.dp),
     ) {
         Row(
@@ -264,7 +287,7 @@ fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserV
                 fontFamily = FontFamily(Font(R.font.neodgm)),
                 modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = "${"%.1f".format(realTimeData.distance)}km",
                 color = Color.White,
@@ -284,7 +307,7 @@ fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserV
                 contentDescription = "Item Icon",
                 modifier = Modifier
                     .size(40.dp)
-                    .padding(end = 4.dp)
+
             )
             Text(
                 text = "x ${realTimeData.itemCount}",
@@ -305,6 +328,7 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
     val playerList by viewModel.playerList.collectAsState()
     val playersDataMap by viewModel.playersDataMap.collectAsState()
 
+    val userList by viewModel.userList.collectAsState()
 
 
     // GameViewModel에서 가져온 게이지 값
@@ -330,18 +354,21 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
 
     Box(
         modifier = Modifier
-            .background(Color.Black)
+            .fillMaxSize()
+            .background(Color.Black),
+            contentAlignment = Alignment.TopCenter
 
     ) {
 
         CircularItemGauge(
             itemProgress = itemProgress,
             bossProgress = bossProgress,
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.Center)
         )
 
-
-        LazyColumn(
+        ScalingLazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally

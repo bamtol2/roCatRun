@@ -109,19 +109,24 @@ fun SplashScreen2() {
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF00FFCC)
             ),
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(0.dp),
             modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .height(50.dp)
+                .width(69.dp)
+                .height(34.dp)
+                .padding(horizontal = 2.dp)
         ) {
             Text(
                 text = "확인",
                 style = TextStyle(
-                    fontSize = 24.sp,
+                    fontSize = 16.sp,
                     color = Color.Black,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily(Font(R.font.neodgm))
-                )
+                ),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false  // 줄바꿈 방지
             )
         }
     }
