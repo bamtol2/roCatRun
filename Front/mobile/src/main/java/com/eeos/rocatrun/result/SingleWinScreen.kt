@@ -38,7 +38,6 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.game.GifImage
 import com.eeos.rocatrun.home.HomeActivity
-import com.eeos.rocatrun.ranking.RankData
 import kotlinx.coroutines.delay
 
 
