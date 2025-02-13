@@ -10,6 +10,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import com.eeos.rocatrun.api.RetrofitInstance
 
 class ClosetViewModel : ViewModel() {
     // 전송 완료 응답 데이터

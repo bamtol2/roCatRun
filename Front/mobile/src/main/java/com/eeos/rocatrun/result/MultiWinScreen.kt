@@ -43,9 +43,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GamePlay
-import com.eeos.rocatrun.game.GifImage
+import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.home.HomeActivity
 import kotlinx.coroutines.delay
+import com.eeos.rocatrun.ui.components.formatTime
+import com.eeos.rocatrun.ui.components.formatPace
 
 @Composable
 fun MultiWinScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults: List<GamePlay.PlayersResultData?>)
@@ -361,17 +363,17 @@ private fun RankingWinRow(
                 Box(modifier = Modifier.width(24.dp)) {
                     when (rank) {
                         1 -> Image(
-                            painter = painterResource(id = R.drawable.game_img_goldpaw),
+                            painter = painterResource(id = R.drawable.all_img_goldpaw),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
                         2 -> if (totalParticipants >= 2) Image(
-                            painter = painterResource(id = R.drawable.game_img_silverpaw),
+                            painter = painterResource(id = R.drawable.all_img_silverpaw),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
                         3 -> if (totalParticipants >= 3) Image(
-                            painter = painterResource(id = R.drawable.game_img_bronzepaw),
+                            painter = painterResource(id = R.drawable.all_img_bronzepaw),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp)
                         )
@@ -414,21 +416,6 @@ private fun RankingWinRow(
             )
         }
     }
-}
-
-// 시간 포맷팅 함수
-private fun formatTime(timeInMillis: Long): String {
-    val hours = timeInMillis / (1000 * 60 * 60)
-    val minutes = (timeInMillis % (1000 * 60 * 60)) / (1000 * 60)
-    val seconds = (timeInMillis % (1000 * 60)) / 1000
-    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-}
-
-// 페이스 포맷팅 함수
-private fun formatPace(paceInMinutesPerKm: Double): String {
-    val minutes = paceInMinutesPerKm.toInt()
-    val seconds = ((paceInMinutesPerKm - minutes) * 60).toInt()
-    return String.format("%02d'%02d\"", minutes, seconds)
 }
 
 // 이미지 리소스 ID를 가져오는 함수

@@ -193,9 +193,9 @@ fun DayStatCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val rankImage = when (player.rank) {
-                            1 -> R.drawable.stats_img_first
-                            2 -> R.drawable.stats_img_second
-                            3 -> R.drawable.stats_img_third
+                            1 -> R.drawable.all_img_goldpaw
+                            2 -> R.drawable.all_img_silverpaw
+                            3 -> R.drawable.all_img_bronzepaw
                             else -> null
                         }
 

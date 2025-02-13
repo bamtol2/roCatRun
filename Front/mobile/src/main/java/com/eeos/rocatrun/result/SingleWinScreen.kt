@@ -36,9 +36,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GamePlay
-import com.eeos.rocatrun.game.GifImage
+import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.home.HomeActivity
 import kotlinx.coroutines.delay
+import com.eeos.rocatrun.ui.components.formatPace
+import com.eeos.rocatrun.ui.components.formatTime
 
 
 @Composable
@@ -225,17 +227,3 @@ private fun ResultRow(label: String, value: String) {
     }
 }
 
-// 시간 포맷팅 함수
-private fun formatTime(timeInMillis: Long): String {
-    val hours = timeInMillis / (1000 * 60 * 60)
-    val minutes = (timeInMillis % (1000 * 60 * 60)) / (1000 * 60)
-    val seconds = (timeInMillis % (1000 * 60)) / 1000
-    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-}
-
-// 페이스 포맷팅 함수
-private fun formatPace(paceInMinutesPerKm: Double): String {
-    val minutes = paceInMinutesPerKm.toInt()
-    val seconds = ((paceInMinutesPerKm - minutes) * 60).toInt()
-    return String.format("%02d'%02d\"", minutes, seconds)
-}

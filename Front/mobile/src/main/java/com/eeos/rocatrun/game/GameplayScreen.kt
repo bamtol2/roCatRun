@@ -32,11 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.game.GamePlay.PlayersData
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.result.MultiLoseScreen
 import com.eeos.rocatrun.result.MultiWinScreen
@@ -46,6 +42,7 @@ import com.eeos.rocatrun.socket.SocketHandler
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
+import com.eeos.rocatrun.ui.components.GifImage
 
 
 @Composable
@@ -418,23 +415,4 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
             SingleLoseScreen(myResult = myResult)
         }
     }
-}
-
-// gif 불러오는 함수
-@Composable
-fun GifImage(modifier: Modifier = Modifier, gifUrl: String) {
-
-    val painter = rememberAsyncImagePainter(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(gifUrl)
-            .crossfade(false)
-            .build()
-    )
-
-    Image(
-        painter = painter,
-        contentDescription = "GIF Image",
-        modifier = modifier,
-        contentScale = ContentScale.Crop
-    )
 }
