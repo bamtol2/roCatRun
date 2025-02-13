@@ -22,19 +22,18 @@ public class MemberService {
 
     /**
      * 회원 탈퇴 처리
-     * - 캐릭터 정보 삭제
+     * - Member 엔티티 삭제 시 CascadeType.ALL 설정으로 인해 연관된 엔티티들이 자동 삭제됨:
+     *   - GameCharacter (orphanRemoval = true)
+     *   - GameResult (CascadeType.ALL)
+     *   - Inventory (CascadeType.ALL)
      * - Redis에 저장된 토큰 정보 삭제
-     * - 회원 정보 삭제
      */
     @Transactional
     public void deleteMember(Long memberId) {
-        // 캐릭터 삭제
-        gameCharacterRepository.deleteByMember_Id(memberId);
-
         // 리프레시 토큰 삭제
         refreshTokenRedisRepository.deleteByKey(memberId.toString());
 
-        // 회원 삭제
+        // 회원 삭제 (연관된 엔티티들은 cascade로 자동 삭제)
         memberRepository.deleteById(memberId);
     }
 

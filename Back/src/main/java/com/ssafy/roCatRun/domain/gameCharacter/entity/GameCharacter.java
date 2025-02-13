@@ -1,5 +1,6 @@
 package com.ssafy.roCatRun.domain.gameCharacter.entity;
 
+import com.ssafy.roCatRun.domain.game.entity.raid.GameResult;
 import com.ssafy.roCatRun.domain.inventory.entity.Inventory;
 import com.ssafy.roCatRun.domain.item.entity.Item;
 import com.ssafy.roCatRun.domain.member.entity.Member;
@@ -57,7 +58,10 @@ public class GameCharacter {
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     private Integer losses = 0;                // 패배 수 (기본값 0)
 
-    // 회원과의 일대일 관계 설정
+    /**
+     * Member와의 일대일 관계 설정
+     * Member가 삭제될 때 GameCharacter도 함께 삭제됨
+     */
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "member_id",
@@ -66,8 +70,26 @@ public class GameCharacter {
     )
     private Member member;
 
-    // 인벤토리와의 일대다 관계 설정
-    @OneToMany(mappedBy = "gameCharacter", cascade = CascadeType.ALL)
+    /**
+     * GameResult와의 일대다 관계 설정
+     * GameCharacter가 삭제될 때 관련된 모든 GameResult도 함께 삭제
+     */
+    @OneToMany(
+            mappedBy = "character",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<GameResult> gameResults = new ArrayList<>();
+
+    /**
+     * Inventory와의 일대다 관계 설정
+     * GameCharacter가 삭제될 때 관련된 모든 Inventory도 함께 삭제
+     */
+    @OneToMany(
+            mappedBy = "gameCharacter",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<Inventory> inventories = new ArrayList<>();
 
     /**

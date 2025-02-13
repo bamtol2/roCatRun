@@ -53,11 +53,16 @@ public class Member {
     private String gender;    // 성별
 
     /**
-     * Member와 Character 간의 1:1 관계 설정
-     * mappedBy: Character 엔티티의 member 필드와 매핑
-     * cascade: Member 엔티티의 변경사항이 Character 엔티티에도 적용
+     * Member와 GameCharacter 간의 1:1 관계 설정
+     * mappedBy: GameCharacter 엔티티의 member 필드와 매핑
+     * cascade: Member 엔티티의 변경사항이 GameCharacter 엔티티에도 적용
+     * orphanRemoval: 연관관계가 끊어진 GameCharacter 엔티티 자동 삭제
      */
-    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL)
+    @OneToOne(
+            mappedBy = "member",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private GameCharacter gameCharacter;
 
     /**
