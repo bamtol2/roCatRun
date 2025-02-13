@@ -49,7 +49,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.rememberAsyncImagePainter
+import coil3.compose.AsyncImage
+import coil3.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
@@ -187,7 +188,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 )
 
                 // 캐릭터 이미지
-                val painter = rememberAsyncImagePainter(characterData.characterImage)
+                val painter = rememberAsyncImagePainter(model = characterData.characterImage)
                 Image(
                     painter = painter,
                     contentDescription = "Cat Character",
@@ -195,6 +196,16 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         .size(230.dp)
                         .offset(x = 20.dp)
                 )
+
+//                AsyncImage(
+//                    model = characterData.characterImage,
+//                    contentDescription = "Cat Character",
+//                    modifier = Modifier
+//                        .size(230.dp)
+//                        .offset(x = 20.dp)
+//                        .fillMaxWidth()
+//                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 정보

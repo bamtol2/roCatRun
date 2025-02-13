@@ -2,7 +2,6 @@ package com.eeos.rocatrun.ranking
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,18 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.rememberAsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.ranking.api.Ranking
-import com.eeos.rocatrun.ranking.api.RankingData
 import com.eeos.rocatrun.ranking.api.RankingResponse
 import com.eeos.rocatrun.ui.components.ModalCustomButton
-import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
