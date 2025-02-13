@@ -55,6 +55,7 @@ class GameViewModel : ViewModel() {
 
 
 
+
     // GameViewModel 초기화 시 BossHealthRepository의 bossHealth를 구독하여 보스 게이지 업데이트
     init {
         viewModelScope.launch {
@@ -73,12 +74,22 @@ class GameViewModel : ViewModel() {
 
     // 아이템 사용 시 호출하는함수
     fun notifyItemUsage(){
-        _itemUsedSignal.value = true
-        incrementTotalItemUsageCount()
-        viewModelScope.launch {
-            delay(1000) // 중복 전송 방지하기 위한 딜레이
-            _itemUsedSignal.value = false
+        if (_avaliableItemCount.value > 0){
+            _itemUsedSignal.value = true
+            _showItemGif.value = true
+
+            incrementTotalItemUsageCount()
+            viewModelScope.launch {
+                delay(1000) // 중복 전송 방지하기 위한 딜레이
+                _avaliableItemCount.value--
+                _itemUsedSignal.value = false
+                _showItemGif.value = false
+            }
+            Log.d("GameViewModel", "아이템 사용")
+        }else{
+            Log.d("GameViewModel", "사용 가능한 아이템이 없습니다.")
         }
+
     }
 
     // 아이템 게이지 증가
@@ -106,9 +117,9 @@ class GameViewModel : ViewModel() {
 //            notifyItemUsage()
             _avaliableItemCount.value++
             _itemUsageCount.value++
-            _showItemGif.value = true
+//            _showItemGif.value = true
             delay(1000)
-            _showItemGif.value = false
+//            _showItemGif.value = false
             vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
             val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(1000), intArrayOf(100), -1)
             vibrator?.vibrate(vibrationEffect)
