@@ -527,18 +527,18 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     @Composable
     fun WatchAppUI(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
-        val pagerState = rememberPagerState(pageCount = { 3 })
+        val pagerState = rememberPagerState(pageCount = { 4 })
         if (showStats) {
             ShowStatsScreen(gameViewModel)
         } else {
             HorizontalPager(state = pagerState) { page ->
                 when (page) {
                     0 -> CircularLayout(gameViewModel)
-//                    1 -> ControlButtons { stopTracking() }
-                    1 -> Box(modifier = Modifier.fillMaxSize()) {
+                    1 -> ControlButtons { stopTracking() }
+                    2 -> Box(modifier = Modifier.fillMaxSize()) {
                         GameScreen(gameViewModel, multiUserViewModel)
                     }
-                    2 -> Box(modifier = Modifier.fillMaxSize()) {
+                    3 -> Box(modifier = Modifier.fillMaxSize()) {
                         MultiUserScreen(multiUserViewModel,gameViewModel)
                     }
                 }
@@ -654,24 +654,24 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-//    @Composable
-//    fun ControlButtons(stopTracking: () -> Unit) {
-//        Column(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(Color.DarkGray)
-//                .padding(16.dp),
-//            verticalArrangement = Arrangement.Center,
-//            horizontalAlignment = Alignment.CenterHorizontally
-//        ) {
-//            Button(onClick = { startTracking() }) {
-//                Text("시작", fontFamily = FontFamily(Font(R.font.neodgm)))
-//            }
-//            Button(onClick = { stopTracking() }) {
-//                Text("종료", fontFamily = FontFamily(Font(R.font.neodgm)))
-//            }
-//        }
-//    }
+    @Composable
+    fun ControlButtons(stopTracking: () -> Unit) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.DarkGray)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(onClick = { startTracking() }) {
+                Text("시작", fontFamily = FontFamily(Font(R.font.neodgm)))
+            }
+            Button(onClick = { stopTracking() }) {
+                Text("종료", fontFamily = FontFamily(Font(R.font.neodgm)))
+            }
+        }
+    }
 
     // 폰에 데이터 전송
     private fun sendDataToPhone(itemUsed: Boolean = false) {
