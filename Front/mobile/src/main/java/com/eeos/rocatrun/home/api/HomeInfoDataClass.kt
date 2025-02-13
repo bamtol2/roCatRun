@@ -7,6 +7,7 @@ data class HomeInfoResponse(
 )
 
 data class CharacterData(
+    val requiredExpForNextLevel: Int,
     val id: Int,
     val nickname: String,
     val level: Int,

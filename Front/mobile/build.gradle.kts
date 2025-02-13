@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
     // coil 추가
+    implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-gif:3.0.4")
     implementation(libs.androidx.runtime.livedata)

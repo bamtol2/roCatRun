@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.BlurMaskFilter
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -50,8 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
-import coil3.compose.rememberAsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.ClosetActivity
 import com.eeos.rocatrun.game.GameRoom
@@ -190,24 +190,13 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 )
 
                 // 캐릭터 이미지
-                val painter = rememberAsyncImagePainter(model = characterData.characterImage)
                 Image(
-                    painter = painter,
+                    painter = rememberAsyncImagePainter(characterData.characterImage),
                     contentDescription = "Cat Character",
                     modifier = Modifier
                         .size(230.dp)
                         .offset(x = 20.dp)
                 )
-
-//                AsyncImage(
-//                    model = characterData.characterImage,
-//                    contentDescription = "Cat Character",
-//                    modifier = Modifier
-//                        .size(230.dp)
-//                        .offset(x = 20.dp)
-//                        .fillMaxWidth()
-//                )
-
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 정보
@@ -251,7 +240,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                                         .background(Color(0xFFFFDA0A))
                                 )
                                 Text(
-                                    text = "${characterData.experience}/1000",
+                                    text = "${characterData.experience}/${characterData.requiredExpForNextLevel}",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF414141),

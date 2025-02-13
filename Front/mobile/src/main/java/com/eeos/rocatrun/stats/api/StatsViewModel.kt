@@ -113,6 +113,7 @@ class StatsViewModel : ViewModel() {
 
         if (auth != null) {
             Log.d("api", "주별 통계 페이지 호출 시작")
+            _noWeekData.value = false
             retrofitInstance.getWeekStats("Bearer $auth", date, week)
                 .enqueue(object : Callback<WeekMonStatsResponse> {
                     override fun onResponse(
@@ -123,8 +124,8 @@ class StatsViewModel : ViewModel() {
                             _weekStatsData.value = response.body()
                             Log.d("api", "주별 통계 호출 성공")
                         } else {
-                            if (response.code() == 404) {
-                                _noWeekData.value = true  // 데이터 없음 상태로 설정
+                            if (response.code() == 404 || response.code() == 400) {
+                                _noWeekData.value = true
                             } else {
                                 println("Error: ${response.errorBody()}")
                                 Log.d("api", response.toString())
@@ -150,6 +151,7 @@ class StatsViewModel : ViewModel() {
 
         if (auth != null) {
             Log.d("api", "월별 통계 페이지 호출 시작")
+            _noMonData.value = false
             retrofitInstance.getMonStats("Bearer $auth", date)
                 .enqueue(object : Callback<WeekMonStatsResponse> {
                     override fun onResponse(
@@ -160,8 +162,8 @@ class StatsViewModel : ViewModel() {
                             _monStatsData.value = response.body()
                             Log.d("api", "월별 통계 호출 성공")
                         } else {
-                            if (response.code() == 404) {
-                                _noMonData.value = true  // 데이터 없음 상태로 설정
+                            if (response.code() == 404 || response.code() == 400) {
+                                _noMonData.value = true
                             } else {
                                 println("Error: ${response.errorBody()}")
                                 Log.d("api", response.toString())
