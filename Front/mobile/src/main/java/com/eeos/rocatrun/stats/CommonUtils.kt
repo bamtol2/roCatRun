@@ -24,6 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.ui.components.StrokedText
 
+// 거리 형식 반환 함수
+fun roundToFirstDecimal(value: Double): Double {
+    return "%,.1f".format(value).toDouble()
+}
+
 // 시간 형식 변환 함수
 fun formatTotalTime(totalTime: String): String {
     val timeParts = totalTime.split(":")

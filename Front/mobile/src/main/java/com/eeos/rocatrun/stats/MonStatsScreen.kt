@@ -151,7 +151,7 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
                 contentAlignment = Alignment.Center
             ) {
                 StrokedText(
-                    text = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.totalDistance}km",
+                    text = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.totalDistance?.let { roundToFirstDecimal(it) }} km",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,

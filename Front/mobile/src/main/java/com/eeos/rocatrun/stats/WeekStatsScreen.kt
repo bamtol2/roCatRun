@@ -153,7 +153,7 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
             ) {
 
                 StrokedText(
-                    text = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.totalDistance}km",
+                    text = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.totalDistance?.let { roundToFirstDecimal(it) }} km",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,

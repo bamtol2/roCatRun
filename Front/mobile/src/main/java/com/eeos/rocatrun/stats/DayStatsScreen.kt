@@ -230,7 +230,7 @@ fun DayStatCard(
                             modifier = Modifier.weight(1.5f)
                         )
                         Text(
-                            text = player.distance.toString(),
+                            text = roundToFirstDecimal(player.distance).toString(),
                             color = Color.White,
                             fontSize = 14.sp,
                             modifier = Modifier.weight(0.5f)
