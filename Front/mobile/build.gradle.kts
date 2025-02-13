@@ -109,4 +109,16 @@ dependencies {
 
     // socket.io -
     implementation ("io.socket:socket.io-client:2.0.0")
+
+    // composable에서 viewModel 이용
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
+    implementation(libs.ui.graphics.android)
+
+
+    // socket.io -
+    implementation ("io.socket:socket.io-client:2.0.0")
+
+    // 캡쳐 라이브러리
+    implementation ("dev.shreyaspatil:capturable:2.1.0")
 }

@@ -20,13 +20,6 @@ public interface GameCharacterRepository extends JpaRepository<GameCharacter, Lo
     boolean existsByNickname(String nickname);
 
     /**
-     * 회원 ID로 캐릭터를 찾습니다.
-     * @param memberId 회원 ID
-     * @return 해당 회원의 캐릭터
-     */
-    GameCharacter findByMember_Id(Long memberId);
-
-    /**
      * 회원 ID로 캐릭터를 삭제합니다.
      * @param memberId 회원 ID
      */

@@ -4,9 +4,7 @@ import com.ssafy.roCatRun.domain.gameCharacter.dto.request.GameCharacterCreateRe
 import com.ssafy.roCatRun.domain.gameCharacter.dto.request.NicknameUpdateRequest;
 import com.ssafy.roCatRun.domain.gameCharacter.dto.response.GameCharacterResponse;
 import com.ssafy.roCatRun.domain.gameCharacter.service.GameCharacterService;
-import org.springframework.security.core.userdetails.UserDetails;
 import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.ssafy.roCatRun.domain.gameCharacter.dto.response.RankingListResponse;
 import com.ssafy.roCatRun.global.common.ApiResponse;
 import jakarta.validation.Valid;
@@ -47,20 +45,26 @@ public class GameCharacterController {
         log.debug("Creating character for member: {}", memberId);
 
         GameCharacter gameCharacter = gameCharacterService.createCharacter(request, Long.parseLong(memberId));
-        return ApiResponse.success(new GameCharacterResponse(gameCharacter));
+        return ApiResponse.success(gameCharacterService.createGameCharacterResponse(gameCharacter));
     }
 
     /**
      * 캐릭터 닉네임의 중복 여부를 확인합니다.
      * @param nickname 중복 확인할 닉네임
-     * @return 중복 여부 (true: 중복, false: 사용 가능)
+     * @return 사용 가능 여부 (true: 사용 가능, false: 사용 불가능)
      */
     @GetMapping("/check-nickname/{nickname}")
     public ApiResponse<Boolean> checkNicknameDuplicate(@PathVariable String nickname) {
+        nickname = nickname.replace("{", "").replace("}", "");
+
+        log.info("Checking nickname duplicate for: {}", nickname);
         boolean isDuplicate = gameCharacterService.checkNicknameDuplicate(nickname);
-        return isDuplicate
-                ? ApiResponse.success("중복된 닉네임이 있습니다.", true)
-                : ApiResponse.success("사용 가능한 닉네임입니다.", false);
+        log.info("Nickname '{}' exists in DB: {}", nickname, isDuplicate);
+
+        return ApiResponse.success(
+                isDuplicate ? "중복된 닉네임이 있습니다." : "사용 가능한 닉네임입니다.",
+                isDuplicate
+        );
     }
 
     /**
@@ -78,8 +82,8 @@ public class GameCharacterController {
         String memberId = authentication.getPrincipal().toString();
         log.debug("Fetching character for member: {}", memberId);
 
-        GameCharacter gameCharacter = gameCharacterService.getCharacterByMemberId(Long.parseLong(memberId));
-        return ApiResponse.success(new GameCharacterResponse(gameCharacter));
+        GameCharacterResponse response = gameCharacterService.getCharacterResponseByMemberId(Long.parseLong(memberId));
+        return ApiResponse.success(response);
     }
 
     /**
@@ -105,6 +109,12 @@ public class GameCharacterController {
         return ApiResponse.success(null);
     }
 
+    /**
+     * 캐릭터의 랭킹 정보를 조회합니다.
+     * @param authentication 현재 인증된 사용자 정보
+     * @return 랭킹 정보
+     * @throws IllegalStateException 인증 정보가 없는 경우
+     */
     @GetMapping("/rankings")
     public ApiResponse<RankingListResponse> getRankings(Authentication authentication) {
         if (authentication == null || authentication.getPrincipal() == null) {

@@ -54,6 +54,10 @@
             android:name=".game.GameMulti"
             android:exported="true" />
         <activity
+            android:name=".closet.ClosetActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun" />
+        <activity
             android:name=".home.HomeActivity"
             android:exported="true"
             android:theme="@style/Theme.RoCatRun" />

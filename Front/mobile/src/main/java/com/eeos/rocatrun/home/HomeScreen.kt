@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.closet.ClosetActivity
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
 import com.eeos.rocatrun.login.data.TokenStorage
@@ -158,7 +160,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
-                    onClick = { /* 옷장 화면으로 전환 */ },
+                    onClick = { context.startActivity(Intent(context, ClosetActivity::class.java)) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     shape = RoundedCornerShape(0.dp),
                     contentPadding = PaddingValues(0.dp)
