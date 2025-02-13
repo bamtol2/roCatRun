@@ -372,7 +372,7 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         cadenceAvg: Double
     ){
         val runningResultJson = JSONObject().apply {
-            put("runningTime", runningTime)
+            put("runningTimeSec", runningTime)
             put("totalDistance", totalDistance)
             put("paceAvg", paceAvg)
             put("heartRateAvg", heartRateAvg)
