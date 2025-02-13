@@ -68,6 +68,7 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.component.CircularItemGauge
+import com.eeos.rocatrun.detector.ArmGestureDetector
 import com.eeos.rocatrun.receiver.SensorUpdateReceiver
 import com.eeos.rocatrun.service.LocationForegroundService
 import com.eeos.rocatrun.util.FormatUtils
@@ -98,6 +99,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var stepCounter: Sensor? = null
     private var heartRateSensor: Sensor? = null
     private var formatUtils = FormatUtils()
+
+    // 동작 인식
+    private lateinit var armGestureDetector: ArmGestureDetector
 
     // GPX 관련 변수
     private val locationList = mutableListOf<Location>()
@@ -163,6 +167,19 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        armGestureDetector = ArmGestureDetector(
+            context = this,
+            onArmSwing = {
+                gameViewModel.notifyItemUsage()
+                Log.d("ArmDectector", "팔 휘두르기 감지")
+            }
+
+        )
+        armGestureDetector.start()
+
+
+
         setContent {
             val gameViewModel: GameViewModel by viewModels()
             val multiUserViewModel: MultiUserViewModel by viewModels()
@@ -262,6 +279,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         sensorManager.unregisterListener(this)
+        armGestureDetector.stop()
     }
     private fun registerHeartRateSensor() {
         heartRateSensor?.let {
