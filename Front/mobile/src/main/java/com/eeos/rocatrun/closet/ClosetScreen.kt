@@ -51,6 +51,8 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.login.data.TokenStorage
+import com.eeos.rocatrun.ui.components.GifImage
+import com.eeos.rocatrun.ui.components.StrokedText
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 import dev.shreyaspatil.capturable.capturable
 import dev.shreyaspatil.capturable.controller.rememberCaptureController
@@ -64,12 +66,14 @@ data class ItemPosition(
 
 data class WearableItem(
     val id: String,
-    val imageRes: Int, // 이미지 리소스
+    val imageRes: Int? = null, // 이미지 리소스
     val position: ItemPosition, // 적용 위치
     val size: Int, // 아이템 크기
     val category: String,
     val categoryInt: Int,
-    var isWorn: Boolean = false // 착용 여부
+    var isWorn: Boolean = false, // 착용 여부
+    var isGif: Boolean = false,
+    val gifUrl: Int? = null
 )
 
 
@@ -98,6 +102,9 @@ fun ClosetScreen() {
                 WearableItem("aura2", R.drawable.closet_ora_2, ItemPosition(10, -50), 300, "오라", 4),
                 WearableItem("balloon1", R.drawable.closet_balloon_1, ItemPosition(70, -20), 80, "풍선", 3),
                 WearableItem("balloon2", R.drawable.closet_balloon_2, ItemPosition(70, -20), 80, "풍선", 3),
+                WearableItem("aura3", position = ItemPosition(10, -50), size = 300, category = "오라", categoryInt = 4, isGif = true, gifUrl = R.drawable.closet_item_pizza_oural),
+                WearableItem("balloon3", position = ItemPosition(70, -20), size = 80, category = "풍선", categoryInt = 3, isGif = true, gifUrl = R.drawable.closet_item_bird_ballon),
+                WearableItem("balloon4", position = ItemPosition(70, -20), size = 80, category = "풍선", categoryInt = 3, isGif = true, gifUrl = R.drawable.closet_item_cat_ballon),
             )
         )
     }
@@ -174,7 +181,7 @@ fun ClosetScreen() {
             // 탭과 아이템 목록 영역
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.75f)
                     .fillMaxWidth()
                     .padding(vertical = 10.dp)
 
@@ -198,7 +205,7 @@ fun ClosetScreen() {
                                 color = Color(0xD6B9999F),
                                 shape = RoundedCornerShape(12.dp)
                             )
-                            .padding(8.dp),
+                            .padding(top = 8.dp, bottom = 23.dp, start = 8.dp, end = 8.dp),
                         contentPadding = PaddingValues(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -241,13 +248,13 @@ fun ClosetScreen() {
                         }
                     }
 
-                    Text(
+                    StrokedText (
                         text = "획득 아이템 : 총 ${filteredItems.size}개",
+                        fontSize = 14,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(vertical = 15.dp, horizontal = 30.dp),
-                        color = Color.White,
-                        fontSize = 14.sp
+                            .padding(vertical = 5.dp, horizontal = 30.dp)
+                            .offset(x = 195.dp, y = 285.dp),
                     )
                 }
             }
@@ -317,23 +324,32 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(70.dp)
                     .padding(bottom = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 // 아이템 이미지
-                Image(
-                    painter = painterResource(id = item.imageRes),
-                    contentDescription = "아이템",
-                    modifier = Modifier.size(50.dp)
-                )
+                if (item.isGif && item.gifUrl != null) {
+                    GifImage(
+                        modifier = Modifier.size(60.dp),
+                        gifUrl = "android.resource://com.eeos.rocatrun/${item.gifUrl}"
+                    )
+                } else {
+                    item.imageRes?.let { painterResource(id = it) }?.let {
+                        Image(
+                            painter = it,
+                            contentDescription = "아이템",
+                            modifier = Modifier.size(60.dp)
+                        )
+                    }
+                }
             }
 
             // 착용/해제 버튼
             Box(
                 modifier = Modifier
-                    .width(60.dp)
-                    .height(30.dp)
+                    .width(70.dp)
+                    .height(33.dp)
                     .clickable { onClick(item) }
             ) {
                 Image(
@@ -348,7 +364,7 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
                 Text(
                     text = if (item.isWorn) "해제" else "착용",
                     color = Color.White,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -356,54 +372,32 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
     }
 }
 
-// 스트로크 글씨 함수
-@Composable
-fun StrokedText(
-    text: String,
-    fontSize: Int,
-    strokeWidth: Float = 10f,
-    color: Color = Color.White,
-    strokeColor: Color = Color.Black
-) {
-    Box {
-        // Stroke 텍스트
-        Text(
-            text = text,
-            color = strokeColor,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = fontSize.sp,
-                drawStyle = Stroke(
-                    width = strokeWidth,
-                    join = StrokeJoin.Round
-                )
-            )
-        )
-        // 일반 텍스트
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleLarge.copy(
-                color = color,
-                fontSize = fontSize.sp
-            )
-        )
-    }
-}
-
 
 // 아이템 장착 화면 - 상단 캐릭터 영역
 @Composable
 fun CharacterWithItems(wornItems: List<WearableItem>) {
-
+    // 이미지 캡쳐 사이즈 200.dp
     Box(modifier = Modifier.size(200.dp)) {
         // 특정 카테고리(예: "오라")의 아이템 배치 (캐릭터 뒤)
         wornItems.filter { it.category == "오라" }.forEach { item ->
-            Image(
-                painter = painterResource(id = item.imageRes),
-                contentDescription = "착용 아이템",
-                modifier = Modifier
-                    .size(item.size.dp)
-                    .offset(item.position.x.dp, item.position.y.dp)
-            )
+            if (item.isGif && item.gifUrl != null) {
+                GifImage(
+                    modifier = Modifier
+                        .size(item.size.dp)
+                        .offset(item.position.x.dp, item.position.y.dp),
+                    gifUrl = "android.resource://com.eeos.rocatrun/${item.gifUrl}"
+                )
+            } else {
+                item.imageRes?.let { painterResource(id = it) }?.let {
+                    Image(
+                        painter = it,
+                        contentDescription = "착용 아이템",
+                        modifier = Modifier
+                            .size(item.size.dp)
+                            .offset(item.position.x.dp, item.position.y.dp)
+                    )
+                }
+            }
         }
 
         // 캐릭터 이미지
@@ -423,13 +417,26 @@ fun CharacterWithItems(wornItems: List<WearableItem>) {
 
         // 나머지 카테고리의 아이템 배치 (캐릭터 위)
         wornItems.filter { it.category != "오라" }.forEach { item ->
-            Image(
-                painter = painterResource(id = item.imageRes),
-                contentDescription = "착용 아이템",
-                modifier = Modifier
-                    .size(item.size.dp)
-                    .offset(item.position.x.dp, item.position.y.dp)
-            )
+            if (item.isGif && item.gifUrl != null) {
+                // GIF 이미지
+                GifImage(
+                    modifier = Modifier
+                        .size(item.size.dp)
+                        .offset(item.position.x.dp, item.position.y.dp),
+                    gifUrl = "android.resource://com.eeos.rocatrun/${item.gifUrl}"
+                )
+            } else {
+                // 일반 이미지
+                item.imageRes?.let { painterResource(id = it) }?.let {
+                    Image(
+                        painter = it,
+                        contentDescription = "착용 아이템",
+                        modifier = Modifier
+                            .size(item.size.dp)
+                            .offset(item.position.x.dp, item.position.y.dp)
+                    )
+                }
+            }
         }
     }
 }
