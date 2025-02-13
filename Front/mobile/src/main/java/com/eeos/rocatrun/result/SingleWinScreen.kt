@@ -35,12 +35,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.game.GifImage
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.ranking.RankData
 import kotlinx.coroutines.delay
 
+
 @Composable
-fun SingleWinScreen() {
+fun SingleWinScreen(myResult: GamePlay.MyResultData?) {
     // confetti GIF 표시 여부 상태
     var showConfetti by remember { mutableStateOf(true) }
     val context = LocalContext.current
@@ -99,7 +102,7 @@ fun SingleWinScreen() {
                         .fillMaxWidth()
                         .height(250.dp),
                 ) {
-                    FirstResultPage()
+                    FirstResultPage(myResult = myResult)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -113,7 +116,7 @@ fun SingleWinScreen() {
                             shape = RoundedCornerShape(7.dp)
                         )
                         .clickable {
-                            // 홈화면으로 이동 구현 예정
+                            // 홈화면으로 이동
                             val intent = Intent(context, HomeActivity::class.java)
                             context.startActivity(intent)
                         }
@@ -141,7 +144,8 @@ fun SingleWinScreen() {
 }
 
 @Composable
-private fun FirstResultPage() {
+private fun FirstResultPage(myResult: GamePlay.MyResultData?) {
+
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
@@ -152,7 +156,7 @@ private fun FirstResultPage() {
                 .border(width = 1.dp, color = Color(0xFFFFFF00))
                 .background(Color(0x7820200D))
                 .padding(16.dp)
-                .height(240.dp),
+                .height(280.dp),
         ) {
             Column(
                 modifier = Modifier
@@ -165,16 +169,16 @@ private fun FirstResultPage() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(23.dp)
                 ) {
-                    ResultItem("거리", "42.5km")
-                    ResultItem("시간", "00:20:30")
+                    ResultItem("거리", "${myResult?.totalDistance?.let { "%.1f".format(it) }}km")
+                    ResultItem("시간", formatTime(myResult?.runningTime ?: 0))
                 }
                 Spacer(modifier = Modifier.height(25.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(23.dp)
                 ) {
-                    ResultItem("페이스", "06'32\"")
-                    ResultItem("칼로리", "320kcal")
+                    ResultItem("페이스", formatPace(myResult?.paceAvg ?: 0.0))
+                    ResultItem("칼로리", "${myResult?.calories ?: 0}kcal")
                 }
 
                 Spacer(modifier = Modifier.height(15.dp))
@@ -188,9 +192,11 @@ private fun FirstResultPage() {
                 )
 
                 Spacer(modifier = Modifier.height(15.dp))
-                ResultRow("공격 횟수", "5번")
+                ResultRow("공격 횟수", "${myResult?.itemUseCount ?: 0}번")
                 Spacer(modifier = Modifier.height(10.dp))
-                ResultRow("획득 경험치", "+100exp")
+                ResultRow("획득 경험치", "+${myResult?.rewardExp ?: 0}exp")
+                Spacer(modifier = Modifier.height(10.dp))
+                ResultRow("획득 코인", "+${myResult?.rewardCoin ?: 0}코인")
             }
         }
     }
@@ -220,3 +226,17 @@ private fun ResultRow(label: String, value: String) {
     }
 }
 
+// 시간 포맷팅 함수
+private fun formatTime(timeInMillis: Long): String {
+    val hours = timeInMillis / (1000 * 60 * 60)
+    val minutes = (timeInMillis % (1000 * 60 * 60)) / (1000 * 60)
+    val seconds = (timeInMillis % (1000 * 60)) / 1000
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+// 페이스 포맷팅 함수
+private fun formatPace(paceInMinutesPerKm: Double): String {
+    val minutes = paceInMinutesPerKm.toInt()
+    val seconds = ((paceInMinutesPerKm - minutes) * 60).toInt()
+    return String.format("%02d'%02d\"", minutes, seconds)
+}

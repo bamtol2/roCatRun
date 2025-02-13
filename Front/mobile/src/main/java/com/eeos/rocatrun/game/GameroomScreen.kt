@@ -28,12 +28,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -48,9 +51,12 @@ import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.socket.SocketHandler
+import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import org.json.JSONObject
+import java.net.Socket
 
 
 @Composable
@@ -443,6 +449,9 @@ fun InviteCodeContent(onBack: () -> Unit) {
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    // 포커스 관리를 위한 FocusRequester 추가
+    val focusRequester = remember { FocusRequester() }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -524,7 +533,9 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         }
                     },
                     modifier = Modifier
+                        .focusRequester(focusRequester)
                         .fillMaxWidth()
+                        .clickable { focusRequester.requestFocus() }
                         .size(0.dp), // TextField의 크기를 0으로 설정
                     textStyle = TextStyle(color = Color.White),
                     singleLine = true
@@ -542,13 +553,11 @@ fun InviteCodeContent(onBack: () -> Unit) {
                         )
                         // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
-//
-//                            // 소켓 초기화, 연결
-//                            SocketHandler.initialize(context)
-//                            SocketHandler.connect()
 
                             // 웹소켓 입장 이벤트 호출: 성공하면 LoadingActivity로 이동, 에러면 모달 띄움
-                            JoinRoomSocket(inviteCode = inviteCode,
+                            JoinRoomSocket(
+                                context = context,
+                                inviteCode = inviteCode,
                                 onSuccess = { rInviteCode, currentPlayers, maxPlayers ->
 
                                     // 성공하면 LoadingActivity로 이동
@@ -584,18 +593,21 @@ fun InviteCodeContent(onBack: () -> Unit) {
         }
     }
 
-    // 에러가 발생했을 때 모달 다이얼로그 표시
+    // 에러가 발생했을 때 모달창 표시
     if (showErrorDialog) {
-        AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
-            title = { Text("에러 발생") },
-            text = { Text(errorMessage) },
-            confirmButton = {
-                TextButton(onClick = { showErrorDialog = false }) {
-                    Text("확인")
-                }
-            }
-        )
+        AlertScreen(
+            errorMessage,
+            onDismissRequest = {
+                showErrorDialog = false
+                // 모달이 닫힐 때 텍스트 필드 초기화 및 포커스 요청
+                inviteCode = ""
+                focusRequester.requestFocus()
+        })
+    }
+
+    // 컴포넌트가 처음 표시될 때 포커스 요청
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 }
 
@@ -771,7 +783,7 @@ fun RandomContent(onBack: () -> Unit) {
                             else -> 2 // 기본값 설정
                         }
 
-                        RandomMatchSocket(bossLevel, roomPlayers) { currentPlayers, maxPlayers ->
+                        RandomMatchSocket(context, bossLevel, roomPlayers) { currentPlayers, maxPlayers ->
                             // Matching으로 이동
                             val intent = Intent(context, Matching::class.java)
                             intent.putExtra("currentPlayers", currentPlayers)
@@ -930,10 +942,6 @@ fun SingleContent(onBack: () -> Unit) {
                     enabled = isSingleEnabled,
                     onSingleClick = {
 
-//                        // 소켓 초기화, 연결
-//                        SocketHandler.initialize(context)
-//                        SocketHandler.connect()
-
                         // 난이도 변환 : "상" -> "HARD", "중" -> "MEDIUM", "하" -> "EASY"
                         val bossLevel = when (singleDifficulty) {
                             "상" -> "HARD"
@@ -942,16 +950,16 @@ fun SingleContent(onBack: () -> Unit) {
                             else -> "EASY" // 기본값 설정
                         }
 
-                        singlePlaySocket(bossLevel, 1) { bossLevel, playerNum ->
+                        singlePlaySocket(bossLevel, 1) { firstBossHealth, playerNicknames ->
                             val intent = Intent(context, GamePlay::class.java)
-                            intent.putExtra("bossLevel", bossLevel)
-                            intent.putExtra("playerNum", playerNum)
+                            intent.putExtra("firstBossHealth", firstBossHealth)
+                            intent.putStringArrayListExtra("playerNicknames", playerNicknames)
                             context.startActivity(intent)
+                            Log.d("Socket", "firstBossHealth: $firstBossHealth")
                         }
                     }
                 )
             }
-
             Spacer(modifier = Modifier.height(15.dp))
         }
     }
@@ -1118,21 +1126,22 @@ fun CreateRoomSocket(
 
 // 웹소켓 입장 이벤트
 fun JoinRoomSocket(
+    context: Context,
     inviteCode: String,
     onSuccess: (inviteCode: String,
                    currentPlayers: Int,
                    maxPlayers: Int) -> Unit,
     onError: (String) -> Unit)
 {
+
     // 전송할 JSON 생성
     val joinRoomJson = JSONObject().apply {
         put("inviteCode", inviteCode)
-
     }
-    Log.d("Socket", "Emit - joinRoom")
 
     // 입장 요청
     SocketHandler.mSocket.emit("joinRoom", joinRoomJson)
+    Log.d("Socket", "Emit - joinRoom")
 
     // 입장 응답 이벤트 리스너 등록
     SocketHandler.mSocket.off("roomJoined") // 중복 등록 방지
@@ -1140,35 +1149,68 @@ fun JoinRoomSocket(
         if (args.isNotEmpty() && args[0] is JSONObject) {
 
             val json = args[0] as JSONObject
+            val roomId = json.optString("roomId", "")
+            val extractedInviteCode = json.optString("inviteCode", "")
+            val currentPlayers = json.optInt("currentPlayers", 0)
+            val maxPlayers = json.optInt("maxPlayers", 0)
 
-            // 만약 json에 "error" 키가 있으면 에러 처리
-            if (json.has("error")) {
-                val errorMsg = json.optString("error", "알 수 없는 에러")
-                Log.d("Socket", "Error - roomJoined : $errorMsg")
-                onError(errorMsg)
-            } else
-            {
-                // 정상 응답일 경우
-                val roomId = json.optString("roomId", "")
-                val extractedInviteCode = json.optString("inviteCode", "")
-                val currentPlayers = json.optInt("currentPlayers", 0)
-                val maxPlayers = json.optInt("maxPlayers", 0)
-
-                Log.d(
-                    "Socket",
-                    "On - roomJoined : userId: $roomId, inviteCode: $extractedInviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
-                )
-                // 콜백으로 초대코드, 현재수, 정원수 전달
-                onSuccess(inviteCode, currentPlayers, maxPlayers)
-            }
-        } else {
-           Log.d("Socket", "Error - roomJoined : 잘못된 응답")
+            Log.d(
+                "Socket",
+                "On - roomJoined : userId: $roomId, inviteCode: $extractedInviteCode, currentPlayers: $currentPlayers, maxPlayers: $maxPlayers"
+            )
+            // 콜백으로 초대코드, 현재수, 정원수 전달
+            onSuccess(inviteCode, currentPlayers, maxPlayers)
         }
     }
+
+    // 코드 입력 오류이면
+    SocketHandler.mSocket.on("error") {
+        Log.d("Socket", "코드입력 오류!")
+        onError("잘못된 코드입니다!")
+    }
+
+    // 만약 마지막 참여자여서 바로 게임스타트 이벤트가 온다면, 바로 받기
+    SocketHandler.mSocket.off("gameReady")
+    SocketHandler.mSocket.on("gameReady") {
+        Log.d("Socket", "On - gameReady")
+    }
+    SocketHandler.mSocket.off("gameStart")
+    SocketHandler.mSocket.on("gameStart") { args ->
+
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+
+            val firstBossHealth = json.optInt("bossHp", 10000)
+
+            val playerNicknames = arrayListOf<String>()
+            val playersArray = json.optJSONArray("players")
+            if (playersArray != null) {
+                for (i in 0 until playersArray.length()) {
+                    val playerObj = playersArray.optJSONObject(i)
+                    playerObj?.let {
+                        val nickname = it.optString("nickname", "")
+                        if (nickname.isNotEmpty()) {
+                            playerNicknames.add(nickname)
+                        }
+                    }
+                }
+            }
+
+            Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+
+            // GameplayActivity로 이동
+            val intent = Intent(context, GamePlay::class.java)
+            intent.putExtra("firstBossHealth", firstBossHealth)
+            intent.putStringArrayListExtra("playerNicknames", playerNicknames)
+            context.startActivity(intent)
+        }
+    }
+
 }
 
 // 랜덤매칭 이벤트
 fun RandomMatchSocket(
+    context: Context,
     bossLevel: String,
     roomPlayers: Int,
     matchCreated: (currentPlayers: Int,
@@ -1185,6 +1227,7 @@ fun RandomMatchSocket(
     SocketHandler.mSocket.emit("randomMatch", randomMatchJson)
 
     // 매치 상황 이벤트 리스너 등록
+    SocketHandler.mSocket.off("matchStatus")
     SocketHandler.mSocket.on("matchStatus") { args ->
         if (args.isNotEmpty() && args[0] is JSONObject) {
             val json = args[0] as JSONObject
@@ -1202,19 +1245,56 @@ fun RandomMatchSocket(
             matchCreated(currentPlayers, maxPlayers)
         }
     }
-}
 
+    // 만약 마지막 참여자여서 바로 게임스타트 이벤트가 온다면, 바로 받기
+    SocketHandler.mSocket.off("gameReady")
+    SocketHandler.mSocket.on("gameReady") {
+        Log.d("Socket", "On - gameReady")
+    }
+    SocketHandler.mSocket.off("gameStart")
+    SocketHandler.mSocket.on("gameStart") { args ->
+
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+
+            val firstBossHealth = json.optInt("bossHp", 10000)
+
+            val playerNicknames = arrayListOf<String>()
+            val playersArray = json.optJSONArray("players")
+            if (playersArray != null) {
+                for (i in 0 until playersArray.length()) {
+                    val playerObj = playersArray.optJSONObject(i)
+                    playerObj?.let {
+                        val nickname = it.optString("nickname", "")
+                        if (nickname.isNotEmpty()) {
+                            playerNicknames.add(nickname)
+                        }
+                    }
+                }
+            }
+
+            Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+
+            // GameplayActivity로 이동
+            val intent = Intent(context, GamePlay::class.java)
+            intent.putExtra("firstBossHealth", firstBossHealth)
+            intent.putStringArrayListExtra("playerNicknames", playerNicknames)
+            context.startActivity(intent)
+        }
+    }
+}
 
 // 싱글플레이 이벤트
 fun singlePlaySocket(
     bossLevel: String,
     roomPlayers: Int,
-    gameStart: (bossLevel: String,
-                   playerNum: Int) -> Unit)
+    gameStart: (firstBossHealth: Int, playerNicknames: ArrayList<String>) -> Unit)
 {
+    var firstBossHealth = 0
+
     // 전송할 JSON 생성
     val singleMatchJson = JSONObject().apply {
-        put("bossLevel", bossLevel)    // "EASY" "MEDIUM", "HARD"
+        put("bossLevel", bossLevel)    // "EASY" "NORMAL", "HARD"
         put("maxPlayers", roomPlayers)        // 1
     }
     Log.d("Socket", "Emit - singleRandomMatch")
@@ -1222,15 +1302,35 @@ fun singlePlaySocket(
     // 랜덤매치 전송
     SocketHandler.mSocket.emit("randomMatch", singleMatchJson)
 
-    // 방 생성 응답 이벤트 리스너 등록
-    SocketHandler.mSocket.on("gameStart") {
+    SocketHandler.mSocket.on("gameReady"){
+        Log.d("Socket", "On - gameReady")
+    }
 
-        // JSON 데이터 로그 출력
-        Log.d(
-            "Socket",
-            "On - gameStart"
-        )
-        // 콜백
-        gameStart(bossLevel, 1)
+    // 게임 스타트 이벤트 시작
+    SocketHandler.mSocket.on("gameStart") { args ->
+
+        if (args.isNotEmpty() && args[0] is JSONObject) {
+            val json = args[0] as JSONObject
+
+            firstBossHealth = json.optInt("bossHp", 10000)
+
+            val playerNicknames = arrayListOf<String>()
+            val playersArray = json.optJSONArray("players")
+            if (playersArray != null) {
+                for (i in 0 until playersArray.length()) {
+                    val playerObj = playersArray.optJSONObject(i)
+                    playerObj?.let {
+                        val nickname = it.optString("nickname", "")
+                        if (nickname.isNotEmpty()) {
+                            playerNicknames.add(nickname)
+                        }
+                    }
+                }
+            }
+
+            Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+
+            gameStart(firstBossHealth, playerNicknames)
+        }
     }
 }

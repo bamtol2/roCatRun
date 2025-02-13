@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.security.identity.ResultData
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -30,6 +31,7 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.PutDataMapRequest
 import kotlinx.coroutines.Dispatchers
@@ -40,55 +42,119 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.ArrayList
 
 class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
     private lateinit var dataClient: DataClient
     private var runningData by mutableStateOf<RunningData?>(null)
     private var resultData by mutableStateOf<ResultData?>(null)
-    private var playersData by mutableStateOf<PlayersData?>(null)
     private var gpxFileReceived by mutableStateOf(false)
+
+    // 게임 오버 상태를 관리하는 변수 추가
+    private var isGameOver by mutableStateOf(false)
 
     // 실시간 러닝 데이터
     data class RunningData(
-        val totalDistance: Double,
-        val elapsedTime: Long
+        val distance: Double,
+        val time: Long
     )
 
     // 실시간 팀원들 데이터
     data class PlayersData(
-        val userId: String,
+        val nickName: String,
         val totalDistance: Double,
         val totalItemUsage: Int,
     )
 
-    // 본인 결과 데이터
+    // 워치에서 받아오는 본인 결과 데이터
     data class ResultData(
-        val totalDistance: Double,
-        val elapsedTime: Long,
+        val distance: Double,
+        val time: Long,
         val averagePace: Double,
         val averageHeartRate: Double,
 //        val averageCadence?? - 케이던스 어케할건징
 //        val totalItemUsage: Int,
     )
 
-    // 유저들 게임 결과 데이터
-    data class PlayersResultData(
+    // 웹소켓에서 받아오는 나의 게임 결과 데이터
+    data class MyResultData(
         val userId: String,
+        val nickName: String,
+        val characterImage: String,  // 유저의 프로필 이미지 파일 경로
         val runningTime: Long,
         val totalDistance: Double,
         val paceAvg: Double,
         val heartRateAvg: Double,
         val cadenceAvg: Double,
         val calories: Int,
-        val itemUseCount: Int
+        val itemUseCount: Int,
+        val rewardExp: Int,
+        val rewardCoin: Int
     )
+
+    // 유저들 게임 결과 데이터
+    data class PlayersResultData(
+        val userId: String,
+        val nickname: String,
+        val characterImage: String,  // 유저의 프로필 이미지 파일 경로
+        val totalDistance: Double,
+        val itemUseCount: Int,
+        val rewardExp: Int,
+        val rewardCoin: Int
+    )
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        setupSocketListeners()
+
+        // intent로 전달된 bossHealth 추출
+        val firstBossHealth = intent.getIntExtra("firstBossHealth", 100000)
+        val playerNicknames = intent.getStringArrayListExtra("playerNicknames")
+
         dataClient = Wearable.getDataClient(this)
-        gameStartSocket()
-        playerDataUpdatedSocket()
+
+        Log.d("Socket", "페이지 이동 후 표출 $firstBossHealth $playerNicknames")
+
+        // 워치 앱을 시작하는 함수
+        fun startWatchApp(context: Context) {
+            val messageClient: MessageClient = Wearable.getMessageClient(context)
+            val path = "/start_watch_app"
+            val messageData = "Start Game".toByteArray()
+
+            Wearable.getNodeClient(context).connectedNodes.addOnSuccessListener { nodes ->
+                if (nodes.isNotEmpty()) {
+                    val nodeId = nodes.first().id
+                    Log.d("WearApp", "연결된 노드: ${nodes.first().displayName}")
+
+                    messageClient.sendMessage(nodeId, path, messageData).apply {
+                        addOnSuccessListener {
+                            Log.d("Wear APP", "메시지 전송 성공")
+                            Toast.makeText(context, "워치 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
+
+                            // 게임 초기 데이터 전송
+                            if (playerNicknames != null) {
+                                gameStartEvent(firstBossHealth, playerNicknames)
+                            }
+                        }
+                        addOnFailureListener { exception ->
+                            Log.e("Wear APP", "메시지 전송 실패: ${exception.message}")
+                            Toast.makeText(context, "워치 앱 시작 요청 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    Log.d("WearApp", "연결된 노드가 없습니다.")
+                    Toast.makeText(context, "연결된 디바이스가 없습니다.", Toast.LENGTH_SHORT).show()
+                }
+            }.addOnFailureListener { exception ->
+                Log.e("WearApp", "노드 검색 실패: ${exception.message}")
+                Toast.makeText(context, "워치 연결 확인 실패", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // 메세지 보내기
+        startWatchApp(this)
 
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
@@ -142,10 +208,16 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
 
     // 워치에서 실시간 러닝데이터 받아오는 함수
     private fun processRunningData(dataItem: DataItem) {
+        // 게임 오버 상태면 데이터 전송하지 않음
+        if (isGameOver) {
+            Log.d("Wear", "게임 오버 상태 - 러닝 데이터 전송 중단")
+            return
+        }
+
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
             runningData = RunningData(
-                totalDistance = getDouble("distance"),
-                elapsedTime = getLong("time")
+                distance = getDouble("distance"),
+                time = getLong("time")
             )
         }
 
@@ -153,19 +225,19 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
 
         // 웹소켓으로 전송
         runningData?.let { data ->
-            updateRunDataSocket(data.totalDistance, data.elapsedTime)
+            updateRunDataSocket(data.distance)
         }
     }
 
     // 워치에서 게임 결과 받아오는 함수
     private fun processResultData(dataItem: DataItem) {
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
-            resultData = ResultData(
-                totalDistance = getDouble("distance"),
-                elapsedTime = getLong("time"),
+            resultData = GamePlay.ResultData(
+                distance = getDouble("distance"),
+                time = getLong("time"),
                 averagePace = getDouble("averagePace"),
                 averageHeartRate = getDouble("averageHeartRate")
-//                totalItemUsage = getInt("totalItemUsage")
+//                averageCadence = getDouble("averageCadence")
             )
         }
 
@@ -174,8 +246,8 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         // 웹소켓으로 전송
         resultData?.let { data ->
             submitRunningResultSocket(
-                data.elapsedTime, 
-                data.totalDistance, 
+                data.time,
+                data.distance,
                 data.averagePace,
                 data.averageHeartRate,
                 0.0              // 케이던스...
@@ -253,93 +325,42 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         context.startActivity(Intent.createChooser(shareIntent, "GPX 파일 공유"))
     }
 
-    // 웹소켓 - 게임 스타트 수신
-    private fun gameStartSocket(){
-        // 게임 스타트 이벤트 시작
-        SocketHandler.mSocket.on("gameStart") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val json = args[0] as JSONObject
-                val firstBossHealth = json.optInt("bossHp", 10000)
+    // 워치 - 초기 boss health, 플레이어 닉네임 보내기
+    private fun gameStartEvent(firstBossHealth: Int, playerNicknames: ArrayList<String>){
 
-                Log.d("Socket", "On - gameStart : $firstBossHealth")
-
-                // 워치에 초기 boss health 보내기
-                val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
-                putDataMapRequest.dataMap.apply {
-                    putInt("firstBossHealth",firstBossHealth)
-                }
-                val request = putDataMapRequest.asPutDataRequest().setUrgent()
-                dataClient.putDataItem(request)
-                    .addOnSuccessListener { _ ->
-                        Log.d("Wear", "보스 초기 체력 송신")
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("Wear", "보스 초기 체력 송신 실패", exception)
-                    }
-            }
+        // 워치에 초기 boss health 보내기
+        val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
+        putDataMapRequest.dataMap.apply {
+            putInt("firstBossHealth",firstBossHealth)
+            // 닉네임 ArrayList 추가
+            putStringArrayList("playerNicknames", playerNicknames)
         }
+        val request = putDataMapRequest.asPutDataRequest().setUrgent()
+        dataClient.putDataItem(request)
+            .addOnSuccessListener { _ ->
+                Log.d("Wear", "보스 초기 체력 송신")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Wear", "보스 초기 체력 송신 실패", exception)
+            }
     }
 
     // 웹소켓 - 실시간 러닝데이터 송신
     private fun updateRunDataSocket(
-        distance: Double,
-        runningTime: Long)
+        distance: Double)
     {
         // 전송할 JSON 생성: {"runningData": {"distance": 5.2, "runningTime": 123}}
         val runningDataPayload = JSONObject().apply {
             put("distance", distance)
-            put("runningTime", runningTime)
         }
         val runDataJson = JSONObject().apply {
             put("runningData", runningDataPayload)
         }
-        Log.d("Socket", "Emit - updateRunningData: $runDataJson")
 
         // updateRunningData 실시간 러닝 데이터 전송
         SocketHandler.mSocket.emit("updateRunningData", runDataJson)
 
-    }
-
-    // 웹소켓 - 플레이어들 실시간 데이터 수신
-    private fun playerDataUpdatedSocket(){
-
-        // 서버에서 updateRunningData 응답 받기
-        SocketHandler.mSocket.on("updateRunningData") { args ->
-            if (args.isNotEmpty() && args[0] is JSONObject) {
-                val responseJson = args[0] as JSONObject
-                val userId = responseJson.optString("userId", "unknown")
-                val returnedDistance = responseJson.optDouble("distance", 0.0)
-                val itemUseCount = responseJson.optInt("itemUseCount", 0)
-                Log.d(
-                    "Socket", "On - updateRunningData: " +
-                            "userId: $userId, distance: $returnedDistance, itemUseCount: $itemUseCount"
-                )
-
-                // 워치에 보낼 playersData 에 위 정보 넣어서 그대로 보내기
-                playersData = PlayersData(
-                    userId = userId,
-                    totalDistance = returnedDistance,
-                    totalItemUsage = itemUseCount
-                )
-
-                // 업데이트된 playersData를 워치에 전송하기 위해 PutDataMapRequest 생성
-                val putDataMapRequest = PutDataMapRequest.create("/players_data")
-                putDataMapRequest.dataMap.apply {
-                    putString("userId", userId)
-                    putDouble("distance", returnedDistance)
-                    putInt("itemUseCount", itemUseCount)
-                }
-                val request = putDataMapRequest.asPutDataRequest().setUrgent()
-                dataClient.putDataItem(request)
-                    .addOnSuccessListener { _ ->
-                        Log.d("Wear", "플레이어들 데이터 전송 완료")
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("Wear", "플레이어들 데이터 전송 실패", exception)
-                    }
-
-            }
-        }
+        Log.d("Socket", "Emit - updateRunningData: $runDataJson")
     }
 
     // 웹소켓 - 게임 결과 데이터 송신
@@ -351,16 +372,27 @@ class GamePlay : ComponentActivity(), DataClient.OnDataChangedListener {
         cadenceAvg: Double
     ){
         val runningResultJson = JSONObject().apply {
-            put("runningTime", runningTime)
+            put("runningTimeSec", runningTime)
             put("totalDistance", totalDistance)
             put("paceAvg", paceAvg)
             put("heartRateAvg", heartRateAvg)
             put("cadenceAvg", cadenceAvg)
         }
-        Log.d("Socket", "Emit - submitRunningResult: $runningResultJson")
 
         // 본인 러닝 결과 전송
         SocketHandler.mSocket.emit("submitRunningResult", runningResultJson)
+        Log.d("Socket", "Emit - submitRunningResult: $runningResultJson")
+    }
 
+    // 소켓 이벤트 리스너 설정 함수
+    private fun setupSocketListeners() {
+        SocketHandler.mSocket.on("gameOver") { args ->
+            runOnUiThread {
+                isGameOver = true
+                Log.d("Socket", "게임 오버 이벤트 수신")
+                // 필요한 경우 추가적인 게임 오버 처리
+            }
+        }
     }
 }
+

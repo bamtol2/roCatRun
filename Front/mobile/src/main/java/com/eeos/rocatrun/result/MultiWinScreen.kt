@@ -1,6 +1,8 @@
 package com.eeos.rocatrun.result
 
+import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,12 +42,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.game.GifImage
 import com.eeos.rocatrun.home.HomeActivity
 import kotlinx.coroutines.delay
 
 @Composable
-fun MultiWinScreen() {
+fun MultiWinScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults: List<GamePlay.PlayersResultData?>)
+{
     // confetti GIF 표시 여부 상태
     var showConfetti by remember { mutableStateOf(true) }
     val context = LocalContext.current
@@ -97,44 +101,64 @@ fun MultiWinScreen() {
                     painter = painterResource(id = R.drawable.game_img_wincat),
                     contentDescription = null,
                     modifier = Modifier
-                        .size(130.dp)
+                        .size(110.dp)
                 )
 
-                // 게임 결과 정보 HorizontalPager
-
-                HorizontalPager(
-                    state = pagerState,
+                Box(contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp),
-                ) { page ->
-                    when (page) {
-                        0 -> FirstResultPage()
-                        1 -> SecondResultPage()
-                    }
-                }
+                        .height(300.dp)
+                        .fillMaxWidth(0.9f)
+                        .border(width = 1.dp, color = Color(0xFFFFFF00))
+                        .background(Color(0x7820200D))
+                        .padding(16.dp)
+//                    .height(240.dp),
+                )
+                {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
 
-                // 인디케이터
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    repeat(2) { index ->
-                        Box(
+                    ) {
+                        // 게임 결과 정보 HorizontalPager
+                        HorizontalPager(
+                            state = pagerState,
                             modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .size(8.dp)
-                                .background(
-                                    if (pagerState.currentPage == index) Color.White else Color.Gray,
-                                    CircleShape
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) { page ->
+                            when (page) {
+                                0 -> FirstResultPage(myResult = myResult)
+                                1 -> SecondResultPage(playerResults = playerResults)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // 인디케이터
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            repeat(2) { index ->
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .size(8.dp)
+                                        .background(
+                                            if (pagerState.currentPage == index) Color.White else Color.Gray,
+                                            CircleShape
+                                        )
                                 )
-                        )
+                            }
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 입장 버튼
+                // 확인 버튼
                 Box(
                     modifier = Modifier
                         .border(
@@ -142,7 +166,6 @@ fun MultiWinScreen() {
                             color = Color(0xFFFFFF00),
                             shape = RoundedCornerShape(7.dp)
                         )
-                        // 입장 클릭하면 대기중 화면 띄우기
                         .clickable {
                             // 홈화면으로 이동.
                             val intent = Intent(context, HomeActivity::class.java)
@@ -174,114 +197,97 @@ fun MultiWinScreen() {
 }
 
 @Composable
-private fun FirstResultPage() {
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ){
-        Box(
+private fun FirstResultPage(myResult: GamePlay.MyResultData?) {
+
+    Box {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .border(width = 1.dp, color = Color(0xFFFFFF00))
-                .background(Color(0x7820200D))
-                .padding(16.dp)
-                .height(240.dp),
-        ) {
-            Column(
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            ) {
+            // 2x2 그리드
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                ResultItem("거리", "${myResult?.totalDistance?.let { "%.1f".format(it)}}km")
+                ResultItem("시간", formatTime(myResult?.runningTime ?: 0))
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(23.dp)
+            ) {
+                ResultItem("페이스", formatPace(myResult?.paceAvg ?: 0.0))
+                ResultItem("칼로리", "${myResult?.calories ?: 0}kcal")
+            }
+
+            Spacer(modifier = Modifier.height(15.dp))
+
+            // 구분선
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                    .height(1.dp)
+                    .background(Color(0xFFFFFF00))
+            )
 
-                ) {
-                // 2x2 그리드
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(23.dp)
-                ) {
-                    ResultItem("거리", "42.5km")
-                    ResultItem("시간", "00:20:30")
-                }
-                Spacer(modifier = Modifier.height(25.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(23.dp)
-                ) {
-                    ResultItem("페이스", "06'32\"")
-                    ResultItem("칼로리", "320kcal")
-                }
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                // 구분선
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color(0xFFFFFF00))
-                )
-
-                Spacer(modifier = Modifier.height(15.dp))
-                ResultRow("순위", "1위")
-                Spacer(modifier = Modifier.height(10.dp))
-                ResultRow("획득 경험치", "+10exp")
-            }
+            Spacer(modifier = Modifier.height(15.dp))
+            ResultRow("공격 횟수", "${myResult?.itemUseCount ?: 0}번")
+            Spacer(modifier = Modifier.height(10.dp))
+            ResultRow("획득 경험치", "+${myResult?.rewardExp ?: 0}exp")
+            Spacer(modifier = Modifier.height(10.dp))
+            ResultRow("획득 코인", "+${myResult?.rewardCoin ?: 0}코인")
         }
     }
 }
 
+
 @Composable
-private fun SecondResultPage() {
+private fun SecondResultPage(playerResults: List<GamePlay.PlayersResultData?>) {
 
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
+    Box {
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .border(width = 1.dp, color = Color(0xFFFFFF00))
-                .background(Color(0x7820200D))
-                .padding(16.dp)
-                .height(240.dp),
+                .fillMaxSize()
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // 헤더
-                Row {
+            // 헤더
+            Row {
 
-                    Text(text = "순위", color = Color.White, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.width(110.dp))
-                    Text(text = "거리", color = Color.White, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.width(30.dp))
-                    Text(text = "보상", color = Color.White, fontSize = 16.sp)
-                }
+                Text(text = "순위", color = Color.White, fontSize = 13.sp)
+                Spacer(modifier = Modifier.width(36.dp))
+                Text(text = "닉네임", color = Color.White, fontSize = 13.sp)
+                Spacer(modifier = Modifier.width(35.dp))
+                Text(text = "거리", color = Color.White, fontSize = 13.sp)
+                Spacer(modifier = Modifier.width(27.dp))
+                Text(text = "보상", color = Color.White, fontSize = 13.sp)
+            }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color(0xFFFFFF00))
-                )
+            Spacer(modifier = Modifier.height(5.dp))
 
-                // 참가자 목록 (예시로 3명으로 설정, 추후 연동해서 수정할거임)
-                val participants = listOf(
-                    Triple("타노스", "42.5km", "+10exp"),
-                    Triple("마이애미", "40.2km", "+8exp"),
-                    Triple("과즙가람", "38.7km", "+6exp"),
-                    Triple("규리몽땅", "31.7km", "+20exp")
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(0.5.dp)
+                    .background(Color(0xFFFFFF00))
+            )
 
-                participants.forEachIndexed { index, (nickname, distance, reward) ->
-                    RankingRow(
+            Spacer(modifier = Modifier.height(4.dp))
+
+            playerResults.forEachIndexed { index, player ->
+                if (player != null) {
+                    RankingWinRow(
                         rank = index + 1,
-                        profileImage = R.drawable.game_img_wincat,
-                        nickname = nickname,
-                        distance = distance,
-                        reward = reward,
-                        totalParticipants = participants.size
+                        profileImage = player.characterImage, // 기본 이미지 사용
+                        nickname = player.nickname,
+                        distance = String.format("%.1fkm", player.totalDistance),
+                        reward = "+${player.rewardExp}exp",
+                        totalParticipants = playerResults.size
                     )
+                } else {
+                    Log.d("Socket", "Error - 데이터 파싱 에러")
                 }
             }
         }
@@ -313,14 +319,24 @@ private fun ResultRow(label: String, value: String) {
 }
 
 @Composable
-private fun RankingRow(
+private fun RankingWinRow(
     rank: Int,
-    profileImage: Int,
+    profileImage: String,
     nickname: String,
     distance: String,
     reward: String,
     totalParticipants: Int
 ) {
+    val context = LocalContext.current
+    val imageResId = getDrawableResourceId(context, profileImage)
+
+    // 닉네임을 5자 이상일 때만 4자로 제한
+    val displayNickname = if (nickname.length >= 5) {
+        nickname.take(4)
+    } else {
+        nickname
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -333,12 +349,12 @@ private fun RankingRow(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 3.dp),
+                .padding(horizontal = 5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier.weight(1.4f),
+                modifier = Modifier.weight(1.2f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 순위 표시 (메달 이미지 또는 텍스트)
@@ -366,13 +382,13 @@ private fun RankingRow(
 
                 Spacer(modifier = Modifier.width(5.dp))
                 Image(
-                    painter = painterResource(id = profileImage),
+                    painter = painterResource(id = imageResId),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = nickname,
+                    text = displayNickname,
                     color = Color.White,
                     fontSize = 13.sp,
                     modifier = Modifier.weight(1f)
@@ -383,7 +399,7 @@ private fun RankingRow(
             Text(
                 text = distance,
                 color = Color.White,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 modifier = Modifier.weight(0.5f),
                 textAlign = TextAlign.Center
             )
@@ -392,7 +408,7 @@ private fun RankingRow(
             Text(
                 text = reward,
                 color = Color(0xFFFFDA0A),
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 modifier = Modifier.weight(0.5f),
                 textAlign = TextAlign.End
             )
@@ -400,3 +416,28 @@ private fun RankingRow(
     }
 }
 
+// 시간 포맷팅 함수
+private fun formatTime(timeInMillis: Long): String {
+    val hours = timeInMillis / (1000 * 60 * 60)
+    val minutes = (timeInMillis % (1000 * 60 * 60)) / (1000 * 60)
+    val seconds = (timeInMillis % (1000 * 60)) / 1000
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
+// 페이스 포맷팅 함수
+private fun formatPace(paceInMinutesPerKm: Double): String {
+    val minutes = paceInMinutesPerKm.toInt()
+    val seconds = ((paceInMinutesPerKm - minutes) * 60).toInt()
+    return String.format("%02d'%02d\"", minutes, seconds)
+}
+
+// 이미지 리소스 ID를 가져오는 함수
+private fun getDrawableResourceId(context: Context, filename: String): Int {
+    val resourceId = context.resources.getIdentifier(
+        filename.substringBeforeLast("."), // 확장자 제거
+        "drawable",
+        context.packageName
+    )
+    // 리소스를 찾지 못하면 기본 이미지 반환
+    return if (resourceId != 0) resourceId else R.drawable.game_img_wincat
+}

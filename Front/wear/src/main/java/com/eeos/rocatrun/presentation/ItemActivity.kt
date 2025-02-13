@@ -1,5 +1,7 @@
 package com.eeos.rocatrun.presentation
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,12 +27,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.component.CircularItemGauge
 import com.eeos.rocatrun.component.FeverTime
-//import android.content.Context
-//import android.os.VibrationEffect
-//import android.os.Vibrator
 import androidx.activity.viewModels
+import com.eeos.rocatrun.viewmodel.BossHealthRepository
 import com.eeos.rocatrun.viewmodel.GameViewModel
 import com.eeos.rocatrun.viewmodel.MultiUserViewModel
+
 
 
 class ItemActivity : ComponentActivity() {
@@ -76,7 +77,10 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
     val showItemGif by gameViewModel.showItemGif.collectAsState()
     val maxGaugeValue = 100
 
-    var itemUsageCount by remember { mutableIntStateOf(0) } // 아이템 사용 횟수 추적
+    // BossHealthRepository의 최대 체력 구독 (최초 값이 0이라면 기본값 10000 사용)
+    val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
+    val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
+
 
     // 피버 이벤트 관찰 시작
     LaunchedEffect(Unit) {
@@ -88,9 +92,10 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
         animationSpec = tween(durationMillis = 500)
     )
     val bossProgress by animateFloatAsState(
-        targetValue = bossGaugeValue.toFloat() / maxGaugeValue,
+        targetValue = bossGaugeValue.toFloat() / effectiveMaxBossHealth,
         animationSpec = tween(durationMillis = 500)
     )
+
 
     Box(
         contentAlignment = Alignment.Center,
@@ -171,7 +176,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
     ) {
         Button(
             onClick = {
-                gameViewModel.increaseItemGauge(1)
+                gameViewModel.setItemGauge(100)
                 if (gameViewModel.itemGaugeValue.value == 100) {
                     gameViewModel.handleGaugeFull(context)
                 }

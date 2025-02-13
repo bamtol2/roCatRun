@@ -102,7 +102,7 @@ fun SplashScreen() {
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-// 버튼들 배치
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()

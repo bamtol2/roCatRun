@@ -10,11 +10,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.presentation.ItemActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.eeos.rocatrun.presentation.ResultActivity
+import kotlinx.coroutines.flow.StateFlow
+import android.speech.tts.TextToSpeech
 
 /**
  * 게임의 상태 관리하는 ViewModel 클래스
@@ -27,7 +29,9 @@ class GameViewModel : ViewModel() {
     private var isHandlingGauge = false
 
     private val _itemGaugeValue = MutableStateFlow(0)
-    private val _bossGaugeValue = MutableStateFlow(100)
+    // BossHealthRepository에서 관리하는 값을 가져옴
+    private val _bossGaugeValue = MutableStateFlow(0)
+
     private val _feverTimeActive = MutableStateFlow(false)
     private val _showItemGif = MutableStateFlow(false)
     private val _itemUsageCount = MutableStateFlow(0)
@@ -38,42 +42,67 @@ class GameViewModel : ViewModel() {
     // 총 아이템 사용 횟수
     private var _totalItemUsageCount = MutableStateFlow(0)
 
+    // 사용가능한 아이템 횟수
+    private var _avaliableItemCount = MutableStateFlow(0)
+
     // 외부에서 읽기 전용으로 사용할 수 있는 상태 흐름 (StateFlow).
-    val itemGaugeValue = _itemGaugeValue.asStateFlow()
-    val bossGaugeValue = _bossGaugeValue.asStateFlow()
-    val feverTimeActive = _feverTimeActive.asStateFlow()
+    val itemGaugeValue: StateFlow<Int> get() = _itemGaugeValue
+    val bossGaugeValue: StateFlow<Int> get() = _bossGaugeValue
+    val feverTimeActive: StateFlow<Boolean> get() = _feverTimeActive
     val showItemGif = _showItemGif.asStateFlow()
     val itemUsedSignal = _itemUsedSignal.asStateFlow()
     val totalItemUsageCount = _totalItemUsageCount.asStateFlow()
 
+
+
+
+    // GameViewModel 초기화 시 BossHealthRepository의 bossHealth를 구독하여 보스 게이지 업데이트
+    init {
+        viewModelScope.launch {
+            BossHealthRepository.bossHealth.collect { health ->
+                _bossGaugeValue.value = health
+                Log.d("GameViewModel", "bossGaugeValue updated to $health")
+            }
+        }
+    }
     // 총 아이템 사용 횟수 증가 함수
     private fun incrementTotalItemUsageCount() {
         _totalItemUsageCount.value++
         Log.d("GameViewModel", "총 아이템 사용 횟수 증가: ${_totalItemUsageCount.value}")
     }
-    // 총 아이템 사용 횟수 초기화 함수
-    fun resetTotalItemUsageCount() {
-        _totalItemUsageCount.value = 0
-        Log.d("GameViewModel", "총 아이템 사용 횟수 초기화")
-    }
+
 
     // 아이템 사용 시 호출하는함수
     fun notifyItemUsage(){
-        _itemUsedSignal.value = true
-        incrementTotalItemUsageCount()
-        viewModelScope.launch {
-            delay(1000) // 중복 전송 방지하기 위한 딜레이
-            _itemUsedSignal.value = false
+        if (_avaliableItemCount.value > 0){
+            _itemUsedSignal.value = true
+            _showItemGif.value = true
+
+            incrementTotalItemUsageCount()
+            viewModelScope.launch {
+                delay(1000) // 중복 전송 방지하기 위한 딜레이
+                _avaliableItemCount.value--
+                _itemUsedSignal.value = false
+                _showItemGif.value = false
+            }
+            Log.d("GameViewModel", "아이템 사용")
+        }else{
+            Log.d("GameViewModel", "사용 가능한 아이템이 없습니다.")
         }
+
     }
 
     // 아이템 게이지 증가
-    fun increaseItemGauge(amount : Int) {
-        // 현재 게이지 값에 양을 추가하며, 최대 100을 넘지 않도록 제한
-        _itemGaugeValue.value = (_itemGaugeValue.value + amount).coerceAtMost(100)
-        Log.d("아이템 게이지", "현재 게이지 값: ${_itemGaugeValue.value}, 증가량: $amount")
-//        Log.i("아이템 사용 횟수 ", "횟수 : ${_itemUsageCount.value}")
+//    fun increaseItemGauge(amount : Int) {
+//        // 현재 게이지 값에 양을 추가하며, 최대 100을 넘지 않도록 제한
+//        _itemGaugeValue.value = (_itemGaugeValue.value + amount).coerceAtMost(100)
+//        Log.d("아이템 게이지", "현재 게이지 값: ${_itemGaugeValue.value}, 증가량: $amount")
+//    }
+    fun setItemGauge(value: Int) {
+        _itemGaugeValue.value = value.coerceIn(0, 100)
+        Log.d("GameViewModel", "Item gauge set to ${_itemGaugeValue.value}")
     }
+
 
     /**
      * 아이템 게이지가 가득 찼을 때 호출되는 함수.
@@ -85,22 +114,38 @@ class GameViewModel : ViewModel() {
 
         isHandlingGauge = true
         viewModelScope.launch {
-            notifyItemUsage()
+//            notifyItemUsage()
+            _avaliableItemCount.value++
             _itemUsageCount.value++
-            _showItemGif.value = true
+//            _showItemGif.value = true
             delay(1000)
-            _showItemGif.value = false
+//            _showItemGif.value = false
+            vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(1000), intArrayOf(100), -1)
+            vibrator?.vibrate(vibrationEffect)
+            var tts: TextToSpeech? = null
+            tts = TextToSpeech(context) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    val result = tts?.setLanguage(java.util.Locale.KOREAN)
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "한국어 TTS를 지원하지 않습니다.")
+                    } else {
+                        // 사용 가능한 아이템 개수를 알림
+                        val text = "사용 가능한 아이템 개수는 ${_avaliableItemCount.value}개 입니다."
+                        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+                } else {
+                    Log.e("TTS", "TTS 초기화 실패")
+                }
+            }
+//            delay(1000)
+//            tts.shutdown()
+
+
+
+
 
             _itemGaugeValue.value = 0
-            _bossGaugeValue.value = (_bossGaugeValue.value - 20).coerceAtLeast(0)
-
-//            if (_bossGaugeValue.value == 0) {
-//                stopFeverTimeEffects()  // 효과 중지
-//                navigateToResultActivity(context)  // 결과 액티비티로 이동
-//                return@launch
-//            }
-
-
             isHandlingGauge = false
         }
     }
@@ -110,8 +155,8 @@ class GameViewModel : ViewModel() {
     private var vibrator: Vibrator? = null
 
     fun startFeverTime(context: Context) {
-        _feverTimeActive.value = true
 
+        _feverTimeActive.value = true
         // 진동과 소리 재생
         vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(3000, 2000), intArrayOf(100, 0), 0)
@@ -143,13 +188,7 @@ class GameViewModel : ViewModel() {
         mediaPlayer = null
     }
 
-    // 결과 창으로 가는 함수
-//    private fun navigateToResultActivity(context: Context) {
-//        resetTotalItemUsageCount()
-//        val intent = Intent(context, ResultActivity::class.java)
-//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-//        context.startActivity(intent)
-//    }
+
 
     fun observeFeverEvents(viewModel: MultiUserViewModel, context: Context) {
         viewModelScope.launch {

@@ -80,16 +80,38 @@ fun MatchingScreen(
                 maxUsers = json.optInt("maxPlayers", maxUsers)
             }
         }
+        //        SocketHandler.mSocket.off("gameReady")
+        SocketHandler.mSocket.on("gameReady") {
+            Log.d("Socket", "On - gameReady")
+        }
+//        SocketHandler.mSocket.off("gameStart")
+        SocketHandler.mSocket.on("gameStart") { args ->
 
-        SocketHandler.mSocket.on("gameReady") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val json = args[0] as JSONObject
-                val message = json.optString("message", "")
 
-                Log.d("Socket", "On - gameReady $message")
+                val firstBossHealth = json.optInt("bossHp", 10000)
+
+                val playerNicknames = arrayListOf<String>()
+                val playersArray = json.optJSONArray("players")
+                if (playersArray != null) {
+                    for (i in 0 until playersArray.length()) {
+                        val playerObj = playersArray.optJSONObject(i)
+                        playerObj?.let {
+                            val nickname = it.optString("nickname", "")
+                            if (nickname.isNotEmpty()) {
+                                playerNicknames.add(nickname)
+                            }
+                        }
+                    }
+                }
+
+                Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
 
                 // GameplayActivity로 이동
                 val intent = Intent(context, GamePlay::class.java)
+                intent.putExtra("firstBossHealth", firstBossHealth)
+                intent.putStringArrayListExtra("playerNicknames", playerNicknames)
                 context.startActivity(intent)
             }
         }
@@ -195,6 +217,7 @@ fun MatchingScreen(
 
                     // 매칭취소 이벤트 발생
                     SocketHandler.mSocket.emit("cancelMatch")
+                    Log.d("Socket", "Emit - cancelMatch")
 
                     // 방페이지로 이동
                     val intent = Intent(context, GameRoom::class.java)
