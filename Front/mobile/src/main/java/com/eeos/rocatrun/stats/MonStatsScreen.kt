@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,6 +61,7 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
     val token = TokenStorage.getAccessToken(context)
 
     val statsViewModel: StatsViewModel = viewModel()
+    val noMonData = statsViewModel.noMonData.observeAsState(initial = false)
 
     // 다이얼로그의 표시 여부 상태
     var isDialogVisible by remember { mutableStateOf(false) }
@@ -149,7 +151,7 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
                 contentAlignment = Alignment.Center
             ) {
                 StrokedText(
-                    text = "${monStatsData?.data?.summary?.totalDistance} KM",
+                    text = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.averagePace}",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,
@@ -165,11 +167,11 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem(label = "러닝", value = "${monStatsData?.data?.summary?.totalRuns}")
-                StatItem(label = "페이스", value = "${monStatsData?.data?.summary?.averagePace}")
+                StatItem(label = "러닝", value = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.totalRuns}")
+                StatItem(label = "페이스", value = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.averagePace}")
                 StatItem(
                     label = "총 시간",
-                    value = "${formatTotalTime(monStatsData?.data?.summary?.totalTime ?: "00:00:00")}"
+                    value = if (noMonData.value) "00:00:00" else formatTotalTime(monStatsData?.data?.summary?.totalTime ?: "00:00:00")
                 )
             }
 
@@ -182,15 +184,20 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
                     .height(300.dp)
                     .background(Color(0x8200001E), RoundedCornerShape(8.dp))
             ) {
-                BarGraphMon(month = sMonth, year = sYear, monStatsData = monStatsData)
+                BarGraphMon(month = sMonth, year = sYear, monStatsData = monStatsData, noMonData = noMonData.value)
             }
         }
     }
 }
 
 @Composable
-fun BarGraphMon(year: Int, month: Int, monStatsData: WeekMonStatsResponse?) {
-    val dataList = monStatsData?.data?.dailyStats ?: emptyList()
+fun BarGraphMon(year: Int, month: Int, monStatsData: WeekMonStatsResponse?, noMonData: Boolean) {
+
+    val dataList = if (noMonData) {
+        emptyList()
+    } else {
+        monStatsData?.data?.dailyStats ?: emptyList()
+    }
 
     val maxDistance = (dataList.maxOfOrNull { it.distance } ?: 1.0).coerceAtLeast(1.0)
     val yAxisIndicators = listOf(
