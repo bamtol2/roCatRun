@@ -8,8 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -302,6 +304,8 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 textAlign = TextAlign.Center
             )
 
+            Spacer(modifier = Modifier.height(150.dp))
+
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -317,67 +321,6 @@ fun GameplayScreen(gpxFileReceived: Boolean, onShareClick: () -> Unit) {
                 )
             }
 
-
-            // 임시 테스트용 버튼 - 없앨거임
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.padding(top = 150.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "멀티 승리",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            modifier = Modifier.clickable { showMultiWinDialog = true }
-                        )
-                    }
-                }
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "멀티 패배",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            modifier = Modifier.clickable { showMultiLoseDialog = true }
-                        )
-                    }
-                }
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "싱글 승리",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            modifier = Modifier.clickable { showSingleWinDialog = true }
-                        )
-                    }
-                }
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "싱글 패배",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            modifier = Modifier.clickable { showSingleLoseDialog = true }
-                        )
-                    }
-                }
-            }
         }
 
         if (gpxFileReceived) {

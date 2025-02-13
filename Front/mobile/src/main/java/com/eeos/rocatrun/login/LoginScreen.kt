@@ -466,7 +466,7 @@ fun UserInfoDialog(
                                     // 성별 아이콘
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Image(
-                                            painter = painterResource(id = R.drawable.login_icon_male),
+                                            painter = painterResource(id = R.drawable.profile_icon_male),
                                             contentDescription = "남성 아이콘",
                                             modifier = Modifier
                                                 .size(48.dp)
@@ -484,7 +484,7 @@ fun UserInfoDialog(
                                         )
 
                                         Image(
-                                            painter = painterResource(id = R.drawable.login_icon_female),
+                                            painter = painterResource(id = R.drawable.profile_icon_female),
                                             contentDescription = "여성 아이콘",
                                             modifier = Modifier
                                                 .size(48.dp)
