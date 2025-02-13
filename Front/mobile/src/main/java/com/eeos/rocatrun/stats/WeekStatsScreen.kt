@@ -1,6 +1,6 @@
 package com.eeos.rocatrun.stats
 
-import android.util.Log
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -15,9 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import com.eeos.rocatrun.R
@@ -48,13 +49,19 @@ import ir.ehsannarmani.compose_charts.models.LineProperties
 import ir.ehsannarmani.compose_charts.models.StrokeStyle
 import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.stats.api.WeekMonStatsResponse
 import com.eeos.rocatrun.ui.components.StrokedText
 import ir.ehsannarmani.compose_charts.models.PopupProperties
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
+    val context = LocalContext.current
+    val token = TokenStorage.getAccessToken(context)
+
     val statsViewModel: StatsViewModel = viewModel()
+    val noWeekData = statsViewModel.noWeekData.observeAsState(initial = false)
 
     // 다이얼로그의 표시 여부 상태
     var isDialogVisible by remember { mutableStateOf(false) }
@@ -125,7 +132,8 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
             LaunchedEffect(selectedDate) {
                 if (selectedDate != previousDate) {
                     val (selectedYear, selectedMonth, selectedWeek) = parseYearMonthWeek(selectedDate)
-                    statsViewModel.fetchWeekStats(selectedYear, selectedMonth, selectedWeek)
+                    val dateString = String.format("%04d-%02d", selectedYear, selectedMonth)
+                    statsViewModel.fetchWeekStats(token, dateString, selectedWeek)
                     previousDate = selectedDate
                 }
             }
@@ -143,8 +151,9 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
                     ),
                 contentAlignment = Alignment.Center
             ) {
+
                 StrokedText(
-                    text = "${weekStatsData?.data?.summary?.totalDistance} KM",
+                    text = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.averagePace}",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,
@@ -160,9 +169,9 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem(label = "러닝", value = "${weekStatsData?.data?.summary?.totalRuns}")
-                StatItem(label = "페이스", value = "${weekStatsData?.data?.summary?.averagePace}")
-                StatItem(label = "총 시간", value = formatTotalTime(weekStatsData?.data?.summary?.totalTime ?: "00:00:00"))
+                StatItem(label = "러닝", value = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.totalRuns}")
+                StatItem(label = "페이스", value = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.averagePace}")
+                StatItem(label = "총 시간", value = if (noWeekData.value) "00:00:00" else formatTotalTime(weekStatsData?.data?.summary?.totalTime ?: "00:00:00"))
             }
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -174,7 +183,7 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
                     .height(300.dp)
                     .background(Color(0x8200001E), RoundedCornerShape(8.dp))
             ) {
-                BarGraphWeek(weekStatsData = weekStatsData)
+                BarGraphWeek(weekStatsData = weekStatsData, noWeekData = noWeekData.value)
             }
         }
     }
@@ -183,8 +192,13 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
 
 // 그래프 함수
 @Composable
-fun BarGraphWeek(weekStatsData: WeekMonStatsResponse?) {
-    val dataList = weekStatsData?.data?.dailyStats ?: emptyList()
+fun BarGraphWeek(weekStatsData: WeekMonStatsResponse?, noWeekData: Boolean) {
+
+    val dataList = if (noWeekData) {
+        emptyList()
+    } else {
+        weekStatsData?.data?.dailyStats ?: emptyList()
+    }
 
     val maxDistance = (dataList.maxOfOrNull { it.distance } ?: 1.0).coerceAtLeast(1.0)
     val yAxisIndicators = listOf(

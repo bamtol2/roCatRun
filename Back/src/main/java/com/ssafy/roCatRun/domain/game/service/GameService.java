@@ -13,7 +13,7 @@ import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
 import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
-//import com.ssafy.roCatRun.domain.stats.service.GameStatsService;
+import com.ssafy.roCatRun.domain.stats.service.GameStatsService;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -45,7 +45,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
     private final GameCharacterRepository characterRepository;
     private final MemberRepository memberRepository;
     private final GameResultRepository gameResultRepository;
-//    private final GameStatsService gameStatsService;
+    private final GameStatsService gameStatsService;
 
     // 게임 종료 후 결과 데이터를 임시 저장할 Map
     private final Map<String, Map<String, PlayerRunningResultRequest>> gameResults = new ConcurrentHashMap<>();
@@ -555,7 +555,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         Map<String, GameResultInfo> rewardInfo = saveGameResults(room, results);
 
         // MongoDB에 게임 통계 저장 (방 정보, 유저별 러닝 결과, 리워드 정보)
-//        gameStatsService.saveGameStats(room, results, rewardInfo);
+        gameStatsService.saveGameStats(room, results, rewardInfo);
 
         List<GameResultResponse.PlayerResult> playerResults = room.getPlayers().stream()
                 .map(player -> {

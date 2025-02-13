@@ -3,7 +3,6 @@ package com.eeos.rocatrun.stats.api
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -24,6 +23,12 @@ class StatsViewModel : ViewModel() {
     val monLoading: LiveData<Boolean> = _monLoading
 
     // Data
+    private val _noWeekData = MutableLiveData<Boolean>(false)
+    val noWeekData: LiveData<Boolean> = _noWeekData
+
+    private val _noMonData = MutableLiveData<Boolean>(false)
+    val noMonData: LiveData<Boolean> = _noMonData
+
     private val _dailyStatsData = MutableLiveData<DailyStatsResponse>()
     val dailyStatsData: LiveData<DailyStatsResponse> = _dailyStatsData
 
@@ -70,80 +75,110 @@ class StatsViewModel : ViewModel() {
     private val retrofitInstance = RetrofitInstance.getInstance().create(StatsAPI::class.java)
 
     // daily api
-    fun fetchDailyStats() {
+    fun fetchDailyStats(auth: String?) {
         _dailyLoading.value = true
 
-        retrofitInstance.getDailyStats().enqueue(object : Callback<DailyStatsResponse> {
-            override fun onResponse(call: Call<DailyStatsResponse>, response: Response<DailyStatsResponse>) {
-                if (response.isSuccessful) {
-                    _dailyStatsData.value = response.body()
-                } else {
-                    println("Error: ${response.errorBody()}")
-                }
-                _dailyLoading.value = false
-            }
+        if (auth != null) {
+            Log.d("api", "일별 통계 페이지 호출 시작")
+            retrofitInstance.getDailyStats("Bearer $auth")
+                .enqueue(object : Callback<DailyStatsResponse> {
+                    override fun onResponse(
+                        call: Call<DailyStatsResponse>,
+                        response: Response<DailyStatsResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            _dailyStatsData.value = response.body()
+                            Log.d("api", "일별 통계 호출 성공")
+                        } else {
+                            println("Error: ${response.errorBody()}")
+                            Log.d("api", response.toString())
+                        }
+                        _dailyLoading.value = false
+                    }
 
-            override fun onFailure(call: Call<DailyStatsResponse>, t: Throwable) {
-                Log.d("mock api", t.localizedMessage)
-                _dailyLoading.value = false
-            }
-        })
+                    override fun onFailure(call: Call<DailyStatsResponse>, t: Throwable) {
+                        Log.d("mock api", t.localizedMessage)
+                        _dailyLoading.value = false
+                    }
+                })
+        } else {
+            Log.d("api", "토큰이 없습니다.")
+            _dailyLoading.value = false
+        }
     }
 
     // week api
-    fun fetchWeekStats(year: Int, month: Int, week: Int) {
+    fun fetchWeekStats(auth: String?, date: String, week: Int) {
         _weekLoading.value = true
 
-        val startTime = System.currentTimeMillis()
-        Log.d("StatsViewModel", "Weeeeeeeek API call started at: $startTime")
+        if (auth != null) {
+            Log.d("api", "주별 통계 페이지 호출 시작")
+            retrofitInstance.getWeekStats("Bearer $auth", date, week)
+                .enqueue(object : Callback<WeekMonStatsResponse> {
+                    override fun onResponse(
+                        call: Call<WeekMonStatsResponse>,
+                        response: Response<WeekMonStatsResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            _weekStatsData.value = response.body()
+                            Log.d("api", "주별 통계 호출 성공")
+                        } else {
+                            if (response.code() == 404) {
+                                _noWeekData.value = true  // 데이터 없음 상태로 설정
+                            } else {
+                                println("Error: ${response.errorBody()}")
+                                Log.d("api", response.toString())
+                            }
+                        }
+                        _weekLoading.value = false
+                    }
 
-        retrofitInstance.getWeekStats(year, month, week).enqueue(object : Callback<WeekMonStatsResponse> {
-            override fun onResponse(call: Call<WeekMonStatsResponse>, response: Response<WeekMonStatsResponse>) {
-                if (response.isSuccessful) {
-                    _weekStatsData.value = response.body()
-
-                    val endTime = System.currentTimeMillis()
-                    Log.d("StatsViewModel", "Weeeeeeeek API call finished at: $endTime")
-                    Log.d("StatsViewModel", "Weeeeeeeek Time taken for API call: ${endTime - startTime} ms")
-                } else {
-                    println("Error: ${response.errorBody()}")
-                }
-                _weekLoading.value = false
-            }
-
-            override fun onFailure(call: Call<WeekMonStatsResponse>, t: Throwable) {
-                Log.d("mock api", t.localizedMessage)
-                _weekLoading.value = false
-            }
-        })
+                    override fun onFailure(call: Call<WeekMonStatsResponse>, t: Throwable) {
+                        Log.d("mock api", t.localizedMessage)
+                        _weekLoading.value = false
+                    }
+                })
+        } else {
+            Log.d("api", "토큰이 없습니다.")
+            _weekLoading.value = false
+        }
     }
 
     // mon api
-    fun fetchMonStats(year: Int, month: Int) {
+    fun fetchMonStats(auth: String?, date: String) {
         _monLoading.value = true
 
-        val startTime = System.currentTimeMillis()
-        Log.d("StatsViewModel", "API call started at: $startTime")
+        if (auth != null) {
+            Log.d("api", "월별 통계 페이지 호출 시작")
+            retrofitInstance.getMonStats("Bearer $auth", date)
+                .enqueue(object : Callback<WeekMonStatsResponse> {
+                    override fun onResponse(
+                        call: Call<WeekMonStatsResponse>,
+                        response: Response<WeekMonStatsResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            _monStatsData.value = response.body()
+                            Log.d("api", "월별 통계 호출 성공")
+                        } else {
+                            if (response.code() == 404) {
+                                _noMonData.value = true  // 데이터 없음 상태로 설정
+                            } else {
+                                println("Error: ${response.errorBody()}")
+                                Log.d("api", response.toString())
+                            }
+                        }
+                        _monLoading.value = false
+                    }
 
-        retrofitInstance.getMonStats(year, month).enqueue(object : Callback<WeekMonStatsResponse> {
-            override fun onResponse(call: Call<WeekMonStatsResponse>, response: Response<WeekMonStatsResponse>) {
-                if (response.isSuccessful) {
-                    _monStatsData.value = response.body()
-
-                    val endTime = System.currentTimeMillis()
-                    Log.d("StatsViewModel", "API call finished at: $endTime")
-                    Log.d("StatsViewModel", "Time taken for API call: ${endTime - startTime} ms")
-                } else {
-                    println("Error: ${response.errorBody()}")
-                }
-                _monLoading.value = false
-            }
-
-            override fun onFailure(call: Call<WeekMonStatsResponse>, t: Throwable) {
-                Log.d("mock api", t.localizedMessage)
-                _monLoading.value = false
-            }
-        })
+                    override fun onFailure(call: Call<WeekMonStatsResponse>, t: Throwable) {
+                        Log.d("mock api", t.localizedMessage)
+                        _monLoading.value = false
+                    }
+                })
+        } else {
+            Log.d("api", "토큰이 없습니다.")
+            _weekLoading.value = false
+        }
     }
 
 }
