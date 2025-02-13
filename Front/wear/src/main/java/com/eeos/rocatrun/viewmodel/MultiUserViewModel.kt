@@ -115,8 +115,8 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
 
     // 게임 종료 이벤트 플로우
-     private val _gameEndEventFlow = MutableSharedFlow<Boolean>()
-     val gameEndEventFlow: SharedFlow<Boolean> get() = _gameEndEventFlow
+    private val _gameEndEventFlow = MutableSharedFlow<Boolean>()
+    val gameEndEventFlow: SharedFlow<Boolean> get() = _gameEndEventFlow
 
     private val context = application.applicationContext
 
@@ -222,6 +222,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             firstBossHealthData = FirstBossHealthData(firstBossHealth = health)
             // 이 값을 최대 체력으로 사용하고, 동시에 현재 체력으로도 반영
             bossHealthData = BossHealthData(bossHealth = health)
+            BossHealthRepository.updateMaxBossHealth(health)
             BossHealthRepository.updateBossHealth(health)
             val nicknames = getStringArrayList("playerNicknames")
             if (nicknames != null) {
@@ -356,7 +357,7 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black),
-            contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.TopCenter
 
     ) {
 

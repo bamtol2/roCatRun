@@ -28,6 +28,10 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.component.CircularItemGauge
 import com.eeos.rocatrun.component.FeverTime
 import androidx.activity.viewModels
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import com.eeos.rocatrun.viewmodel.BossHealthRepository
 import com.eeos.rocatrun.viewmodel.GameViewModel
 import com.eeos.rocatrun.viewmodel.MultiUserViewModel
@@ -160,6 +164,35 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                         )
                 }
             }
+        }
+        // 확인 버튼
+        Button(
+            onClick = {
+                gameViewModel.notifyItemUsage()
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF00FFCC)
+            ),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier
+                .width(69.dp)
+                .height(34.dp)
+                .padding(horizontal = 2.dp)
+                .offset(y= 60.dp)
+        ) {
+            Text(
+                text = "공격",
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily(Font(R.font.neodgm))
+                ),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false  // 줄바꿈 방지
+            )
         }
 
 

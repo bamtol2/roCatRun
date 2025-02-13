@@ -39,3 +39,11 @@ data class UpdateProfileRequest(
     val age: Int,
     val gender: String
 )
+
+// 회원 탈퇴 응답
+data class DeleteMemberResponse(
+    val success: Boolean,
+    val message: String,
+    val data: Any? = null
+)
+

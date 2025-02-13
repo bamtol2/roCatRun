@@ -2,6 +2,7 @@ package com.eeos.rocatrun.profile.api
 
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
@@ -35,4 +36,10 @@ interface ProfileAPI {
     fun userLogout(
         @Header("Authorization") authorization: String,
     ): Call<ProfileResponse>
+
+    // 회원탈퇴
+    @DELETE("/domain/members/me")
+    fun memberDelete(
+        @Header("Authorization") authorization: String,
+    ): Call<DeleteMemberResponse>
 }

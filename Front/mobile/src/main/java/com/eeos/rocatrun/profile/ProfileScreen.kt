@@ -350,7 +350,12 @@ fun ProfileDialog(
                     CustomTextButton(
                         text = "회원 탈퇴",
                         textColor = Color(0xFFFD2727),
-                        onClick = { /* 회원 탈퇴 로직 */ }
+                        onClick = {
+                            profileViewModel.deleteMember(token)
+                            TokenStorage.clearTokens(context)
+                            val intent = Intent(context, LoginActivity::class.java)
+                            context.startActivity(intent)
+                        }
                     )
 
                     CustomTextButton(

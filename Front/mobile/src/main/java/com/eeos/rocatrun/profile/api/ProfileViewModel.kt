@@ -136,4 +136,32 @@ class ProfileViewModel : ViewModel() {
             Log.d("debug", "토큰이 없습니다.")
         }
     }
+    // 회원 탈퇴
+    fun deleteMember(auth: String?){
+        if (auth != null){
+            retrofitInstance.memberDelete("Bearer $auth")
+                .enqueue(object : Callback<DeleteMemberResponse>{
+                    override fun onResponse(
+                        call: Call<DeleteMemberResponse>,
+                        response: Response<DeleteMemberResponse>
+                    ){
+                        if (response.isSuccessful){
+                            Log.d("api", "회원 탈퇴 성공: ${response.body()?.message}")
+                        }else {
+                            Log.e("api", "회원 탈퇴 실패: ${response.errorBody()?.string()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<DeleteMemberResponse>, t: Throwable) {
+                        Log.e("api", "회원 탈퇴 호출 실패: ${t.localizedMessage}")
+                    }
+                }
+
+
+
+                )
+        }else {
+            Log.d("debug", "토큰이 없습니다.")
+        }
+    }
 }
