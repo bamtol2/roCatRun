@@ -13,17 +13,26 @@ public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "item_id")
-    private Long id;
+    private Long id;                // 아이템 ID
 
     @Column(nullable = false)
     private String name;            // 아이템 이름
 
     @Column(nullable = false)
-    private String imagePath;       // 아이템 이미지 경로
+    private String description;     // 아이템 설명
+
+    @Column(nullable = false)
+    private String listImage;       // 아이템 목록에 보일 이미지
+
+    @Column(nullable = false)
+    private String equipImage;      // 착용 시 보일 이미지
+
+    @Column(nullable = false)
+    private Boolean isGif;          // GIF 여부
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Category category;  // 아이템 카테고리
+    private Category category;      // 아이템 카테고리
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

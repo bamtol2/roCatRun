@@ -20,16 +20,18 @@ public class ItemDrawResponse {
     @Getter
     @NoArgsConstructor
     public static class DrawnItem {
-        private Long itemId;
-        private String name;
-        private String imagePath;
-        private String rarity;
+        private Long itemId;        // 아이템 ID
+        private String name;        // 아이템 이름
+        private String description; // 아이템 설명
+        private String listImage;   // 아이템 목록 이미지
+        private String rarity;      // 아이템 희귀도
 
         public static DrawnItem from(Item item) {
             DrawnItem drawnItem = new DrawnItem();
             drawnItem.itemId = item.getId();
             drawnItem.name = item.getName();
-            drawnItem.imagePath = item.getImagePath();
+            drawnItem.description = item.getDescription();
+            drawnItem.listImage = item.getListImage();
             drawnItem.rarity = item.getRarity().name();
             return drawnItem;
         }
