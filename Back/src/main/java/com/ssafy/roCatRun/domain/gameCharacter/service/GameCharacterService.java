@@ -12,6 +12,8 @@ import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.global.exception.ErrorCode;
 import com.ssafy.roCatRun.global.exception.InvalidNicknameException;
+import com.ssafy.roCatRun.global.s3.service.S3Service;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class GameCharacterService {
     private final GameCharacterRepository gameCharacterRepository;
     private final MemberRepository memberRepository;
     private final LevelRepository levelRepository;
+    private final S3Service s3Service;
 
     /**
      * 닉네임 중복 여부를 확인합니다.
@@ -173,5 +176,24 @@ public class GameCharacterService {
     public GameCharacterResponse getCharacterResponseByMemberId(Long memberId) {
         GameCharacter character = getCharacterByMemberId(memberId);
         return createGameCharacterResponse(character);
+    }
+
+    /**
+     * 캐릭터의 이미지를 업데이트하는 메서드
+     * @param memberId 회원 ID
+     * @param imageUrl 새로운 이미지 URL
+     * @throws IllegalArgumentException 캐릭터를 찾을 수 없는 경우
+     */
+    @Transactional
+    public void updateCharacterImage(Long memberId, String imageUrl) {
+        GameCharacter character = getCharacterByMemberId(memberId);
+
+        // 기존 이미지가 기본 이미지가 아니라면 S3에서 삭제
+        if (!"default.png".equals(character.getCharacterImage())) {
+            s3Service.deleteFile(character.getCharacterImage());
+        }
+
+        character.setCharacterImage(imageUrl);
+        log.debug("Character image updated for member: {}, new image URL: {}", memberId, imageUrl);
     }
 }
