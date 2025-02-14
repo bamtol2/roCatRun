@@ -70,6 +70,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.component.CircularItemGauge
 import com.eeos.rocatrun.detector.ArmGestureDetector
 import com.eeos.rocatrun.receiver.SensorUpdateReceiver
+import com.eeos.rocatrun.sensor.SensorManagerHelper
 import com.eeos.rocatrun.service.LocationForegroundService
 import com.eeos.rocatrun.util.FormatUtils
 import com.eeos.rocatrun.viewmodel.BossHealthRepository
@@ -96,9 +97,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var sensorManager: SensorManager
-    private var stepCounter: Sensor? = null
-    private var heartRateSensor: Sensor? = null
     private var formatUtils = FormatUtils()
+    private lateinit var sensorManagerHelper: SensorManagerHelper
 
     // 동작 인식
     private lateinit var armGestureDetector: ArmGestureDetector
@@ -126,6 +126,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var lastStepCount: Int = 0
     private var lastStepTimestamp = 0L
     private var stepCount = 0  // 누적 걸음 수
+
+    // 보폭
+    private val defaultStride = 0.75
 
     // 절전 모드
     private lateinit var wakeLock: PowerManager.WakeLock
@@ -177,6 +180,18 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
         )
         armGestureDetector.start()
+        sensorManagerHelper = SensorManagerHelper(
+            context = this,
+            onHeartRateUpdated = { newHeartRate ->
+                heartRate = newHeartRate.toString()
+                Log.d("RunningActivity", "Heart rate updated: $heartRate")
+            },
+            onStepDetected = {
+                stepCount++
+                Log.d("RunningActivity", "Total steps: $stepCount")
+            }
+        )
+
 
 
 
@@ -209,13 +224,8 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             }
         }
 
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
-        stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-        stepCounter?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-            Log.d("StepCounter", "Step counter sensor registered successfully.")
-        } ?: Log.w("StepCounter", "No step counter sensor available.")
+
+
 
         requestPermissions()
 
@@ -264,7 +274,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        registerHeartRateSensor()
+        sensorManagerHelper.registerSensors()
     }
 
     override fun onPause() {
@@ -273,20 +283,23 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             Log.e("WakeLock", "WakeLock 확인")
             wakeLock.release()
         }
-        sensorManager.unregisterListener(this)
+        sensorManagerHelper.unregisterSensors()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        sensorManager.unregisterListener(this)
+        sensorManagerHelper.unregisterSensors()
         armGestureDetector.stop()
     }
-    private fun registerHeartRateSensor() {
-        heartRateSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-            Log.d("HeartRate", "Heart rate sensor registered successfully.")
-        } ?: Log.w("HeartRate", "No heart rate sensor available.")
+
+
+
+    // 걸음 수랑 보폭으로 추정 거리 계산하는 함수
+    private fun computeDistanceFromSteps(stepCount: Int, strideLength: Double = defaultStride): Double {
+        return stepCount * strideLength
     }
+
+
 
     private fun requestPermissions() {
         val permissions = arrayOf(
@@ -757,30 +770,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     Log.d("추가", "심박수 추가")
                 }
             }
-            Sensor.TYPE_STEP_COUNTER -> {
-                // STEP_COUNTER 센서는 부팅 후 누적 걸음 수를 제공함
-                val currentSteps = event.values[0].toInt()
-                Log.d("StepCounter", "걸음수 : $currentSteps")
-                val currentTime = System.currentTimeMillis()
-                Log.d("StepCounter", "Received step counter: $currentSteps at $currentTime")
-                // 최초 이벤트에서 기준값 저장
-                if (initialStepCount == 0) {
-                    initialStepCount = currentSteps
-                    Log.d("StepCounter", "체크 : $initialStepCount, $currentSteps")
-                }
-                // 실제 걸음 수는 (현재 센서 값 - 초기 기준값)
-                stepCount = currentSteps - initialStepCount
-                Log.d("StepCounter", "Total steps: $stepCount, $currentSteps,$initialStepCount")
 
-                // 선택: cadence 계산 (이전 이벤트와의 차이를 사용)
-                val stepsDelta = currentSteps - lastStepCount
-                val timeDelta = currentTime - lastStepTimestamp
-                if (stepsDelta > 0 && timeDelta > 0) {
-                    updateCadence(stepsDelta, timeDelta)
-                }
-                lastStepCount = currentSteps
-                lastStepTimestamp = currentTime
-            }
             Sensor.TYPE_STEP_DETECTOR -> {
                 // STEP_DETECTOR는 한 걸음당 1 이벤트를 발생시키므로,
                 // 만약 STEP_COUNTER 센서가 없다면 대체로 사용 가능
@@ -790,26 +780,16 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-    // updateStepCount는 STEP_DETECTOR의 경우에만 사용
-    private fun updateStepCount(stepsDelta: Int) {
-        stepCount += stepsDelta
-        Log.d("StepCounter", "Total steps (from detector): $stepCount")
-    }
 
-    // cadence 계산: 분당 걸음수 = (걸음 증가량) / (시간 간격(분))
-    private fun updateCadence(stepsDelta: Int, timeDelta: Long) {
-        val cadence = (stepsDelta.toFloat() / (timeDelta / 60000f)).roundToInt()
-        cadenceData.add(Pair(System.currentTimeMillis(), cadence))
-        Log.d("StepCounter", "Current cadence: $cadence steps/min")
-    }
 
     private fun calculateAverageCadence(): Int {
-        return if (cadenceData.isNotEmpty()) {
-            cadenceData.map { it.second }.average().roundToInt()
+        return if (elapsedTime > 0L) {
+            (stepCount.toFloat() / (elapsedTime / 60000f)).roundToInt()
         } else {
             0
         }
     }
+
 
     // 알람 설정 (센서 업데이트용)
     private fun scheduleSensorUpdates() {
