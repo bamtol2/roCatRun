@@ -322,21 +322,6 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 new GameOverResponse(true, "게임이 종료되었습니다."));
     }
 
-
-//    /**
-//     * 게임 종료 처리
-//     * @param room 방 정보
-//     */
-//    public void handleGameOver(GameRoom room) {
-//        room.setStatus(GameStatus.FINISHED);
-//        GameResultResponse result = createGameResult(room);
-//        server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
-//        // 방에서 제외 및 방 제거 처리
-//        for(Player player : room.getPlayers()){
-//            handleUserDisconnect(player.getId(), room);
-//        }
-//    }
-
     /**
      * 유저에게서 받은 러닝 결과 처리
      * @param userId 유저식별자
@@ -429,9 +414,13 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 GameCharacterService.LevelUpResponse levelUpResponse =
                         gameCharacterService.addExperienceAndCheckLevelUp(userCharacter.getId(), finalExp);
 
+                // 캐릭터를 다시 조회하여 최신 상태 가져오기
+                GameCharacter updatedCharacter = characterRepository.findById(Long.parseLong(characterId))
+                        .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
+
                 // 코인 추가
-                userCharacter.addCoin(finalCoin);
-                characterRepository.save(userCharacter);
+                updatedCharacter.addCoin(finalCoin);
+                characterRepository.save(updatedCharacter);
 
                 // 결과 정보 저장
                 resultInfoMap.put(userId, new GameResultInfo(
