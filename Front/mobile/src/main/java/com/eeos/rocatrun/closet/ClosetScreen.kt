@@ -1,8 +1,6 @@
 package com.eeos.rocatrun.closet
 
 
-import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,10 +27,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -48,15 +44,11 @@ import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.closet.api.InventoryItem
-import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.components.StrokedText
-import com.eeos.rocatrun.ui.theme.MyFontFamily
 import dev.shreyaspatil.capturable.capturable
 import dev.shreyaspatil.capturable.controller.rememberCaptureController
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.livedata.observeAsState
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeApi::class)
@@ -68,11 +60,11 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
     // 아이템 목록
     val itemList = closetViewModel.itemList.value
 
-
     // 이미지 캡쳐 변수
     val captureController = rememberCaptureController()
-    val scope = rememberCoroutineScope()
+    var showSaveCheck by remember { mutableStateOf(false) }
 
+    // 탭
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("전체", "물감", "머리띠", "풍선", "오라")
 
@@ -94,7 +86,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                 .align(Alignment.TopStart)
                 .offset(x = 20.dp, y = 70.dp)
                 .padding(10.dp),
-            onClick = { context.startActivity(Intent(context, HomeActivity::class.java)) },
+            onClick = { showSaveCheck = true },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             shape = RoundedCornerShape(0.dp),
             contentPadding = PaddingValues(0.dp)
@@ -105,34 +97,6 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                 modifier = Modifier.size(50.dp)
             )
         }
-
-        // (임시) 이미지 다운로드 버튼
-        Button(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(y = 70.dp)
-                .padding(10.dp)
-                .border(
-                    width = 2.dp,
-                    color = Color(0xFF36DBEB),
-                    shape = RoundedCornerShape(15.dp)
-                ),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            onClick = {
-                scope.launch {
-                    val bitmapAsync = captureController.captureAsync()
-                    try {
-                        val bitmap = bitmapAsync.await()
-                        saveImageToDownloads(context, bitmap, closetViewModel, token)
-                    } catch (error: Throwable) {
-                        Toast.makeText(context, "이미지 저장 실패: ${error.message}", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            }) {
-            Text(text = "프로필 저장", fontFamily = MyFontFamily, color = Color.White)
-        }
-
 
         Column(modifier = Modifier.fillMaxSize()) {
             // 상단 캐릭터 영역
@@ -221,6 +185,19 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                             .offset(x = 195.dp, y = 285.dp),
                     )
                 }
+            }
+        }
+
+        // 프로필 저장 모달 표시
+        if (showSaveCheck) {
+            if (token != null) {
+                SaveCheckScreen(
+                    message = "프로필로 저장할까냥?",
+                    onDismissRequest = { showSaveCheck = false },
+                    captureController = captureController,
+                    closetViewModel = closetViewModel,
+                    token = token
+                )
             }
         }
     }
@@ -364,17 +341,11 @@ fun CharacterWithItems(wornItems: List<InventoryItem>) {
         }
 
         // 캐릭터 이미지 (물감 적용하기 PAINT)
-        Box(
+        GifImage(
             modifier = Modifier
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            GifImage(
-                modifier = Modifier
-                    .size(300.dp),
-                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
-            )
-        }
+                .size(300.dp),
+            gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
+        )
 
         // 나머지 카테고리의 아이템 배치 (캐릭터 위)
         wornItems.filter { it.category != "AURA" }.forEach { item ->
