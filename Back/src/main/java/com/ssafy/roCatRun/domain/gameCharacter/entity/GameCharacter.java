@@ -102,10 +102,9 @@ public class GameCharacter {
      * @param exp 추가할 경험치량
      * @return 레벨업 결과 정보
      */
-    public LevelUpResult addExperience(int exp) {
+    public void addExperience(int exp) {
         int oldLevel = this.levelInfo.getLevel();
         this.experience += exp;
-        return new LevelUpResult(oldLevel, this.experience);
     }
 
 //    /**

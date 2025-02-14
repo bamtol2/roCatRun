@@ -28,7 +28,7 @@ public class GameCharacterResponse {
     public GameCharacterResponse(GameCharacter gameCharacter, Integer requiredExpForNextLevel) {
         this.id = gameCharacter.getId();
         this.nickname = gameCharacter.getNickname();
-        this.level = gameCharacter.getLevel();
+        this.level = gameCharacter.getLevelInfo().getLevel();
         this.experience = gameCharacter.getExperience();
         this.characterImage = gameCharacter.getCharacterImage();
         this.coin = gameCharacter.getCoin();

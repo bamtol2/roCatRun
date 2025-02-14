@@ -212,12 +212,12 @@ public class GameCharacterService {
         GameCharacter character = gameCharacterRepository.findById(characterId)
                 .orElseThrow(() -> new IllegalArgumentException("Character not found"));
 
-        int oldLevel = character.getLevelInfo().getLevel();
-        character.addExperience(exp);
+        int oldLevel = character.getLevelInfo().getLevel(); // 현재 유저 레벨&경험치 가져오기
+        character.addExperience(exp); // 보상 경험치를 기존 경험치에 더하기
         int currentExp = character.getExperience();
 
-        Level currentLevelInfo = character.getLevelInfo();
-        boolean hasLeveledUp = false;
+        Level currentLevelInfo = character.getLevelInfo(); // 캐릭터 레벨 정보 가져오기
+        boolean hasLeveledUp = false; // 레벨업 여부
         int newLevel = oldLevel;
 
         // 레벨업 체크 및 처리
@@ -230,6 +230,7 @@ public class GameCharacterService {
 
             // 경험치 차감
             currentExp -= currentLevelInfo.getRequiredExp();
+            // 레벨업
             newLevel++;
             hasLeveledUp = true;
 
