@@ -216,34 +216,13 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 }
         }
 
-        // 웹소켓 - 게임종료 이벤트 수신 -> 워치 송신
-        SocketHandler.mSocket.on("gameOver") {
-
-            Log.d("Socket", "On - gameOver")
-            isGameOver = true
-
-            // 워치에 게임 종료 메세지 보내기
-            val putDataMapRequest = PutDataMapRequest.create("/game_end")
-            putDataMapRequest.dataMap.apply {
-                putBoolean("gameEnd", true)
-                putLong("timestamp", System.currentTimeMillis())
-            }
-            val request = putDataMapRequest.asPutDataRequest().setUrgent()
-            dataClient.putDataItem(request)
-                .addOnSuccessListener { _ ->
-                    Log.d("Wear", "게임 종료")
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("Wear", "게임 종료 실패", exception)
-                }
-        }
-
         // 플레이어들 결과 공유 데이터 수신
         SocketHandler.mSocket.on("gameResult") { args ->
             if (args.isNotEmpty() && args[0] is JSONObject) {
                 val responseJson = args[0] as JSONObject
                 // 클리어/페일
                 val cleared = responseJson.optBoolean("cleared", false)
+                Log.d("Socket", "gameResult 이벤트 수신: $responseJson")
 
                 // myResult 파싱
                 responseJson.optJSONObject("myResult")?.let { myResultJson ->
@@ -262,6 +241,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                         rewardCoin = myResultJson.optInt("rewardCoin", 0)
                     )
                     _myResult.postValue(result)
+                    Log.d("Socket", "myResult 업데이트: $result")
                 }
 
                 // playerResults 파싱
@@ -285,17 +265,18 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                         }
                     }
 
+                    _playerResults.postValue(newPlayerResults)
+                    _myRank.postValue(responseJson.optInt("myRank", 0))
+
                     // 모달 상태 업데이트
-                    _playerResults.value?.let { results ->
-                        _modalState.postValue(
-                            when {
-                                cleared && results.size == 1 -> ModalState.SingleWin
-                                cleared -> ModalState.MultiWin
-                                results.size == 1 -> ModalState.SingleLose
-                                else -> ModalState.MultiLose
-                            }
-                        )
-                    }
+                    _modalState.postValue(
+                        when {
+                            cleared && newPlayerResults.size == 1 -> ModalState.SingleWin
+                            cleared -> ModalState.MultiWin
+                            newPlayerResults.size == 1 -> ModalState.SingleLose
+                            else -> ModalState.MultiLose
+                        }
+                    )
 
                     Log.d(
                         "Socket",
@@ -303,6 +284,28 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                     )
                 }
             }
+        }
+
+        // 웹소켓 - 게임종료 이벤트 수신 -> 워치 송신
+        SocketHandler.mSocket.on("gameOver") {
+
+            Log.d("Socket", "On - gameOver")
+//            isGameOver = true
+
+            // 워치에 게임 종료 메세지 보내기
+            val putDataMapRequest = PutDataMapRequest.create("/game_end")
+            putDataMapRequest.dataMap.apply {
+                putBoolean("gameEnd", true)
+                putLong("timestamp", System.currentTimeMillis())
+            }
+            val request = putDataMapRequest.asPutDataRequest().setUrgent()
+            dataClient.putDataItem(request)
+                .addOnSuccessListener { _ ->
+                    Log.d("Wear", "게임 종료")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Wear", "게임 종료 실패", exception)
+                }
         }
 
     }
@@ -352,8 +355,6 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
             ))
         }
 
-        Log.d("Wear","러닝 데이터 받는중 - $_runningData")
-
         // 웹소켓으로 전송
         _runningData.value?.let { data ->  // value로 접근하도록 수정
             updateRunDataSocket(data.distance)
@@ -362,28 +363,33 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
 
     // 워치에서 게임 결과 받아오는 함수
     private fun processResultData(dataItem: DataItem) {
-        DataMapItem.fromDataItem(dataItem).dataMap.apply {
-            _resultData.postValue(ResultData(
+        val resultData = DataMapItem.fromDataItem(dataItem).dataMap.run {
+            ResultData(
                 distance = getDouble("distance"),
                 time = getLong("time"),
                 averagePace = getDouble("averagePace"),
                 averageHeartRate = getDouble("averageHeartRate")
-//                averageCadence = getDouble("averageCadence")
-            ))
-        }
-
-        Log.d("Wear", "게임 결과 데이터 수신 완료! - $_resultData")
-
-        // 웹소켓으로 전송
-        _resultData.value?.let { data ->  // value로 접근하도록 수정
-            submitRunningResultSocket(
-                data.time,
-                data.distance,
-                data.averagePace,
-                data.averageHeartRate,
-                0.0
             )
         }
+
+        _resultData.value = resultData
+        Log.d(
+            "Wear", """
+            게임 결과 데이터 수신 완료!
+            거리: ${resultData.distance}
+            시간: ${resultData.time}
+            평균 페이스: ${resultData.averagePace}
+            평균 심박수: ${resultData.averageHeartRate}
+        """.trimIndent()
+        )
+        // _resultData.value를 기다리지 않고 local 변수 resultData를 바로 사용
+        submitRunningResultSocket(
+            resultData.time,
+            resultData.distance,
+            resultData.averagePace,
+            resultData.averageHeartRate,
+            0.0
+        )
     }
 
     // 워치에서 아이템 사용여부 받아오는 함수

@@ -58,16 +58,13 @@ fun GameplayScreen(onShareClick: () -> Unit) {
     val myRank by GamePlayService.myRank.observeAsState(0)
     val modalState by GamePlayService.modalState.observeAsState(GamePlayService.ModalState.None)
 
-
-    // 모달 분기용 변수들
-    var showMultiWinDialog by remember { mutableStateOf(false) }
-    var showMultiLoseDialog by remember { mutableStateOf(false) }
-    var showSingleWinDialog by remember { mutableStateOf(false) }
-    var showSingleLoseDialog by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
     val dataClient = Wearable.getDataClient(context)
     val cleared by remember { mutableStateOf(false) }  // 추가
+
+    LaunchedEffect(modalState) {
+        Log.d("Modal", "Modal state changed: $modalState")
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
