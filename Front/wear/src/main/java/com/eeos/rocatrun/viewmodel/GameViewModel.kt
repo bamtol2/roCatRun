@@ -52,6 +52,7 @@ class GameViewModel : ViewModel() {
     val showItemGif = _showItemGif.asStateFlow()
     val itemUsedSignal = _itemUsedSignal.asStateFlow()
     val totalItemUsageCount = _totalItemUsageCount.asStateFlow()
+    val availableItemCount = _avaliableItemCount.asStateFlow()
 
 
 
@@ -162,9 +163,9 @@ class GameViewModel : ViewModel() {
         val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(3000, 2000), intArrayOf(100, 0), 0)
         vibrator?.vibrate(vibrationEffect)
 
-        mediaPlayer = MediaPlayer.create(context, R.raw.fever_time_sound).apply {
-            start()
-        }
+//        mediaPlayer = MediaPlayer.create(context, R.raw.fever_time_sound).apply {
+//            start()
+//        }
 
         viewModelScope.launch {
             delay(30000)

@@ -1,9 +1,6 @@
 package com.eeos.rocatrun.viewmodel
 
 import android.app.Application
-import android.content.Context
-import android.content.Intent
-import android.provider.ContactsContract.Data
 import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -18,25 +15,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.random.Random
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.zIndex
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
-import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import androidx.lifecycle.AndroidViewModel
@@ -45,7 +37,7 @@ import androidx.wear.compose.foundation.lazy.items
 import com.eeos.rocatrun.R
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import com.eeos.rocatrun.component.CircularItemGauge
+import com.eeos.rocatrun.ui.CircularItemGauge
 
 data class UserData(
     val nickname: String,
@@ -309,7 +301,6 @@ fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserV
                 contentDescription = "Item Icon",
                 modifier = Modifier
                     .size(40.dp)
-
             )
             Text(
                 text = "x ${realTimeData.itemCount}",

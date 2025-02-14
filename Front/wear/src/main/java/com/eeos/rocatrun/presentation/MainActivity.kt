@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.presentation
 
+import android.Manifest
 import android.util.Log
 import android.os.Bundle
 import android.os.Build
@@ -30,15 +31,24 @@ import com.eeos.rocatrun.R
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import android.content.Context
+import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.FusedLocationProviderClient
 
 class MainActivity : ComponentActivity() {
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             SplashScreen()
         }
+
+        requestPermissions()
     }
 
     // 모바일 앱 실행 요청 함수
@@ -65,6 +75,18 @@ class MainActivity : ComponentActivity() {
                 Log.d("WearApp", "연결된 노드가 없습니다.")
                 Toast.makeText(this, "연결된 디바이스가 없습니다.", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+     fun requestPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.BODY_SENSORS,
+            Manifest.permission.ACTIVITY_RECOGNITION
+        )
+        if (permissions.any {
+                ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            }) {
+            ActivityCompat.requestPermissions(this, permissions, 0)
         }
     }
 }

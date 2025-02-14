@@ -40,12 +40,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,7 +65,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.component.CircularItemGauge
+import com.eeos.rocatrun.ui.CircularItemGauge
 import com.eeos.rocatrun.detector.ArmGestureDetector
 import com.eeos.rocatrun.receiver.SensorUpdateReceiver
 import com.eeos.rocatrun.sensor.SensorManagerHelper
@@ -229,7 +227,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
 
 
-        requestPermissions()
+//        requestPermissions()
 
         // 게임 종료 이벤트 구독: RunningActivity의 lifecycleScope를 사용하여 구독
         lifecycleScope.launch {
@@ -303,18 +301,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
 
 
-    private fun requestPermissions() {
-        val permissions = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.BODY_SENSORS,
-            Manifest.permission.ACTIVITY_RECOGNITION
-        )
-        if (permissions.any {
-                ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-            }) {
-            ActivityCompat.requestPermissions(this, permissions, 0)
-        }
-    }
 
     private var lastDistanceUpdate = 0.0  // 마지막 게이지 업데이트 시점
     private var segmentDistance = 0.0 // 아이템 게이지 채우기 위한 이동 거리
@@ -504,41 +490,19 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     fun RunningApp(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
         val activity = LocalContext.current as? RunningActivity
         var isCountdownFinished by remember { mutableStateOf(false) }
-        var countdownValue by remember { mutableIntStateOf(5) }
 
-        LaunchedEffect(Unit) {
-            while (countdownValue > 0) {
-                delay(1000)
-                countdownValue -= 1
-            }
-            isCountdownFinished = true
-            activity?.startTrackingRequested = true
-        }
 
         if (isCountdownFinished) {
             WatchAppUI(gameViewModel, multiUserViewModel)
         } else {
-            CountdownScreen(countdownValue)
+            CountdownScreen(onFinish = {
+                isCountdownFinished = true
+                activity?.startTrackingRequested = true
+            })
         }
     }
 
-    @Composable
-    fun CountdownScreen(countdownValue: Int) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = countdownValue.toString(),
-                color = Color.White,
-                fontSize = 80.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily(Font(R.font.neodgm))
-            )
-        }
-    }
+
 
     @Composable
     fun WatchAppUI(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {

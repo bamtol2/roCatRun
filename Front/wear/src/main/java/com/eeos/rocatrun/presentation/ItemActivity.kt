@@ -1,7 +1,5 @@
 package com.eeos.rocatrun.presentation
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.presentation.theme.RoCatRunTheme
 import android.graphics.drawable.AnimatedImageDrawable
-import android.util.Log
 import android.widget.ImageView
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
@@ -25,10 +22,12 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.viewinterop.AndroidView
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.component.CircularItemGauge
-import com.eeos.rocatrun.component.FeverTime
+import com.eeos.rocatrun.ui.CircularItemGauge
+import com.eeos.rocatrun.ui.FeverTime
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -79,6 +78,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
     val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
     val feverTimeActive by gameViewModel.feverTimeActive.collectAsState()
     val showItemGif by gameViewModel.showItemGif.collectAsState()
+    val itemCount by gameViewModel.availableItemCount.collectAsState()
     val maxGaugeValue = 100
 
     // BossHealthRepository의 최대 체력 구독 (최초 값이 0이라면 기본값 10000 사용)
@@ -153,7 +153,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 // 고양이 GIF
                 AnimatedGifView(
                     resourceId = R.drawable.wear_gif_movewhitecat,
-                    modifier = Modifier.size(80.dp)
+                    modifier = Modifier.size(80.dp).offset(y = -10.dp)
                     )
 
                 // 아이템 GIF (조건부 표시)
@@ -165,37 +165,36 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 }
             }
         }
-        // 확인 버튼
-        Button(
-            onClick = {
-                gameViewModel.notifyItemUsage()
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF00FFCC)
-            ),
-            shape = RoundedCornerShape(16.dp),
-            contentPadding = PaddingValues(0.dp),
-            modifier = Modifier
-                .width(69.dp)
-                .height(34.dp)
-                .padding(horizontal = 2.dp)
-                .offset(y= 60.dp)
-        ) {
-            Text(
-                text = "공격",
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily(Font(R.font.neodgm))
+        if (itemCount > 0) {
+            Button(
+                onClick = {
+                    gameViewModel.notifyItemUsage()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00FFCC)
                 ),
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                softWrap = false  // 줄바꿈 방지
-            )
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .width(69.dp)
+                    .height(34.dp)
+                    .padding(horizontal = 2.dp)
+                    .offset(y = 60.dp)
+            ) {
+                Text(
+                    text = "공격",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(R.font.neodgm))
+                    ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false  // 줄바꿈 방지
+                )
+            }
         }
-
-
     }
 
 
@@ -204,9 +203,27 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(top = 16.dp)
     ) {
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Image(
+                painter = painterResource(id = R.drawable.wear_icon_fish),
+                contentDescription = "아이템",
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(
+                text = " X ${itemCount}",
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font(R.font.neodgm)),
+                color = Color.White
+            )
+
+
         Button(
             onClick = {
                 gameViewModel.setItemGauge(100)
@@ -214,9 +231,12 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                     gameViewModel.handleGaugeFull(context)
                 }
             },
-            modifier = Modifier.wrapContentSize() // 버튼 크기 조정
+            modifier = Modifier
+                .width(30.dp)
+                .height(30.dp)
         ) {
-            Text("게이지+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
+            Text("+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
+        }
         }
     }
 }

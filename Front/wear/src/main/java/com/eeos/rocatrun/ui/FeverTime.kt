@@ -1,6 +1,5 @@
-package com.eeos.rocatrun.component
+package com.eeos.rocatrun.ui
 
-import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
@@ -18,10 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.zIndex
-import androidx.wear.compose.foundation.CurvedLayout
 import androidx.wear.compose.material.LocalTextStyle
-import androidx.wear.compose.material.MaterialTheme
 import com.eeos.rocatrun.R
 
 @Composable

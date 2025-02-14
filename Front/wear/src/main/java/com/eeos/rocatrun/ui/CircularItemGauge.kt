@@ -1,4 +1,4 @@
-package com.eeos.rocatrun.component
+package com.eeos.rocatrun.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
