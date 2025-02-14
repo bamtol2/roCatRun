@@ -19,7 +19,7 @@ public class InventoryResponse {
     private String category;        // 아이템 카테고리
     private String rarity;          // 아이템 희귀도
     private int price;             // 판매 가격
-    private boolean isEquipped;     // 착용 여부
+    private boolean equipped;     // 착용 여부 (isEquipped -> equipped로 변경)
 
     public static InventoryResponse from(Inventory inventory) {
         InventoryResponse response = new InventoryResponse();
@@ -46,7 +46,7 @@ public class InventoryResponse {
             response.price = 0;
         }
 
-        response.isEquipped = inventory.getIsEquipped();
+        response.equipped = inventory.getIsEquipped();  // isEquipped -> equipped로 변경
         return response;
     }
 }
