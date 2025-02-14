@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 캐릭터 엔티티에 대한 데이터베이스 작업을 처리하는 리포지토리
@@ -46,4 +47,11 @@ public interface GameCharacterRepository extends JpaRepository<GameCharacter, Lo
      */
     @Query("SELECT COUNT(gc) + 1 FROM GameCharacter gc WHERE gc.level > :level OR (gc.level = :level AND gc.experience > :experience)")
     Long findRankByLevelAndExperience(@Param("level") Integer level, @Param("experience") Integer experience);
+
+    /**
+     * 회원 ID로 캐릭터를 찾습니다.
+     * @param memberId 회원 ID
+     * @return 해당 회원의 캐릭터
+     */
+    Optional<GameCharacter> findByMember_Id(Long memberId);
 }

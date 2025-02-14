@@ -38,7 +38,8 @@ public class ItemService {
         }
 
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-        GameCharacter character = gameCharacterRepository.getReferenceById(memberId);
+        GameCharacter character = gameCharacterRepository.findByMember_Id(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("캐릭터를 찾을 수 없습니다."));
 
         int requiredCoins = drawCount * DRAW_COST;
         character.useCoin(requiredCoins); // GameCharacter의 useCoin 메서드 사용
