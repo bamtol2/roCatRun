@@ -326,7 +326,7 @@ fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
 fun CharacterWithItems(wornItems: List<InventoryItem>) {
     val context = LocalContext.current
 
-    // 이미지 캡쳐 사이즈 300.dp
+    // 이미지 캡쳐 사이즈 230.dp
     Box(
         modifier = Modifier
             .size(230.dp)
@@ -355,12 +355,6 @@ fun CharacterWithItems(wornItems: List<InventoryItem>) {
                 )
             }
         }
-
-//        // 캐릭터 이미지 (물감 적용하기 PAINT)
-//        GifImage(
-//            modifier = Modifier.size(300.dp),
-//            gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
-//        )
 
         // 캐릭터 이미지
         val paintItem = wornItems.filter { it.category == "PAINT" }.firstOrNull()

@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.ui.platform.LocalContext
+import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.home.api.HomeViewModel
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.socket.SocketHandler
@@ -14,6 +15,7 @@ import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 class HomeActivity : ComponentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModels()
+    private val closetViewModel: ClosetViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -25,6 +27,7 @@ class HomeActivity : ComponentActivity() {
 
         val token = TokenStorage.getAccessToken(this)
         homeViewModel.fetchHomeInfo(token)
+        closetViewModel.fetchAllItems(token)
 
         setContent {
             RoCatRunTheme {

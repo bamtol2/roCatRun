@@ -53,7 +53,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.closet.CharacterWithItems
 import com.eeos.rocatrun.closet.ClosetActivity
+import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
 import com.eeos.rocatrun.login.data.TokenStorage
@@ -72,6 +74,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
     // ViewModel에서 가져온 데이터
     val homeInfoData = homeViewModel.homeData.observeAsState()
+
+    // 아이템 목록
+    val closetViewModel : ClosetViewModel = viewModel()
+    val itemList = closetViewModel.itemList.value
 
     // 프로필 관련 변수, 프로필 데이터가 없을 때만 호출
     val profileViewModel: ProfileViewModel = viewModel()
@@ -206,11 +212,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                             .offset(x = 20.dp)
                     )
                 } else {
-                    Image(
-                        painter = rememberAsyncImagePainter(characterData.characterImage),
-                        contentDescription = "Cat Character",
-                        modifier = Modifier.size(230.dp),
-                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CharacterWithItems(wornItems = itemList.filter { it.equipped })
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
