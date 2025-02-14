@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.closet
 
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -250,8 +251,11 @@ fun CustomTabRow(
 }
 
 // Item UI
+@SuppressLint("DiscouragedApi")
 @Composable
 fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
+    val context = LocalContext.current
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -270,21 +274,20 @@ fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 // 아이템 이미지
-                if (item.listImageIsGif && item.listImage != null) {
-                    GifImage(
-                        modifier = Modifier.size(60.dp),
-                        gifUrl = "android.resource://com.eeos.rocatrun/${item.listImage}"
-                    )
+                val resourceId = context.resources.getIdentifier("${item.itemName}_off", "drawable", context.packageName)
+                val imageRes = if (resourceId != 0) {
+                    "android.resource://${context.packageName}/$resourceId"
                 } else {
-                    item.listImage?.let {
-                        Image(
-                            painter = rememberAsyncImagePainter(item.listImage),
-                            contentDescription = "착용 아이템",
-                            modifier = Modifier
-                                .size(200.dp)
-                        )
-                    }
+                    "android.resource://com.eeos.rocatrun/${R.drawable.closet_img_x}"
                 }
+
+                Image(
+                    painter = rememberAsyncImagePainter(imageRes),
+                    contentDescription = "착용 전 아이템",
+                    modifier = Modifier
+                        .size(200.dp)
+                )
+
             }
 
             // 착용/해제 버튼
@@ -316,56 +319,62 @@ fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
 
 
 // 아이템 장착 화면 - 상단 캐릭터 영역
+@SuppressLint("DiscouragedApi")
 @Composable
 fun CharacterWithItems(wornItems: List<InventoryItem>) {
+    val context = LocalContext.current
+
     // 이미지 캡쳐 사이즈 200.dp
     Box(modifier = Modifier.size(300.dp)) {
         // 특정 카테고리(예: "오라")의 아이템 배치 (캐릭터 뒤)
         wornItems.filter { it.category == "AURA" }.forEach { item ->
-            if (item.equipImageIsGif && item.equipImage != null) {
+            val resourceId = context.resources.getIdentifier("${item.itemName}_on", "drawable", context.packageName)
+            val imageUrl = if (resourceId != 0) {
+                "android.resource://${context.packageName}/$resourceId"
+            } else {
+                "android.resource://com.eeos.rocatrun/${R.drawable.closet_img_x}"
+            }
+
+            if (item.isGif) {
                 GifImage(
-                    modifier = Modifier
-                        .size(300.dp),
-                    gifUrl = "android.resource://com.eeos.rocatrun/${item.equipImage}"
+                    modifier = Modifier.size(300.dp),
+                    gifUrl = imageUrl
                 )
             } else {
-                item.equipImage?.let {
-                    Image(
-                        painter = rememberAsyncImagePainter(item.equipImage),
-                        contentDescription = "착용 아이템",
-                        modifier = Modifier
-                            .size(300.dp)
-                    )
-                }
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = "착용 아이템",
+                    modifier = Modifier.size(300.dp)
+                )
             }
         }
 
         // 캐릭터 이미지 (물감 적용하기 PAINT)
         GifImage(
-            modifier = Modifier
-                .size(300.dp),
+            modifier = Modifier.size(300.dp),
             gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
         )
 
         // 나머지 카테고리의 아이템 배치 (캐릭터 위)
         wornItems.filter { it.category != "AURA" }.forEach { item ->
-            if (item.equipImageIsGif && item.equipImage != null) {
-                // GIF 이미지
+            val resourceId = context.resources.getIdentifier("${item.itemName}_on", "drawable", context.packageName)
+            val imageUrl = if (resourceId != 0) {
+                "android.resource://${context.packageName}/$resourceId"
+            } else {
+                "android.resource://com.eeos.rocatrun/${R.drawable.closet_img_x}"
+            }
+
+            if (item.isGif) {
                 GifImage(
-                    modifier = Modifier
-                        .size(300.dp),
-                    gifUrl = "android.resource://com.eeos.rocatrun/${item.equipImage}"
+                    modifier = Modifier.size(300.dp),
+                    gifUrl = imageUrl
                 )
             } else {
-                // 일반 이미지
-                item.equipImage?.let {
-                    Image(
-                        painter = rememberAsyncImagePainter(item.equipImage),
-                        contentDescription = "착용 아이템",
-                        modifier = Modifier
-                            .size(300.dp)
-                    )
-                }
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrl),
+                    contentDescription = "착용 아이템",
+                    modifier = Modifier.size(300.dp)
+                )
             }
         }
     }
