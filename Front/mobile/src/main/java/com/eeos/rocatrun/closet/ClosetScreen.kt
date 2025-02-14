@@ -363,35 +363,24 @@ fun CharacterWithItems(wornItems: List<InventoryItem>) {
 //        )
 
         // 캐릭터 이미지
-        val paintItem = wornItems.firstOrNull { it.category == "PAINT" }
-        if (paintItem != null) {
-            // "물감" 카테고리 아이템이 착용된 경우
+        val paintItem = wornItems.filter { it.category == "PAINT" }.firstOrNull()
+        val imageUrl = paintItem?.let {
             val resourceId =
-                context.resources.getIdentifier(
-                    "${paintItem.name}_on",
-                    "drawable",
-                    context.packageName
-                )
-            val imageUrl = if (resourceId != 0) {
+                context.resources.getIdentifier("${it.name}_on", "drawable", context.packageName)
+            if (resourceId != 0) {
                 "android.resource://${context.packageName}/$resourceId"
             } else {
                 "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
             }
+        } ?: "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}" // 기본 이미지
 
-            GifImage(
-                modifier = Modifier.size(300.dp),
-                gifUrl = imageUrl
-            )
-        } else {
-            // 기본 캐릭터 이미지 사용
-            GifImage(
-                modifier = Modifier.size(300.dp),
-                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
-            )
-        }
+        GifImage(
+            modifier = Modifier.size(300.dp),
+            gifUrl = imageUrl
+        )
 
         // 나머지 카테고리의 아이템 배치 (캐릭터 위)
-        wornItems.filter { it.category != "AURA" }.forEach { item ->
+        wornItems.filter { it.category != "AURA" && it.category != "PAINT" }.forEach { item ->
             val resourceId =
                 context.resources.getIdentifier("${item.name}_on", "drawable", context.packageName)
             val imageUrl = if (resourceId != 0) {
