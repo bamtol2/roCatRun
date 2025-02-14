@@ -57,6 +57,7 @@ import com.eeos.rocatrun.closet.ClosetActivity
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
 import com.eeos.rocatrun.login.data.TokenStorage
+import com.eeos.rocatrun.ppobgi.PpobgiDialog
 import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.ranking.RankingDialog
@@ -89,6 +90,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     var showRanking by remember { mutableStateOf(false) }
     val rankingData by rankingViewModel.rankingData.observeAsState()
 
+    // 뽑기 모달 변수
+    var showPpobgi by remember { mutableStateOf(false) }
+
     LaunchedEffect(rankingData) {
         if (rankingData == null) {
             rankingViewModel.fetchRankingInfo(token)
@@ -112,21 +116,39 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 .offset(x = 0.dp, y = 47.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            // 왼쪽 상단 버튼 (랭킹)
-            Button(
+            Column(
                 modifier = Modifier
-                    .align(Alignment.TopStart),
-                onClick = { showRanking = true },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                shape = RoundedCornerShape(0.dp),
-                contentPadding = PaddingValues(0.dp)
+                    .align(Alignment.TopStart)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.home_icon_ranking),
-                    contentDescription = "Ranking Icon",
-                    modifier = Modifier.size(60.dp)
-                )
+                // 왼쪽 상단 버튼들 (랭킹, 뽑기)
+                Button(
+                    onClick = { showRanking = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_ranking),
+                        contentDescription = "Ranking Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { showPpobgi = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_ppobgi),
+                        contentDescription = "Ppobgi Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+
             }
+
 
             // 오른쪽 상단 세로 버튼들 (프로필, 통계, 옷장)
             Column(
@@ -327,6 +349,11 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
         // 프로필 모달 표시
         if (showProfile) {
             ProfileDialog(onDismiss = { showProfile = false }, profileData = profileData)
+        }
+
+        // 뽑기 모달 표시
+        if (showPpobgi) {
+            PpobgiDialog(onDismiss = { showPpobgi = false })
         }
 
     }
