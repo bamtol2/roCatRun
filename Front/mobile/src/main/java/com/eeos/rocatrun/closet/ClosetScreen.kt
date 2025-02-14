@@ -69,7 +69,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("전체", "물감", "머리띠", "풍선", "오라")
 
-    // 리스트로 만들어서 착용 아이템들 전달하는 용도로 사용해도 될 듯
+    // 착용 아이템 리스트
     val equippedItems = closetViewModel.equippedItems.value
 
     Box(modifier = Modifier.fillMaxSize()) {

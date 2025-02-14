@@ -13,6 +13,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import com.eeos.rocatrun.api.RetrofitInstance
 import androidx.compose.runtime.State
+import com.eeos.rocatrun.login.data.RetrofitClient.apiService
 
 class ClosetViewModel : ViewModel() {
     // 전송 완료 응답 데이터
@@ -44,16 +45,12 @@ class ClosetViewModel : ViewModel() {
                 it
             }
         }
-
         // 장착된 아이템 리스트 업데이트
-        _equippedItems.value = if (clickedItem.equipped) {
-            _equippedItems.value.filter { it != clickedItem.inventoryId }
-        } else {
-            _equippedItems.value + clickedItem.inventoryId
-        }
+        _equippedItems.value = _itemList.value
+            .filter { it.equipped }
+            .map { it.inventoryId }
 
         Log.d("api", _equippedItems.value.toString())
-
     }
 
     fun initializeItemList(items: List<InventoryItem>) {
@@ -132,7 +129,35 @@ class ClosetViewModel : ViewModel() {
                 _isItemLoading.value = false
             }
         }
+    }
 
+    // 아이템 착용 상태 변경
+    fun changeEquipStatus(auth: String, inventoryIds: List<Int>) {
+        if (auth == null) {
+            Log.d("debug", "토큰이 없습니다.")
+            return
+        }
+
+        Log.d("api", "아이템 착용 상태 변경 호출")
+        viewModelScope.launch {
+            try {
+                // EquipRequest 생성
+                val equipRequest = EquipRequest(inventoryIds)
+                val response = retrofitInstance.putItemsEquip(token = "Bearer $auth", requestBody = equipRequest)
+
+                if (response.isSuccessful) {
+                    response.body()?.let { inventoryResponse ->
+                        _itemList.value = inventoryResponse.data
+                        initializeItemList(inventoryResponse.data)
+                    }
+                    Log.d("api", "아이템 착용 상태 변경 성공")
+                } else {
+                    Log.e("api", "아이템 착용 상태 변경 실패: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("api", "API 호출 중 오류 발생: ${e.localizedMessage}")
+            }
+        }
     }
 
 }

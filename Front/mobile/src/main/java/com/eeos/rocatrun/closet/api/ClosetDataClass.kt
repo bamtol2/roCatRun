@@ -21,3 +21,7 @@ data class InventoryItem(
     val price: Int,
     val equipped: Boolean
 )
+
+data class EquipRequest(
+    val inventoryIds: List<Int>
+)

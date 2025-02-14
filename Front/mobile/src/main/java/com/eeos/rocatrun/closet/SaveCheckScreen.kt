@@ -120,6 +120,7 @@ fun SaveCheckScreen(
                                     try {
                                         val bitmap = captureController.captureAsync().await()
                                         saveImageToDownloads(context, bitmap, closetViewModel, token)
+                                        closetViewModel.changeEquipStatus(auth = token, inventoryIds = closetViewModel.equippedItems.value)
 //                                        onDismissRequest()
                                         context.startActivity(Intent(context, HomeActivity::class.java))
                                     } catch (error: Throwable) {
