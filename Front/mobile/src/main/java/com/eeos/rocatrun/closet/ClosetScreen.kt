@@ -25,11 +25,11 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,17 +38,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.api.ClosetViewModel
+import com.eeos.rocatrun.closet.api.InventoryItem
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.ui.components.GifImage
@@ -57,32 +56,18 @@ import com.eeos.rocatrun.ui.theme.MyFontFamily
 import dev.shreyaspatil.capturable.capturable
 import dev.shreyaspatil.capturable.controller.rememberCaptureController
 import kotlinx.coroutines.launch
-
-
-data class ItemPosition(
-    val x: Int, // X 좌표 (dp 단위)
-    val y: Int  // Y 좌표 (dp 단위)
-)
-
-data class WearableItem(
-    val id: String,
-    val imageRes: Int? = null, // 이미지 리소스
-    val position: ItemPosition, // 적용 위치
-    val size: Int, // 아이템 크기
-    val category: String,
-    val categoryInt: Int,
-    var isWorn: Boolean = false, // 착용 여부
-    var isGif: Boolean = false,
-    val gifUrl: Int? = null
-)
+import androidx.compose.runtime.livedata.observeAsState
 
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeApi::class)
 @Composable
-fun ClosetScreen() {
+fun ClosetScreen(closetViewModel: ClosetViewModel) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
-    val closetViewModel: ClosetViewModel = viewModel()
+
+    // 아이템 목록
+    val itemList = closetViewModel.itemList.value
+
 
     // 이미지 캡쳐 변수
     val captureController = rememberCaptureController()
@@ -93,21 +78,6 @@ fun ClosetScreen() {
 
     // 리스트로 만들어서 착용 아이템들 전달하는 용도로 사용해도 될 듯
     var equippedItem by remember { mutableStateOf<String?>(null) }
-
-    // 아이템 더미 리스트
-    var items by remember {
-        mutableStateOf(
-            listOf(
-                WearableItem("aura1", R.drawable.closet_ora_1, ItemPosition(7, 65), 300, "오라", 4),
-                WearableItem("aura2", R.drawable.closet_ora_2, ItemPosition(10, -50), 300, "오라", 4),
-                WearableItem("balloon1", R.drawable.closet_balloon_1, ItemPosition(70, -20), 80, "풍선", 3),
-                WearableItem("balloon2", R.drawable.closet_balloon_2, ItemPosition(70, -20), 80, "풍선", 3),
-                WearableItem("aura3", position = ItemPosition(10, -50), size = 300, category = "오라", categoryInt = 4, isGif = true, gifUrl = R.drawable.closet_item_pizza_oural),
-                WearableItem("balloon3", position = ItemPosition(70, -20), size = 80, category = "풍선", categoryInt = 3, isGif = true, gifUrl = R.drawable.closet_item_bird_ballon),
-                WearableItem("balloon4", position = ItemPosition(70, -20), size = 80, category = "풍선", categoryInt = 3, isGif = true, gifUrl = R.drawable.closet_item_cat_ballon),
-            )
-        )
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -174,7 +144,7 @@ fun ClosetScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(modifier = Modifier.capturable(captureController)) {
-                    CharacterWithItems(wornItems = items.filter { it.isWorn })
+                    CharacterWithItems(wornItems = itemList.filter { it.equipped })
                 }
             }
 
@@ -211,45 +181,39 @@ fun ClosetScreen() {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val currentItems = when (selectedTab) {
-                            0 -> items // 전체
-                            1 -> items.filter { it.categoryInt == 1 } // 물감
-                            2 -> items.filter { it.categoryInt == 2 } // 머리띠
-                            3 -> items.filter { it.categoryInt == 3 } // 풍선
-                            4 -> items.filter { it.categoryInt == 4 } // 오라
+                            0 -> itemList // 전체
+                            1 -> itemList.filter { it.category == "PAINT" } // 물감
+                            2 -> itemList.filter { it.category == "HEADBAND" } // 머리띠
+                            3 -> itemList.filter { it.category == "BALLOON" } // 풍선
+                            4 -> itemList.filter { it.category == "AURA" } // 오라
                             else -> emptyList()
                         }
 
-                        items(currentItems) { item ->
-                            ItemCard(item) { clickedItem ->
-                                items = items.map {
-                                    // 클릭한 아이템의 상태를 토글하고 같은 카테고리 아이템은 모두 해제
-                                    if (it.id == clickedItem.id) {
-                                        it.copy(isWorn = !it.isWorn)
-                                    } else if (it.categoryInt == clickedItem.categoryInt) {
-                                        it.copy(isWorn = false)
-                                    } else {
-                                        it
-                                    }
-                                }
-                            }
+
+                        items(
+                            items = currentItems,
+                            key = { item -> item.inventoryId }
+                        ) { item ->
+                            ItemCard(
+                                item = item,
+                                onClick = { closetViewModel.toggleItemEquipped(it) }
+                            )
                         }
 
                     }
 
                     // 획득 아이템 표시 텍스트
-                    val filteredItems = items.filter { item ->
-                        when (selectedTab) {
-                            0 -> true // 전체 아이템
-                            1 -> item.categoryInt == 1 // 물감
-                            2 -> item.categoryInt == 2 // 머리띠
-                            3 -> item.categoryInt == 3 // 풍선
-                            4 -> item.categoryInt == 4 // 오라
-                            else -> false
-                        }
+                    val currentItemCount = when (selectedTab) {
+                        0 -> itemList.size // 전체
+                        1 -> itemList.count { it.category == "PAINT" }
+                        2 -> itemList.count { it.category == "HEADBAND" }
+                        3 -> itemList.count { it.category == "BALLOON" }
+                        4 -> itemList.count { it.category == "AURA" }
+                        else -> 0
                     }
 
-                    StrokedText (
-                        text = "획득 아이템 : 총 ${filteredItems.size}개",
+                    StrokedText(
+                        text = "획득 아이템 : 총 ${currentItemCount}개",
                         fontSize = 14,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -310,7 +274,7 @@ fun CustomTabRow(
 
 // Item UI
 @Composable
-fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
+fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -329,17 +293,18 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 // 아이템 이미지
-                if (item.isGif && item.gifUrl != null) {
+                if (item.listImageIsGif && item.listImage != null) {
                     GifImage(
                         modifier = Modifier.size(60.dp),
-                        gifUrl = "android.resource://com.eeos.rocatrun/${item.gifUrl}"
+                        gifUrl = "android.resource://com.eeos.rocatrun/${item.listImage}"
                     )
                 } else {
-                    item.imageRes?.let { painterResource(id = it) }?.let {
+                    item.listImage?.let {
                         Image(
-                            painter = it,
-                            contentDescription = "아이템",
-                            modifier = Modifier.size(60.dp)
+                            painter = rememberAsyncImagePainter(item.listImage),
+                            contentDescription = "착용 아이템",
+                            modifier = Modifier
+                                .size(200.dp)
                         )
                     }
                 }
@@ -354,7 +319,7 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
             ) {
                 Image(
                     painter = painterResource(
-                        id = if (item.isWorn) R.drawable.closet_btn_dresson
+                        id = if (item.equipped) R.drawable.closet_btn_dresson
                         else R.drawable.closet_btn_dressoff
                     ),
                     contentDescription = null,
@@ -362,7 +327,7 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
                     modifier = Modifier.matchParentSize()
                 )
                 Text(
-                    text = if (item.isWorn) "해제" else "착용",
+                    text = if (item.equipped) "해제" else "착용",
                     color = Color.White,
                     fontSize = 13.sp,
                     modifier = Modifier.align(Alignment.Center)
@@ -375,65 +340,59 @@ fun ItemCard(item: WearableItem, onClick: (WearableItem) -> Unit) {
 
 // 아이템 장착 화면 - 상단 캐릭터 영역
 @Composable
-fun CharacterWithItems(wornItems: List<WearableItem>) {
+fun CharacterWithItems(wornItems: List<InventoryItem>) {
     // 이미지 캡쳐 사이즈 200.dp
-    Box(modifier = Modifier.size(200.dp)) {
+    Box(modifier = Modifier.size(300.dp)) {
         // 특정 카테고리(예: "오라")의 아이템 배치 (캐릭터 뒤)
-        wornItems.filter { it.category == "오라" }.forEach { item ->
-            if (item.isGif && item.gifUrl != null) {
+        wornItems.filter { it.category == "AURA" }.forEach { item ->
+            if (item.equipImageIsGif && item.equipImage != null) {
                 GifImage(
                     modifier = Modifier
-                        .size(item.size.dp)
-                        .offset(item.position.x.dp, item.position.y.dp),
-                    gifUrl = "android.resource://com.eeos.rocatrun/${item.gifUrl}"
+                        .size(300.dp),
+                    gifUrl = "android.resource://com.eeos.rocatrun/${item.equipImage}"
                 )
             } else {
-                item.imageRes?.let { painterResource(id = it) }?.let {
+                item.equipImage?.let {
                     Image(
-                        painter = it,
+                        painter = rememberAsyncImagePainter(item.equipImage),
                         contentDescription = "착용 아이템",
                         modifier = Modifier
-                            .size(item.size.dp)
-                            .offset(item.position.x.dp, item.position.y.dp)
+                            .size(300.dp)
                     )
                 }
             }
         }
 
-        // 캐릭터 이미지
+        // 캐릭터 이미지 (물감 적용하기 PAINT)
         Box(
             modifier = Modifier
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.all_img_whitecat),
-                contentDescription = null,
+            GifImage(
                 modifier = Modifier
-                    .size(150.dp)
-                    .offset(x = 15.dp, y = 10.dp)
+                    .size(300.dp),
+                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
             )
         }
 
         // 나머지 카테고리의 아이템 배치 (캐릭터 위)
-        wornItems.filter { it.category != "오라" }.forEach { item ->
-            if (item.isGif && item.gifUrl != null) {
+        wornItems.filter { it.category != "AURA" }.forEach { item ->
+            if (item.equipImageIsGif && item.equipImage != null) {
                 // GIF 이미지
                 GifImage(
                     modifier = Modifier
-                        .size(item.size.dp)
-                        .offset(item.position.x.dp, item.position.y.dp),
-                    gifUrl = "android.resource://com.eeos.rocatrun/${item.gifUrl}"
+                        .size(300.dp),
+                    gifUrl = "android.resource://com.eeos.rocatrun/${item.equipImage}"
                 )
             } else {
                 // 일반 이미지
-                item.imageRes?.let { painterResource(id = it) }?.let {
+                item.equipImage?.let {
                     Image(
-                        painter = it,
+                        painter = rememberAsyncImagePainter(item.equipImage),
                         contentDescription = "착용 아이템",
                         modifier = Modifier
-                            .size(item.size.dp)
-                            .offset(item.position.x.dp, item.position.y.dp)
+                            .size(300.dp)
                     )
                 }
             }
