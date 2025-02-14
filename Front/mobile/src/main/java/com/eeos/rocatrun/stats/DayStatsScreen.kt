@@ -20,10 +20,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import com.eeos.rocatrun.stats.api.Game
 import com.eeos.rocatrun.stats.api.Player
 import com.eeos.rocatrun.ui.components.StrokedText
+import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
@@ -53,18 +55,13 @@ fun DayStatsScreen(games: List<Game>) {
                         )
                     },
                     isSuccess = game.result,
-                    bossImg = painterResource(id = R.drawable.all_img_boss1),  // 필요 시 수정
+                    difficulty = game.difficulty,
                     onClick = { selectedGame = game }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
-
-    // 세부 모달 표시
-//    if (showDetail) {
-//        DetailDialog(onDismiss = { showDetail = false })
-//    }
 
     // 세부 모달 표시: selectedGame이 null이 아닐 때만 보여줌
     selectedGame?.let { game ->
@@ -82,7 +79,7 @@ fun DayStatCard(
     status: String,
     players: List<Player>,
     isSuccess: Boolean,
-    bossImg: Painter,
+    difficulty: String,
     onClick: () -> Unit,
 ) {
     val dateWithoutTime = date.substringBefore("T").replace("-", "/")
@@ -91,16 +88,26 @@ fun DayStatCard(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clickable(onClick = onClick)
     ) {
         // 배경 이미지
-        Image(
-            painter = painterResource(id = R.drawable.stats_bg_day),
-            contentDescription = "Card Background",
-            contentScale = ContentScale.FillWidth,
-            alpha = 0.8f,
-            modifier = Modifier.fillMaxWidth()
-        )
+        val bgImage = when (players.size) {
+            1 -> R.drawable.stats_bg_day_one
+            2 -> R.drawable.stats_bg_day_two
+            3 -> R.drawable.stats_bg_day_three
+            4 -> R.drawable.stats_bg_day_four
+            else -> null
+        }
+
+        if (bgImage != null) {
+            Image(
+                painter = painterResource(id = bgImage),
+                contentDescription = "Card Background",
+                contentScale = ContentScale.Crop,
+                alpha = 0.8f,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
 
         Card(
             modifier = Modifier
@@ -158,12 +165,22 @@ fun DayStatCard(
                 // 게임 결과
                 Row(
                     modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = bossImg,
-                        contentDescription = "Boss Img",
-                        modifier = Modifier.size(35.dp)
-                    )
+                    val bossImg = when (difficulty) {
+                        "HARD" -> R.drawable.all_img_boss1
+                        "NORMAL" -> R.drawable.all_img_boss2
+                        "EASY" -> R.drawable.all_img_boss3
+                        else -> null
+                    }
+
+                    if (bossImg != null) {
+                        Image(
+                            painter = painterResource(id = bossImg),
+                            contentDescription = "Boss Img",
+                            modifier = Modifier.size(35.dp)
+                        )
+                    }
 
                     StrokedText(
                         text = status,
@@ -172,6 +189,29 @@ fun DayStatCard(
                         fontSize = 34,
                         modifier = Modifier.offset(x = 15.dp)
                     )
+
+                    // 세부 모달 버튼
+                    Button(
+                        onClick = onClick,
+                        modifier = Modifier
+                            .offset(x = 84.dp)
+                            .border(2.dp, Color(0xFF2EB5DC), RoundedCornerShape(10.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                        ),
+                        contentPadding = PaddingValues(horizontal = 7.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = "개인 기록",
+                            style = TextStyle(
+                                fontFamily = MyFontFamily,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            ),
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -230,7 +270,7 @@ fun DayStatCard(
                             modifier = Modifier.weight(1.5f)
                         )
                         Text(
-                            text = roundToFirstDecimal(player.distance).toString(),
+                            text = "${roundToFirstDecimal(player.distance)}km",
                             color = Color.White,
                             fontSize = 14.sp,
                             modifier = Modifier.weight(0.5f)
