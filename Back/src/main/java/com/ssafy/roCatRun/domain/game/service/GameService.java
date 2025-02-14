@@ -547,27 +547,17 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @return 소모 칼로리
      */
     private int calculateCalories(Member member, double distance, long runningTimeSec) {
-        if (member.getWeight() == null || member.getHeight() == null || member.getGender() == null) {
-            return 0; // 신체 정보가 없는 경우 0 반환
+        if (member.getWeight() == null || member.getGender() == null) {
+            return 0;
         }
 
-        // MET(Metabolic Equivalent of Task) 값 계산
-        // 달리기 속도에 따른 MET 값 (approximate values)
-        double paceMinPerKm = (runningTimeSec / 60.0) / distance; // 1km당 몇 분
-        double met;
-        if (paceMinPerKm < 5) met = 11.5;      // 5분 이하/km: 매우 빠른 달리기
-        else if (paceMinPerKm < 6) met = 10.0;  // 5-6분/km: 빠른 달리기
-        else if (paceMinPerKm < 7) met = 9.0;   // 6-7분/km: 보통 달리기
-        else if (paceMinPerKm < 8) met = 8.3;   // 7-8분/km: 조깅
-        else met = 7.0;                         // 8분 이상/km: 가벼운 조깅
-
-        // 칼로리 계산 공식: 칼로리 = MET × 체중(kg) × 시간(hour)
-        double hours = runningTimeSec / 3600.0;
-        double calories = met * member.getWeight() * hours;
+        // 기본 공식: 체중(kg) * 거리(km) * 상수
+        // 상수는 보통 0.75 ~ 0.9 사이의 값을 사용 (평균적으로 0.8)
+        double calories = member.getWeight() * distance * 0.8;
 
         // 성별에 따른 보정
         if ("women".equals(member.getGender())) {
-            calories *= 0.9; // 여성의 경우 대략 10% 감소
+            calories *= 0.9;
         }
 
         return (int) calories;
