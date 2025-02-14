@@ -36,7 +36,7 @@ class ClosetViewModel : ViewModel() {
     // 아이템 상태 변경 함수
     fun toggleItemEquipped(clickedItem: InventoryItem) {
         _itemList.value = _itemList.value.map {
-            if (it.id == clickedItem.id) {
+            if (it.inventoryId == clickedItem.inventoryId) {
                 it.copy(equipped = !it.equipped)
             } else if (it.category == clickedItem.category) {
                 it.copy(equipped = false)
@@ -47,9 +47,9 @@ class ClosetViewModel : ViewModel() {
 
         // 장착된 아이템 리스트 업데이트
         _equippedItems.value = if (clickedItem.equipped) {
-            _equippedItems.value.filter { it != clickedItem.id }
+            _equippedItems.value.filter { it != clickedItem.inventoryId }
         } else {
-            _equippedItems.value + clickedItem.id
+            _equippedItems.value + clickedItem.inventoryId
         }
 
         Log.d("api", _equippedItems.value.toString())
@@ -58,7 +58,7 @@ class ClosetViewModel : ViewModel() {
 
     fun initializeItemList(items: List<InventoryItem>) {
         _itemList.value = items
-        _equippedItems.value = items.filter { it.equipped }.map { it.id }
+        _equippedItems.value = items.filter { it.equipped }.map { it.inventoryId }
     }
 
 

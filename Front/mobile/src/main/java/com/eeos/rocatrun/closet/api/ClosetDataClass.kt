@@ -11,7 +11,7 @@ data class InventoryResponse(
 )
 
 data class InventoryItem(
-    val id: Int,
+    val inventoryId: Int,
     val name: String,
     val koreanName: String,
     val description: String,
