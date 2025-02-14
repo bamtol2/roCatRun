@@ -126,4 +126,32 @@ public class InventoryService {
         return inventoryRepository.findByIdAndGameCharacter_Member_Id(inventoryId, memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 접근 권한이 없는 인벤토리 아이템입니다."));
     }
+
+    /**
+     * 아이템 착용 상태를 일괄 변경합니다.
+     * 요청된 아이템들만 착용 상태로 변경하고 나머지는 모두 해제합니다.
+     *
+     * @param inventoryIds 착용할 인벤토리 아이템 ID 리스트
+     * @return 변경된 전체 인벤토리 아이템 목록
+     */
+    @Transactional
+    public List<InventoryResponse> equipItems(List<Long> inventoryIds) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        // 회원의 모든 인벤토리 아이템을 조회
+        List<Inventory> allInventories = inventoryRepository.findByGameCharacter_Member_Id(memberId);
+
+        // 모든 아이템을 우선 착용 해제 상태로 변경
+        allInventories.forEach(inventory -> inventory.setIsEquipped(false));
+
+        // 요청된 ID에 해당하는 아이템만 착용 상태로 변경
+        allInventories.stream()
+                .filter(inventory -> inventoryIds.contains(inventory.getId()))
+                .forEach(inventory -> inventory.setIsEquipped(true));
+
+        return allInventories.stream()
+                .map(InventoryResponse::from)
+                .collect(Collectors.toList());
+    }
+
 }

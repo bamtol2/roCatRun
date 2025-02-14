@@ -1,5 +1,6 @@
 package com.ssafy.roCatRun.domain.inventory.controller;
 
+import com.ssafy.roCatRun.domain.inventory.dto.request.InventoryEquipRequest;
 import com.ssafy.roCatRun.domain.inventory.dto.response.InventoryResponse;
 import com.ssafy.roCatRun.domain.inventory.dto.response.ItemSellResponse;
 import com.ssafy.roCatRun.domain.inventory.service.InventoryService;
@@ -75,5 +76,16 @@ public class InventoryController {
     public ApiResponse<ItemSellResponse> sellItem(@PathVariable Long inventoryId) {
         return ApiResponse.success("아이템 판매 성공",
                 inventoryService.sellItem(inventoryId));
+    }
+
+    /**
+     * 아이템 일괄 착용/해제
+     * - 요청된 inventoryIds 리스트의 아이템들만 착용 상태로 변경
+     * - 나머지 아이템들은 모두 해제 상태로 변경
+     */
+    @PutMapping("/items/equip")
+    public ApiResponse<List<InventoryResponse>> equipItems(@RequestBody InventoryEquipRequest request) {
+        return ApiResponse.success("아이템 착용 상태 변경 성공",
+                inventoryService.equipItems(request.getInventoryIds()));
     }
 }
