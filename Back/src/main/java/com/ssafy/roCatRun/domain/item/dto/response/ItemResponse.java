@@ -12,7 +12,8 @@ public class ItemResponse {
     private String description;     // 아이템 설명
     private String listImage;       // 아이템 목록 이미지
     private String equipImage;      // 착용 시 이미지
-    private Boolean isGif;          // GIF 여부
+    private Boolean listImageIsGif;     // 목록 이미지 GIF 여부
+    private Boolean equipImageIsGif;     // 착용 이미지 GIF 여부
     private Item.Category category; // 아이템 카테고리
     private Item.ItemRarity rarity; // 아이템 희귀도
     private Integer price;          // 판매 가격
@@ -24,7 +25,8 @@ public class ItemResponse {
         response.description = item.getDescription();
         response.listImage = item.getListImage();
         response.equipImage = item.getEquipImage();
-        response.isGif = item.getIsGif();
+        response.listImageIsGif = item.getListImageIsGif();
+        response.equipImageIsGif = item.getEquipImageIsGif();
         response.category = item.getCategory();
         response.rarity = item.getRarity();
         response.price = item.getPrice();

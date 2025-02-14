@@ -16,7 +16,8 @@ public class InventoryResponse {
     private String description;     // 아이템 설명
     private String listImage;       // 아이템 목록 이미지
     private String equipImage;      // 착용 시 이미지
-    private Boolean isGif;          // GIF 여부
+    private Boolean listImageIsGif;      // 목록 이미지 GIF 여부
+    private Boolean equipImageIsGif;      // 착용 이미지 GIF 여부
     private String category;        // 아이템 카테고리
     private String rarity;          // 아이템 희귀도
     private int price;             // 판매 가격
@@ -33,7 +34,8 @@ public class InventoryResponse {
             response.description = item.getDescription();
             response.listImage = item.getListImage();
             response.equipImage = item.getEquipImage();
-            response.isGif = item.getIsGif();
+            response.listImageIsGif = item.getListImageIsGif();
+            response.equipImageIsGif = item.getEquipImageIsGif();
             response.category = item.getCategory().name();
             response.rarity = item.getRarity().name();
             response.price = item.getPrice();
@@ -43,7 +45,8 @@ public class InventoryResponse {
             response.description = "비어있는 인벤토리 슬롯입니다.";
             response.listImage = "default.png";
             response.equipImage = "default.png";
-            response.isGif = false;
+            response.listImageIsGif = false;
+            response.equipImageIsGif = false;
             response.category = "NONE";
             response.rarity = "NONE";
             response.price = 0;
