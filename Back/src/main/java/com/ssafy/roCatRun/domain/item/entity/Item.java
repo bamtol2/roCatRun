@@ -28,7 +28,10 @@ public class Item {
     private String equipImage;      // 착용 시 보일 이미지
 
     @Column(nullable = false)
-    private Boolean isGif;          // GIF 여부
+    private Boolean listImageIsGif;    // 목록 이미지 GIF 여부
+
+    @Column(nullable = false)
+    private Boolean equipImageIsGif;    // 착용 이미지 GIF 여부
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
