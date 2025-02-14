@@ -87,6 +87,7 @@ import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
@@ -200,6 +201,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             val multiUserViewModel: MultiUserViewModel by viewModels()
             RunningApp(gameViewModel, multiUserViewModel)
         }
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         observeStartTrackingState()
 
         // 절전 모드 방지를 위한 WakeLock 설정
@@ -230,7 +232,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         requestPermissions()
 
         // 게임 종료 이벤트 구독: RunningActivity의 lifecycleScope를 사용하여 구독
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launch {
             multiUserViewModel.gameEndEventFlow.collect { gameEnded ->
                 if (gameEnded) {
                     // 게임 종료 시 센서 및 위치 업데이트 등 정리 작업 수행
@@ -361,9 +363,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             .setMinUpdateDistanceMeters(2.0f)
             .build()
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-        }
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+//        }
     }
 
     private fun resetTrackingData() {

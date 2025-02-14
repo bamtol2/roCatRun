@@ -245,6 +245,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 delay(500)
                 BossHealthRepository.updateBossHealth(0)
                 _gameEndEventFlow.emit(true)
+                Log.d("게임 종료", "게임 종료 이벤트 플로우 : $gameEndEventFlow")
 
             }
         }
