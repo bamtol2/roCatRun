@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -180,7 +181,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(vertical = 5.dp, horizontal = 30.dp)
-                            .offset(x = 195.dp, y = 285.dp),
+                            .offset(x = (-5).dp, y = 285.dp),
                     )
                 }
             }
@@ -271,7 +272,11 @@ fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 // 아이템 이미지
-                val resourceId = context.resources.getIdentifier("${item.name}_off", "drawable", context.packageName)
+                val resourceId = context.resources.getIdentifier(
+                    "${item.name}_off",
+                    "drawable",
+                    context.packageName
+                )
                 val imageRes = if (resourceId != 0) {
                     "android.resource://${context.packageName}/$resourceId"
                 } else {
@@ -321,11 +326,16 @@ fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
 fun CharacterWithItems(wornItems: List<InventoryItem>) {
     val context = LocalContext.current
 
-    // 이미지 캡쳐 사이즈 200.dp
-    Box(modifier = Modifier.size(300.dp)) {
+    // 이미지 캡쳐 사이즈 300.dp
+    Box(
+        modifier = Modifier
+            .size(230.dp)
+            .scale(1.3f)
+    ) {
         // 특정 카테고리(예: "오라")의 아이템 배치 (캐릭터 뒤)
         wornItems.filter { it.category == "AURA" }.forEach { item ->
-            val resourceId = context.resources.getIdentifier("${item.name}_on", "drawable", context.packageName)
+            val resourceId =
+                context.resources.getIdentifier("${item.name}_on", "drawable", context.packageName)
             val imageUrl = if (resourceId != 0) {
                 "android.resource://${context.packageName}/$resourceId"
             } else {
@@ -346,15 +356,44 @@ fun CharacterWithItems(wornItems: List<InventoryItem>) {
             }
         }
 
-        // 캐릭터 이미지 (물감 적용하기 PAINT)
-        GifImage(
-            modifier = Modifier.size(300.dp),
-            gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
-        )
+//        // 캐릭터 이미지 (물감 적용하기 PAINT)
+//        GifImage(
+//            modifier = Modifier.size(300.dp),
+//            gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
+//        )
+
+        // 캐릭터 이미지
+        val paintItem = wornItems.firstOrNull { it.category == "PAINT" }
+        if (paintItem != null) {
+            // "물감" 카테고리 아이템이 착용된 경우
+            val resourceId =
+                context.resources.getIdentifier(
+                    "${paintItem.name}_on",
+                    "drawable",
+                    context.packageName
+                )
+            val imageUrl = if (resourceId != 0) {
+                "android.resource://${context.packageName}/$resourceId"
+            } else {
+                "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
+            }
+
+            GifImage(
+                modifier = Modifier.size(300.dp),
+                gifUrl = imageUrl
+            )
+        } else {
+            // 기본 캐릭터 이미지 사용
+            GifImage(
+                modifier = Modifier.size(300.dp),
+                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.color_white_on}"
+            )
+        }
 
         // 나머지 카테고리의 아이템 배치 (캐릭터 위)
         wornItems.filter { it.category != "AURA" }.forEach { item ->
-            val resourceId = context.resources.getIdentifier("${item.name}_on", "drawable", context.packageName)
+            val resourceId =
+                context.resources.getIdentifier("${item.name}_on", "drawable", context.packageName)
             val imageUrl = if (resourceId != 0) {
                 "android.resource://${context.packageName}/$resourceId"
             } else {

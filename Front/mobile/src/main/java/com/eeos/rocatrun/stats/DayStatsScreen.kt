@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.stats.api.Game
 import com.eeos.rocatrun.stats.api.Player
 import com.eeos.rocatrun.ui.components.StrokedText
@@ -255,8 +256,15 @@ fun DayStatCard(
                             Spacer(modifier = Modifier.size(12.dp))
                         }
 
+
+                        val imageUrl = if (player.profileUrl == "default.png") {
+                            "android.resource://com.eeos.rocatrun/${R.drawable.all_img_whitecat}" // 기본 이미지로 교체
+                        } else {
+                            player.profileUrl
+                        }
+
                         Image(
-                            painter = painterResource(id = R.drawable.stats_img_profile),
+                            painter = coil.compose.rememberAsyncImagePainter(imageUrl),
                             contentDescription = "Profile Img",
                             modifier = Modifier
                                 .size(35.dp)

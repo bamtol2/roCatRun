@@ -33,6 +33,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.home.HomeActivity
 import dev.shreyaspatil.capturable.controller.CaptureController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeApi::class)
@@ -122,6 +123,7 @@ fun SaveCheckScreen(
                                         saveImageToDownloads(context, bitmap, closetViewModel, token)
                                         closetViewModel.changeEquipStatus(auth = token, inventoryIds = closetViewModel.equippedItems.value)
 //                                        onDismissRequest()
+                                        delay(500)
                                         context.startActivity(Intent(context, HomeActivity::class.java))
                                     } catch (error: Throwable) {
                                         Toast.makeText(

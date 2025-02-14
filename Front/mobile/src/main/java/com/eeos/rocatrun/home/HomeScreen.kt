@@ -197,19 +197,21 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 )
 
                 // 캐릭터 이미지
-                val imageUrl = if (characterData.characterImage == "default.png") {
-                    "android.resource://com.eeos.rocatrun/${R.drawable.all_img_whitecat}" // 다른 기본 이미지로 교체
+                if (characterData.characterImage == "default.png") {
+                    Image(
+                        painter = rememberAsyncImagePainter("android.resource://com.eeos.rocatrun/${R.drawable.all_img_whitecat}"),
+                        contentDescription = "Cat Character",
+                        modifier = Modifier
+                            .size(230.dp)
+                            .offset(x = 20.dp)
+                    )
                 } else {
-                    characterData.characterImage
+                    Image(
+                        painter = rememberAsyncImagePainter(characterData.characterImage),
+                        contentDescription = "Cat Character",
+                        modifier = Modifier.size(230.dp),
+                    )
                 }
-
-                Image(
-                    painter = rememberAsyncImagePainter(imageUrl),
-                    contentDescription = "Cat Character",
-                    modifier = Modifier
-                        .size(230.dp)
-//                        .offset(x = 20.dp)
-                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 정보

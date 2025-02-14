@@ -98,9 +98,14 @@ fun RankingItem(rankData: Ranking, highlight: Boolean) {
         Text(text = "${rankData.rank}위", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textColor)
         Spacer(modifier = Modifier.width(8.dp))
 
-        val painter = rememberAsyncImagePainter(rankData.characterImage)
+        val imageUrl = if (rankData.characterImage == "default.png") {
+            "android.resource://com.eeos.rocatrun/${R.drawable.all_img_whitecat}" // 기본 이미지로 교체
+        } else {
+            rankData.characterImage
+        }
+
         Image(
-            painter = painterResource(id = R.drawable.all_img_whitecat),
+            painter = coil.compose.rememberAsyncImagePainter(imageUrl),
             contentDescription = "Profile Image",
             modifier = Modifier.size(30.dp)
         )
