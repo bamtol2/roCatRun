@@ -245,7 +245,7 @@ fun UserInfoDialog(
     var showErrorModal by remember { mutableStateOf(false) }
 
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = {}) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -344,8 +344,6 @@ fun UserInfoDialog(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .padding(end = 10.dp)
-                            .background(Color(0xFF00FFCC), shape = RoundedCornerShape(8.dp))
-                            .padding(vertical = 8.dp, horizontal = 12.dp)
                             .clickable {  coroutineScope.launch {
                                 val token = TokenStorage.getAccessToken(context)
                                 if (token != null){
@@ -357,7 +355,10 @@ fun UserInfoDialog(
                                     }
                                 }
                             }
-                            },
+                            }
+                            .background(Color(0xFF00FFCC), shape = RoundedCornerShape(8.dp))
+                            .padding(vertical = 8.dp, horizontal = 12.dp),
+
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
