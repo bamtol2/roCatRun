@@ -70,7 +70,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
     val tabs = listOf("전체", "물감", "머리띠", "풍선", "오라")
 
     // 리스트로 만들어서 착용 아이템들 전달하는 용도로 사용해도 될 듯
-    var equippedItem by remember { mutableStateOf<String?>(null) }
+    val equippedItems = closetViewModel.equippedItems.value
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -155,10 +155,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                         }
 
 
-                        items(
-                            items = currentItems,
-                            key = { item -> item.inventoryId }
-                        ) { item ->
+                        items(currentItems) { item ->
                             ItemCard(
                                 item = item,
                                 onClick = { closetViewModel.toggleItemEquipped(it) }
@@ -274,7 +271,7 @@ fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 // 아이템 이미지
-                val resourceId = context.resources.getIdentifier("${item.itemName}_off", "drawable", context.packageName)
+                val resourceId = context.resources.getIdentifier("${item.name}_off", "drawable", context.packageName)
                 val imageRes = if (resourceId != 0) {
                     "android.resource://${context.packageName}/$resourceId"
                 } else {
@@ -328,7 +325,7 @@ fun CharacterWithItems(wornItems: List<InventoryItem>) {
     Box(modifier = Modifier.size(300.dp)) {
         // 특정 카테고리(예: "오라")의 아이템 배치 (캐릭터 뒤)
         wornItems.filter { it.category == "AURA" }.forEach { item ->
-            val resourceId = context.resources.getIdentifier("${item.itemName}_on", "drawable", context.packageName)
+            val resourceId = context.resources.getIdentifier("${item.name}_on", "drawable", context.packageName)
             val imageUrl = if (resourceId != 0) {
                 "android.resource://${context.packageName}/$resourceId"
             } else {
@@ -357,7 +354,7 @@ fun CharacterWithItems(wornItems: List<InventoryItem>) {
 
         // 나머지 카테고리의 아이템 배치 (캐릭터 위)
         wornItems.filter { it.category != "AURA" }.forEach { item ->
-            val resourceId = context.resources.getIdentifier("${item.itemName}_on", "drawable", context.packageName)
+            val resourceId = context.resources.getIdentifier("${item.name}_on", "drawable", context.packageName)
             val imageUrl = if (resourceId != 0) {
                 "android.resource://${context.packageName}/$resourceId"
             } else {

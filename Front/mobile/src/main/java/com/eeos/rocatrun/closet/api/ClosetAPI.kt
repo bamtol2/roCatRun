@@ -11,7 +11,7 @@ import retrofit2.http.Query
 
 interface ClosetAPI {
     @Multipart
-    @POST("/domain/upload")
+    @POST("/domain/upload/character-image")
     suspend fun uploadImage(
         @Header("Authorization") token: String,
         @Part image: MultipartBody.Part

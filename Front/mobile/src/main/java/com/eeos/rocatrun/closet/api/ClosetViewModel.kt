@@ -29,10 +29,14 @@ class ClosetViewModel : ViewModel() {
     private val _isItemLoading = MutableLiveData<Boolean>()
     val isItemLoading: LiveData<Boolean> = _isItemLoading
 
+    // 장착된 아이템 id 리스트
+    private val _equippedItems = mutableStateOf<List<Int>>(emptyList())
+    val equippedItems: State<List<Int>> = _equippedItems
+
     // 아이템 상태 변경 함수
     fun toggleItemEquipped(clickedItem: InventoryItem) {
         _itemList.value = _itemList.value.map {
-            if (it.inventoryId == clickedItem.inventoryId) {
+            if (it.id == clickedItem.id) {
                 it.copy(equipped = !it.equipped)
             } else if (it.category == clickedItem.category) {
                 it.copy(equipped = false)
@@ -40,8 +44,22 @@ class ClosetViewModel : ViewModel() {
                 it
             }
         }
+
+        // 장착된 아이템 리스트 업데이트
+        _equippedItems.value = if (clickedItem.equipped) {
+            _equippedItems.value.filter { it != clickedItem.id }
+        } else {
+            _equippedItems.value + clickedItem.id
+        }
+
+        Log.d("api", _equippedItems.value.toString())
+
     }
 
+    fun initializeItemList(items: List<InventoryItem>) {
+        _itemList.value = items
+        _equippedItems.value = items.filter { it.equipped }.map { it.id }
+    }
 
 
     private val retrofitInstance = RetrofitInstance.getInstance().create(ClosetAPI::class.java)
@@ -94,7 +112,7 @@ class ClosetViewModel : ViewModel() {
         }
 
         _isItemLoading.value = true
-        Log.d("debug", "아이템 목록 조회 호출")
+        Log.d("api", "아이템 목록 조회 호출")
         viewModelScope.launch {
             try {
                 val response = retrofitInstance.getAllItems(token = "Bearer $auth",)
@@ -102,13 +120,14 @@ class ClosetViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     response.body()?.let { inventoryResponse ->
                         _itemList.value = inventoryResponse.data
-                        Log.d("debug", "아이템 조회 성공: ${inventoryResponse.data}")
+                        initializeItemList(inventoryResponse.data)
+                        Log.d("api", "아이템 조회 성공: ${inventoryResponse.data}")
                     }
                 } else {
-                    Log.d("debug", "응답 실패: ${response.message()}")
+                    Log.d("api", "응답 실패: ${response.message()}")
                 }
             } catch (e: Exception) {
-                Log.d("debug", "예외 발생: ${e.message}")
+                Log.d("api", "예외 발생: ${e.message}")
             } finally {
                 _isItemLoading.value = false
             }

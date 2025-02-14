@@ -11,17 +11,13 @@ data class InventoryResponse(
 )
 
 data class InventoryItem(
-    val inventoryId: Int,
-    val itemName: String,
-    val description: String?,
-//    val listImage: String?,
-//    val equipImage: String?,
-//    val listImageIsGif: Boolean,
-//    val equipImageIsGif: Boolean,
+    val id: Int,
+    val name: String,
+    val koreanName: String,
+    val description: String,
     val isGif: Boolean,
     val category: String,
     val rarity: String,
     val price: Int,
-    val itemNameKo: String,
     val equipped: Boolean
 )
