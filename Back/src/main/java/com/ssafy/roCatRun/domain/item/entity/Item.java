@@ -16,22 +16,16 @@ public class Item {
     private Long id;                // 아이템 ID
 
     @Column(nullable = false)
-    private String name;            // 아이템 이름
+    private String name;            // 아이템 영문 이름
+
+    @Column(nullable = false)
+    private String koreanName;      // 아이템 한글 이름
 
     @Column(nullable = false)
     private String description;     // 아이템 설명
 
     @Column(nullable = false)
-    private String listImage;       // 아이템 목록에 보일 이미지
-
-    @Column(nullable = false)
-    private String equipImage;      // 착용 시 보일 이미지
-
-    @Column(nullable = false)
-    private Boolean listImageIsGif;    // 목록 이미지 GIF 여부
-
-    @Column(nullable = false)
-    private Boolean equipImageIsGif;    // 착용 이미지 GIF 여부
+    private Boolean isGif;          // GIF 이미지 여부
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
