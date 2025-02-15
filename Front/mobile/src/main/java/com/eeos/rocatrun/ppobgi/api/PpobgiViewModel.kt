@@ -27,9 +27,9 @@ class PpobgiViewModel : ViewModel() {
                         _drawResult.value = response.data.drawnItems.firstOrNull()
                         _remainingCoins.value = response.data.remainingCoins
 
-                        Log.d("뽑기", "drawItem: ${_drawResult.value} ${_remainingCoins.value}")
+                        Log.d("뽑기", "drawItem: ${_drawResult.value} remainingCoins: ${_remainingCoins.value}")
                     } else {
-                        _error.value = response.message
+                        _error.value = "뽑기 응답 에러: ${response.message}"
                     }
                 }.onFailure {
                     _error.value = it.message
@@ -44,16 +44,27 @@ class PpobgiViewModel : ViewModel() {
 
     suspend fun drawItems(token: String, drawCount: Int): Result<PpobgiResponse> {
         return try {
-            val response = ppobgiAPI.randomPpobgi("Bearer $token", drawCount)
+            Log.d("뽑기", "API 요청 시작 - drawCount: $drawCount")
+            val drawRequest = DrawRequest(drawCount)
+            val response = ppobgiAPI.randomPpobgi("Bearer $token", drawRequest)
+
             if (response.isSuccessful) {
-                Result.success(response.body()!!)
+                val responseBody = response.body()
+                Log.d("뽑기", "API 응답 성공: $responseBody")
+                Result.success(responseBody!!)
             } else {
+                Log.e("뽑기", "API 응답 실패: ${response.code()} - ${response.message()}")
                 Result.failure(Exception("뽑기 실패: ${response.message()}"))
             }
         } catch (e: Exception) {
+            Log.e("뽑기", "API 호출 예외 발생: ${e.message}")
             Result.failure(e)
         }
     }
 
-
+    fun clearDrawResult() {
+        _drawResult.value = null
+        _error.value = null
+        _remainingCoins.value = null
+    }
 }

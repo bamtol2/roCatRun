@@ -14,6 +14,7 @@ data class DrawData(
 data class DrawItem(
     val id: Int,
     val name: String,
-    val rarity: String,
-    val imagePath: String
+    val koreanName: String,
+    val description: String,
+    val rarity: String
 )

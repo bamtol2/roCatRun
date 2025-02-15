@@ -46,6 +46,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.eeos.rocatrun.R
@@ -53,6 +54,7 @@ import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.ppobgi.api.PpobgiViewModel
 import kotlinx.coroutines.delay
 import com.eeos.rocatrun.ui.components.GifImage
+import com.eeos.rocatrun.ui.components.StrokedText
 
 @Composable
 fun PpobgiDialog(onDismiss: () -> Unit) {
@@ -103,69 +105,63 @@ fun PpobgiDialog(onDismiss: () -> Unit) {
                             )
                             .zIndex(1f)  // zIndex 설정
                     ){
+                        // 닫기 아이콘
+                        Image(
+                            painter = painterResource(id = R.drawable.game_icon_close),
+                            contentDescription = "Close",
+                            modifier = Modifier
+                                .align(Alignment.TopStart)  // 왼쪽 중앙 정렬
+                                .padding(start = 16.dp, top = 16.dp)  // 패딩 조정
+                                .size(24.dp)
+                                .clickable { onDismiss() }
+                        )
                         // 내용을 담을 Column
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 5.dp),
+                                .padding(top = 60.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            // 안내 텍스트
-                            Text(
-                                text = "어떤 아이템이 나올까냥?\n기대된다냥~(⁎˃ᆺ˂)",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    color = Color(0xFF100810),
-                                    fontSize = 25.sp,
-                                    textAlign = TextAlign.Center
-                                ),
-                                modifier = Modifier.padding(vertical = 50.dp)
-                            )
-                            // 뽑기 버튼
-                            Box(
-                                modifier = Modifier
-                                    .clickable {
-                                        if (token != null) {
-                                            viewModel.drawItem(token, 1)
-                                        } else {
-                                            Log.d("pppobgi", "뽑기 토큰 에러")
-                                        }
-                                        isDrawing = true
-                                    }
-                                    .padding(top = 5.dp)
-                            ) {
-                                // 뽑기 버튼 배경
-                                Image(
-                                    painter = painterResource(id = R.drawable.ppobgi_btn_random),
-                                    contentDescription = "뽑기 버튼",
-                                    modifier = Modifier
-                                        .width(350.dp)  // 버튼 가로 크기 증가
-                                        .height(250.dp)  // 버튼 세로 크기 증가
-                                )
 
-                                // 코인 정보를 보여주는 Row
-                                Row(
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .padding(vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.home_img_cancoin),
-                                        contentDescription = "코인 아이콘",
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = "100",
-                                        style = MaterialTheme.typography.titleLarge.copy(
-                                            color = Color(0xFF100810),
-                                            fontSize = 36.sp,
-                                        ),
-                                        color = Color.White
-                                    )
-                                }
+                            StrokedText(
+                                text = "어떤 아이템이 나올까냥?",
+                                fontSize = 23,
+                                color = Color(0xFF100810),
+                                strokeColor = Color(0xFFD599C5),
+                                modifier = Modifier.padding(vertical = 10.dp),
+                            )
+                            StrokedText(
+                                text = "뽑아보라냥~(⁎˃ᆺ˂)",
+                                fontSize = 23,
+                                color = Color(0xFF100810),
+                                strokeColor = Color(0xFFD599C5),
+                                modifier = Modifier.padding(vertical = 10.dp),
+                            )
+                            Row (
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ){
+
+                                // 뽑기 버튼
+                                CustomButton(
+                                    text = "뽑기",
+                                    onClick = {
+                                        if (token != null) {
+                                            Log.d("뽑기", "뽑기 시작 - 토큰: ${token.take(10)}...")
+                                            viewModel.drawItem(token, 1)
+                                            isDrawing = true
+                                        } else {
+                                            Log.d("뽑기", "토큰 에러")
+                                        }
+                                    },
+                                    showCoin = true,
+                                    coinAmount = "x 100",
+                                    buttonHeight = 150,
+                                    modifier = Modifier.weight(0.5f)
+                                )
                             }
                         }
                     }
@@ -181,33 +177,32 @@ fun PpobgiDialog(onDismiss: () -> Unit) {
                     // 에러 처리
                     LaunchedEffect(error) {
                         error?.let {
-                            // 에러 메시지 표시 로직
+                            // 코인 수 모자라면 모달 띄워주어야 함
                             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
                         }
                     }
 
-                    // Rainbow gif를 모달창 위에 배치
+                    // Rainbow gif
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset(y = (-150).dp)  // 모달창 상단으로 위치 조정
-                            .zIndex(2f),  // 모달창보다 위에 표시
+                            .offset(y = (-120).dp)
+                            .zIndex(2f),
                         contentAlignment = Alignment.TopCenter
                     ) {
                         GifImage(
                             modifier = Modifier
-                                .width(300.dp)
-                                .height(200.dp),
+                                .width(250.dp)
+                                .height(180.dp),
                             gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.ppobgi_gif_rainbow}"
                         )
                     }
-
                 }
             } else if (isDrawing) {
-                // 뽑기 애니메이션 (Coil로 GIF 로드)
+                // 상자 애니메이션
                 Box(
                     modifier = Modifier
-                        .size(400.dp)
+                        .size(500.dp)
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -224,49 +219,121 @@ fun PpobgiDialog(onDismiss: () -> Unit) {
                 }
             } else if (showResult) {
                 // 뽑기 결과 표시
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .padding(24.dp)
+                        .clip(RoundedCornerShape(10.dp))
                 ) {
-                    // 뽑은 아이템 이미지
-                    Image(
-                        painter = painterResource(id = R.drawable.game_img_monster1),
-                        contentDescription = "뽑은 아이템",
-                        modifier = Modifier
-                            .size(150.dp)
-                            .padding(16.dp)
-                    )
-
-                    Text(
-                        text = "축하합니다!",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-
-                    Button(
-                        onClick = onDismiss,
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp)
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("확인")
+                        drawResult?.let { item ->
+
+                            // 로컬에서 아이템 이미지 찾기
+                            val resourceName = "${item.name}_off"
+                            val resourceId = context.resources.getIdentifier(resourceName, "drawable", context.packageName)
+                            Log.d("뽑기", "리소스 찾음 - resourceId: $resourceId")
+
+                            // 아이템 이미지
+                            Image(
+                                painter = painterResource(id = resourceId),
+                                contentDescription = "뽑은 아이템",
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .padding(16.dp),
+                                contentScale = ContentScale.Fit
+                            )
+
+                            // 아이템 이름
+                            Text(
+                                text = item.koreanName,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontSize = 30.sp  // sp 단위 사용
+                                ),
+                                modifier = Modifier.padding(top = 8.dp),
+                                color = Color.White
+                            )
+
+                            // 등급
+                            val (textColor, strokeColor) = getRarityColors(item.rarity)
+                            StrokedText(
+                                text = "${item.rarity}",
+                                fontSize = 20,
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = textColor,
+                                strokeColor = strokeColor
+                            )
+
+                            Spacer(modifier = Modifier.height(15.dp))
+
+                            // 설명
+                            Text(
+                                text = item.description,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontSize = 15.sp  // sp 단위 사용
+                                ),
+                                modifier = Modifier.padding(top = 8.dp),
+                                color = Color.White
+                            )
+
+                            remainingCoins?.let { coins ->
+                                Text(
+                                    text = "잔여 코인: $coins",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontSize = 15.sp  // sp 단위 사용
+                                    ),
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                            
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(1.dp)  // 버튼 사이 간격
+                            ) {
+                                CustomButton(
+                                    text = "한번 더!",
+                                    onClick = {
+                                        viewModel.clearDrawResult()
+                                        isDrawing = false
+                                        showResult = false
+                                    },
+                                    buttonHeight = 80,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                CustomButton(
+                                    text = "확인",
+                                    onClick = {
+                                        isDrawing = false
+                                        showResult = false
+                                        onDismiss()
+                                    },
+                                    buttonHeight = 80,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
                     }
                 }
             }
-
         }
     }
 }
 
-// 배경 어둡게 처리를 위한 Scrim
-@Composable
-fun DialogScrim(onDismiss: () -> Unit, content: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
-            .clickable(onClick = onDismiss)
-    ) {
-        content()
+fun getRarityColors(rarity: String): Pair<Color, Color> {
+    return when (rarity) {
+        "NORMAL" -> Color.White to Color(0xFFA3A1A5)
+        "RARE" -> Color.White to Color(0xFF018F2C)
+        "UNIQUE" -> Color.White to Color(0xFF1646CB)
+        "EPIC" -> Color.White to Color(0xFFE6C13E)
+        "LEGENDARY" -> Color(0xFFFF0080) to Color(0xFFFFFF00)
+        else -> Color.White to Color.White
     }
 }
