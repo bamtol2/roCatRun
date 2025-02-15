@@ -37,7 +37,7 @@ public class Member {
     private LocalDateTime createAt;    // 회원 가입 시간
 
     @Column(nullable = false)
-    private LocalDateTime lastLoginAt; // 마지막 로그인 시간
+    private LocalDateTime lastLoginAt; // 마지막 로그인  시간
 
     // 사용자의 신체 정보 (선택적)
     @Column(nullable = true)
