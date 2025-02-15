@@ -247,7 +247,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
     private fun generateMockData(): List<UserData> {
-        val users = listOf("마이애미", "과즙가람", "타노스","이가람")
+        val users = listOf("마이애미", "과즙가람")
         return users.map {
             UserData(
                 nickname = it,
@@ -282,9 +282,7 @@ fun UserInfoCard(user: UserData) {
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
-                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = " ${"%.1f".format(user.distance)}km",
                 color = Color.White,
@@ -303,13 +301,13 @@ fun UserInfoCard(user: UserData) {
                 painter = painterResource(id = R.drawable.wear_icon_fish),
                 contentDescription = "Item Icon",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(30.dp)
             )
             Text(
                 text = "x ${user.itemCount}",
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
-                fontSize = 12.sp
+                fontSize = 14.sp
             )
 
         }
@@ -368,7 +366,8 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
             modifier = Modifier
                 .fillMaxSize()
                 .padding(4.dp) // 카드 주위 여백
-                .align(Alignment.TopCenter),
+                .align(Alignment.TopCenter)
+                .offset(y = 20.dp),
             mainAxisSpacing = 4.dp,  // 가로 방향 아이템 간격
             crossAxisSpacing = 4.dp, // 세로 방향 아이템 간격
              mainAxisAlignment = FlowMainAxisAlignment.Center,  // 가로 정렬(옵션)
