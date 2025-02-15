@@ -61,6 +61,9 @@ import java.net.Socket
 
 @Composable
 fun GameroomScreen() {
+    var showBossDialog by remember {
+        mutableStateOf(false)
+    }
     var showInfoDialog by remember {
         mutableStateOf(false)
     }
@@ -81,6 +84,9 @@ fun GameroomScreen() {
         ) {
             // Top Navigation Icons
             TopNavigation(
+                onBossClick = {
+                    showBossDialog = true
+                },
                 onInfoClick = {
                     showInfoDialog = true
                 }
@@ -88,6 +94,14 @@ fun GameroomScreen() {
 
             // Main Buttons
             MainButtons()
+        }
+
+        if (showBossDialog) {
+            BossScreen(
+                onDismissRequest = {
+                    showBossDialog = false
+                }
+            )
         }
 
         if (showInfoDialog) {
@@ -103,6 +117,7 @@ fun GameroomScreen() {
 // 상단 홈, 정보 아이콘 버튼
 @Composable
 fun TopNavigation(
+    onBossClick: () -> Unit,
     onInfoClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -126,12 +141,30 @@ fun TopNavigation(
             )
         }
 
-        IconButton(onClick = onInfoClick ) {
-            Image(
-                painter = painterResource(id = R.drawable.game_icon_inform),
-                contentDescription = "Information",
-                modifier = Modifier.size(160.dp),
-            )
+
+
+        // 우측 아이콘들을 위한 Row
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp), // 아이콘 사이 간격
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 물음표 아이콘
+            IconButton(onClick = onInfoClick) {
+                Image(
+                    painter = painterResource(id = R.drawable.game_icon_quest),
+                    contentDescription = "Game Information",
+                    modifier = Modifier.size(160.dp),
+                )
+            }
+
+            // 정보 아이콘
+            IconButton(onClick = onBossClick) {
+                Image(
+                    painter = painterResource(id = R.drawable.game_icon_inform),
+                    contentDescription = "Boss Information",
+                    modifier = Modifier.size(160.dp),
+                )
+            }
         }
     }
 }

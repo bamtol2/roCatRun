@@ -10,22 +10,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.ui.components.StrokedText
+import kotlinx.coroutines.launch
 
 @Composable
 fun InfoScreen(
@@ -42,8 +44,7 @@ fun InfoScreen(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
             usePlatformDefaultWidth = false
-        ),
-
+            ),
     ) {
         Box(
             modifier = Modifier
@@ -52,9 +53,9 @@ fun InfoScreen(
                 .height(700.dp)
                 .border(
                     width = 3.dp,
-                    color = Color(0xFF00E2B1)
+                    color = Color(0xFFCC00FF)
                 )
-                .background(color = Color(0xB2000000))
+                .background(color = Color(0xE50C010E))
         ) {
             Column(
                 modifier = Modifier
@@ -65,7 +66,7 @@ fun InfoScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF00E2B1))
+                        .background(Color(0xFFCC00FF))
                         .height(50.dp)
 
                 ) {
@@ -80,7 +81,7 @@ fun InfoScreen(
                             .clickable { onDismissRequest() }
                     )
 
-                    // 게임 Rule 텍스트
+                    // 보스 정보 텍스트
                     Text(
                         text = "게임 Rule",
                         style = MaterialTheme.typography.titleLarge.copy(
@@ -91,210 +92,146 @@ fun InfoScreen(
                         textAlign = TextAlign.Center
                     )
                 }
-
-                // 보스 정보 내용
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-//                        .weight(1f)  // 남은 공간 모두 차지
-                        .verticalScroll(rememberScrollState())  // 스크롤 가능하도록 설정
-                        .padding(30.dp),
-                    verticalArrangement = Arrangement.spacedBy(30.dp)
+                Column (
+                    verticalArrangement = Arrangement.spacedBy(30.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // 상
-                    BossInfoSection(
-                        difficulty = "상",
-                        bossName = "나일론 마스크",
-                        bossImage = R.drawable.game_img_monster1,
-                        details = listOf(
-                            "30분",   // 제한시간
-                            "50km",  // 거리
-                            "exp10 ~ 50", // 보상
-                            "모든 유저가 아이템 3개 사용시", // 피버조건
-                            "1km 완주시" // 아이템 획득조건
-                        )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    StrokedText(
+                        text = "게임 시작 전 워치를 꼭 연결 하라냥!",
+                        fontSize = 17,
+                        strokeWidth = 15f,
+                        color = Color.Black,
+                        strokeColor = Color(0xFFEEABFF)
                     )
 
-                    // 중
-                    BossInfoSection(
-                        difficulty = "중",
-                        bossName = "땅콩수집 로봇",
-                        bossImage = R.drawable.game_img_monster2,
-                        details = listOf(
-                            "30분",   // 제한시간
-                            "30km",  // 거리
-                            "exp10 ~ 50", // 보상
-                            "모든 유저가 아이템 3개 사용시", // 피버조건
-                            "1km 완주시" // 아이템 획득조건
+                    Box (
+                    modifier = Modifier
+                        .padding(horizontal = 30.dp)
+                    ){
+                        Text(
+                            text = "아래 자세한 게임 설명을 읽고,\n보스들을 해치워서 화성까지 달려보자냥!",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            lineHeight = 18.sp
                         )
-                    )
+                    }
 
-                    // 하
-                    BossInfoSection(
-                        difficulty = "하",
-                        bossName = "사채업자 해파리",
-                        bossImage = R.drawable.game_img_monster3,
-                        details = listOf(
-                            "30분",   // 제한시간
-                            "20km",  // 거리
-                            "exp10 ~ 50", // 보상
-                            "모든 유저가 아이템 3개 사용시", // 피버조건
-                            "1km 완주시" // 아이템 획득조건
-                        )
-                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
-            }
-        }
-    }
-}
 
-// 보스 정보 박스
-@Composable
-private fun BossInfoSection(
-    difficulty: String,
-    bossName: String,
-    bossImage: Int,
-    details: List<String>
-) {
-    Box(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // 보스 정보 박스
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)  // 난이도 텍스트와 겹치도록 상단 패딩 조정
-                .background(Color(0x7D539086), shape = RoundedCornerShape(size = 10.dp))
-                .padding(16.dp)
-        ) {
-            Column {
-                Row(
+                Column (
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 20.dp),
-//
-                ) {
-                    // 왼쪽 열: 보스 이미지와 이름
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(vertical = 15.dp, horizontal = 15.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = bossImage),
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
+                        .height(440.dp),  // 전체 높이 증가
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    val pagerState = rememberPagerState(pageCount = { 5 })
+                    val coroutineScope = rememberCoroutineScope()
 
-                        Box{
-                            // 보스이름 stroke 텍스트
-                            Text(
-                                text = bossName,
-                                color = Color(0xFF0A7961),
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontSize = 18.sp,
-                                    drawStyle = Stroke(
-                                        width = 10f,
-                                        join = StrokeJoin.Round
-                                    )
-                                )
-                            )
-                            Text(
-                                text = bossName,
-                                color = Color.White,
-                                fontSize = 18.sp
+                    //horizontalpager 넣고 그 안에 이미지 넣고, 좌우로 움직일 수 있는 버튼 제공 < >
+                    // 이미지 슬라이더
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)  // 상단 Box가 가능한 많은 공간 차지
+                    ) {
+                        // 이미지 페이저
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize()
+                        ) { page ->
+                            Image(
+                                painter = painterResource(
+                                    id = when (page) {
+                                        0 -> R.drawable.game_img_gameinfo1
+                                        1 -> R.drawable.game_img_gameinfo2
+                                        2 -> R.drawable.game_img_gameinfo3
+                                        3 -> R.drawable.game_img_gameinfo4
+                                        else -> R.drawable.game_img_gameinfo5
+                                    }
+                                ),
+                                contentDescription = "Info Image ${page + 1}",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
                             )
                         }
 
+                        // 좌우 이동 버튼
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.Center),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // 왼쪽 영역 (첫 페이지에서도 공간 유지)
+                            Box(modifier = Modifier
+                                .size(50.dp)
+                                .padding(start = 1.dp)
+                            ) {
+                                if (pagerState.currentPage > 0) {
+                                    Text(
+                                        text = "<",
+                                        color = Color.White,
+                                        fontSize = 32.sp,
+                                        modifier = Modifier
+                                            .clickable {
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                                }
+                                            }
+                                            .align(Alignment.Center)
+                                    )
+                                }
+                            }
+
+                            // 오른쪽 영역
+                            Box(modifier = Modifier
+                                .padding(end = 1.dp)
+                                .size(50.dp)
+                            ) {
+                                if (pagerState.currentPage < 5) {
+                                    Text(
+                                        text = ">",
+                                        color = Color.White,
+                                        fontSize = 32.sp,
+                                        modifier = Modifier
+                                            .clickable {
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                                }
+                                            }
+                                            .align(Alignment.Center)
+                                    )
+                                }
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(19.dp))
-
-                    // 오른쪽 열: 제한시간, 거리, 보상
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    // 페이지 인디케이터
+                    Row(
+                        modifier = Modifier
+                            .padding(top = 10.dp, bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        StrokedText(text = "제한시간", fontSize = 17)
-                        Text(text = details[0], color = Color.White)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        StrokedText(text = "거리", fontSize = 17)
-                        Text(text = details[1], color = Color.White)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        StrokedText(text = "보상", fontSize = 17)
-                        Text(text = details[2], color = Color.White)
+                        repeat(5) { index ->
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(
+                                        color = if (pagerState.currentPage == index)
+                                            Color(0xFFCC00FF)
+                                        else
+                                            Color.Gray,
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(15.dp))
-
-                // 하단정보: 피버조건, 아이템 획득조건
-                Column(
-                    modifier = Modifier.padding(horizontal = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    StrokedText(text = "피버조건", fontSize = 16)
-                    Text(text = details[3], color = Color.White)
-                    Spacer(modifier = Modifier.height(9.dp))
-                    StrokedText(text = "아이템 획득조건", fontSize = 16)
-                    Text(text = details[4], color = Color.White)
                 }
             }
         }
-
-        // 난이도 텍스트
-        Text(
-            text = difficulty,
-            color = Color(0xFF00E2B1),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 35.sp,
-                drawStyle = Stroke(
-                    width = 20f,
-                    join = StrokeJoin.Round
-                )
-            ),
-            modifier = Modifier.padding(start = 10.dp)
-        )
-        Text(
-            text = difficulty,
-            style = MaterialTheme.typography.titleLarge.copy(
-                color = Color(0xFF000000),
-                fontSize = 35.sp
-            ),
-            modifier = Modifier.padding(start = 10.dp)
-        )
     }
 }
-
-// 스트로크 글씨 함수
-@Composable
-fun StrokedText(
-    text: String,
-    fontSize: Int,
-    strokeWidth: Float = 10f,
-    color: Color = Color.White,
-    strokeColor: Color = Color.Black
-) {
-    Box {
-        // Stroke 텍스트
-        Text(
-            text = text,
-            color = strokeColor,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = fontSize.sp,
-                drawStyle = Stroke(
-                    width = strokeWidth,
-                    join = StrokeJoin.Round
-                )
-            )
-        )
-        // 일반 텍스트
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleLarge.copy(
-                color = color,
-                fontSize = fontSize.sp
-            )
-        )
-    }
-}
-
