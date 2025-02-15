@@ -96,12 +96,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
             showDialog = true
         }
     }
-    LaunchedEffect(userInfo) {
-        if (userInfo != null) {
-            // 회원가입 모달 표시
-            showDialog = true
-        }
-    }
+
 
 
     Column(
