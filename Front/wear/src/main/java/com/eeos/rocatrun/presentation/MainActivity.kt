@@ -81,7 +81,9 @@ class MainActivity : ComponentActivity() {
         val permissions = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.BODY_SENSORS,
-            Manifest.permission.ACTIVITY_RECOGNITION
+            Manifest.permission.ACTIVITY_RECOGNITION,
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH_SCAN
         )
         if (permissions.any {
                 ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
