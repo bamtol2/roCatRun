@@ -35,6 +35,12 @@ public class NicknameValidator implements ConstraintValidator<ValidNickname, Str
             return false;
         }
 
+        // 비속어 체크
+        if (containsBannedWord(nickname)) {
+            addConstraintViolation(context, "부적절한 단어가 포함되어 있습니다.");
+            return false;
+        }
+
         // 숫자로만 이루어진 경우 체크
         if (NUMBERS_ONLY.matcher(nickname).matches()) {
             addConstraintViolation(context, "닉네임은 숫자로만 구성될 수 없습니다.");
@@ -47,6 +53,7 @@ public class NicknameValidator implements ConstraintValidator<ValidNickname, Str
                 addConstraintViolation(context, "영어 닉네임은 2-8자여야 합니다.");
                 return false;
             }
+            return true;
         }
         // 한글 닉네임 체크
         else if (KOREAN_PATTERN.matcher(nickname).matches()) {
@@ -54,20 +61,13 @@ public class NicknameValidator implements ConstraintValidator<ValidNickname, Str
                 addConstraintViolation(context, "한글 닉네임은 2-6자여야 합니다.");
                 return false;
             }
+            return true;
         }
         // 특수문자가 포함된 경우
         else {
             addConstraintViolation(context, "닉네임은 한글, 영문, 숫자만 사용 가능합니다.");
             return false;
         }
-
-        // 비속어 체크
-        if (containsBannedWord(nickname)) {
-            addConstraintViolation(context, "부적절한 단어가 포함되어 있습니다.");
-            return false;
-        }
-
-        return true;
     }
 
     private boolean containsBannedWord(String nickname) {
