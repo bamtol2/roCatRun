@@ -311,6 +311,7 @@ fun PpobgiDialog(onDismiss: () -> Unit) {
                                 CustomButton(
                                     text = "확인",
                                     onClick = {
+                                        viewModel.clearDrawResult()
                                         isDrawing = false
                                         showResult = false
                                         onDismiss()
