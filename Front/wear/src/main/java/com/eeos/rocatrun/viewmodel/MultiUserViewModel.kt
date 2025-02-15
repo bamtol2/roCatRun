@@ -247,7 +247,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
     private fun generateMockData(): List<UserData> {
-        val users = listOf("마이애미", "과즙가람", "타노스","이가람")
+        val users = listOf("마이애미", "과즙가람")
         return users.map {
             UserData(
                 nickname = it,
@@ -262,7 +262,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
 // 사용자 정보를 표시하는 카드 컴포저블
 @Composable
-fun UserInfoCard(user: UserData) {
+fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserViewModel.PlayersData) {
     Column(
         modifier = Modifier
             .width(110.dp)
@@ -277,16 +277,14 @@ fun UserInfoCard(user: UserData) {
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
-                text = user.nickname,
+                text = player.nickname,
                 color = Color.White,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
-                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(2.dp))
             Text(
-                text = " ${"%.1f".format(user.distance)}km",
+                text = " ${"%.1f".format(realTimeData.distance)}km",
                 color = Color.White,
                 fontSize = 12.sp,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
@@ -303,13 +301,13 @@ fun UserInfoCard(user: UserData) {
                 painter = painterResource(id = R.drawable.wear_icon_fish),
                 contentDescription = "Item Icon",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(30.dp)
             )
             Text(
-                text = "x ${user.itemCount}",
+                text = "x ${realTimeData.itemCount}",
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
-                fontSize = 12.sp
+                fontSize = 14.sp
             )
 
         }
@@ -368,14 +366,20 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
             modifier = Modifier
                 .fillMaxSize()
                 .padding(4.dp) // 카드 주위 여백
-                .align(Alignment.TopCenter),
+                .align(Alignment.TopCenter)
+                .offset(y = 20.dp),
             mainAxisSpacing = 4.dp,  // 가로 방향 아이템 간격
             crossAxisSpacing = 4.dp, // 세로 방향 아이템 간격
              mainAxisAlignment = FlowMainAxisAlignment.Center,  // 가로 정렬(옵션)
              crossAxisAlignment = FlowCrossAxisAlignment.Center // 세로 정렬(옵션)
         ) {
-            displayList.forEach { user ->
-                UserInfoCard(user)
+            // playerList(닉네임 목록)에서 최대 4명만 표시
+            playerList.take(4).forEach { player ->
+                val realTimeData = playersDataMap[player.nickname]
+                Log.d("UI", "player.nickname=${player.nickname}, realTimeData=$realTimeData")
+                if (realTimeData != null) {
+                    UserInfoCard(player, realTimeData)
+                }
             }
         }
     }
