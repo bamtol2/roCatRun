@@ -34,7 +34,7 @@ public class GameCharacter {
     @Column(name = "character_id")
     private Long id;                           // 캐릭터 고유 ID
 
-    @Column(nullable = false, unique = true, length = 10)
+    @Column(nullable = false, unique = true, length = 8)
     private String nickname;                   // 캐릭터 닉네임
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
@@ -47,7 +47,7 @@ public class GameCharacter {
     private String characterImage = "default.png";  // 캐릭터 이미지 (기본값 'default.png')
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private Integer coin = 0;                  // 보유 코인 (기본값 0)
+    private Integer coin = 100;                  // 보유 코인 (기본값 0)
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     private Integer totalGames = 0;            // 총 게임 수 (기본값 0)
