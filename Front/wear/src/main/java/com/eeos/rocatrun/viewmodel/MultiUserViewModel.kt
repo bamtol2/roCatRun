@@ -262,7 +262,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
 // 사용자 정보를 표시하는 카드 컴포저블
 @Composable
-fun UserInfoCard(user: UserData) {
+fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserViewModel.PlayersData) {
     Column(
         modifier = Modifier
             .width(110.dp)
@@ -277,14 +277,14 @@ fun UserInfoCard(user: UserData) {
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
-                text = user.nickname,
+                text = player.nickname,
                 color = Color.White,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
             )
             Text(
-                text = " ${"%.1f".format(user.distance)}km",
+                text = " ${"%.1f".format(realTimeData.distance)}km",
                 color = Color.White,
                 fontSize = 12.sp,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
@@ -304,7 +304,7 @@ fun UserInfoCard(user: UserData) {
                     .size(30.dp)
             )
             Text(
-                text = "x ${user.itemCount}",
+                text = "x ${realTimeData.itemCount}",
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
                 fontSize = 14.sp
@@ -373,8 +373,13 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
              mainAxisAlignment = FlowMainAxisAlignment.Center,  // 가로 정렬(옵션)
              crossAxisAlignment = FlowCrossAxisAlignment.Center // 세로 정렬(옵션)
         ) {
-            displayList.forEach { user ->
-                UserInfoCard(user)
+            // playerList(닉네임 목록)에서 최대 4명만 표시
+            playerList.take(4).forEach { player ->
+                val realTimeData = playersDataMap[player.nickname]
+                Log.d("UI", "player.nickname=${player.nickname}, realTimeData=$realTimeData")
+                if (realTimeData != null) {
+                    UserInfoCard(player, realTimeData)
+                }
             }
         }
     }
