@@ -58,7 +58,7 @@ dependencies {
     // GPX 파일 관련 의존성
     implementation("androidx.wear:wear-ongoing:1.0.0")
     implementation("com.google.code.gson:gson:2.9.0")
-
+    implementation("com.google.accompanist:accompanist-flowlayout:0.36.0")
     implementation(libs.androidx.lifecycle.livedata.core)
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))

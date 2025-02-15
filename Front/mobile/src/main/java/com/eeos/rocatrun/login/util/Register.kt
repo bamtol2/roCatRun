@@ -18,6 +18,11 @@ object Register {
         weight : Int,
         gender : String
     ): Boolean {
+        val (isValid, errorMsg) = NicknameValidator.validate(nickname)
+        if (!isValid) {
+            Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+            return false
+        }
         return try {
 
             val response = RetrofitClient.apiService.createCharacter(

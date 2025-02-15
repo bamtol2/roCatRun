@@ -96,6 +96,12 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
             showDialog = true
         }
     }
+    LaunchedEffect(userInfo) {
+        if (userInfo != null) {
+            // 회원가입 모달 표시
+            showDialog = true
+        }
+    }
 
 
     Column(
@@ -208,7 +214,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
         ) {
             MessageBox(
                 imageResId = R.drawable.login_img_check,
-                message = "회원가입에 성공하였습니다!",
+                message = "회원가입에 성공했다냥!",
                 modifier = Modifier
                     .width(600.dp)
                     .height(600.dp)
@@ -345,7 +351,7 @@ fun UserInfoDialog(
                             .align(Alignment.CenterEnd)
                             .padding(end = 10.dp)
                             .clickable {  coroutineScope.launch {
-                                val token = TokenStorage.getAccessToken(context)
+                                val token = userInfo.data?.token?.accessToken ?: ""
                                 if (token != null){
                                     val isDuplicate = NicknameCheckHelper.checkNicknameAvailability(nickname, token)
                                     nicknameStatusMessage = when (isDuplicate) {
@@ -607,7 +613,7 @@ fun UserInfoDialog(
                         } else{
                              // 회원가입 API 호출
                             coroutineScope.launch {
-                                val token = TokenStorage.getAccessToken(context)
+                                val token = userInfo.data?.token?.accessToken ?: ""
                                 if (token != null){
                                     val registerSuccess = Register.registerCharacter(
                                         context,
@@ -618,6 +624,9 @@ fun UserInfoDialog(
                                         weight.toIntOrNull()?:0,
                                         gender)
                                     if (registerSuccess){
+                                        val token = userInfo.data?.token?.accessToken ?: ""
+                                        val refresh = userInfo.data?.token?.refreshToken ?: ""
+                                        TokenStorage.saveTokens(context, token, refresh)
                                         onShowMessageBox()
                                         onDismiss()
                                         Log.i("회원가입 성공", "회원가입 성공")
