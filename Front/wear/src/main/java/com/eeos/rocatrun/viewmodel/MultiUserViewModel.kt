@@ -38,6 +38,9 @@ import com.eeos.rocatrun.R
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import com.eeos.rocatrun.ui.CircularItemGauge
+import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
+import com.google.accompanist.flowlayout.FlowMainAxisAlignment
+import com.google.accompanist.flowlayout.FlowRow
 
 data class UserData(
     val nickname: String,
@@ -244,7 +247,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
     private fun generateMockData(): List<UserData> {
-        val users = listOf("마이애미", "과즙가람", "타노스")
+        val users = listOf("마이애미", "과즙가람", "타노스","이가람")
         return users.map {
             UserData(
                 nickname = it,
@@ -259,14 +262,13 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
 // 사용자 정보를 표시하는 카드 컴포저블
 @Composable
-fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserViewModel.PlayersData) {
+fun UserInfoCard(user: UserData) {
     Column(
         modifier = Modifier
-            .width(150.dp)
-            .height(110.dp)
-            .padding(horizontal = 12.dp, vertical = 14.dp)
+            .width(110.dp)
+            .height(50.dp)
             .background(Color(0xFF1C1C1C), shape = RoundedCornerShape(16.dp))
-            .padding(16.dp),
+            .padding(4.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -274,18 +276,18 @@ fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserV
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
-                text = player.nickname,
+                text = user.nickname,
                 color = Color.White,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
-                text = "${"%.1f".format(realTimeData.distance)}km",
+                text = " ${"%.1f".format(user.distance)}km",
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
             )
         }
@@ -303,10 +305,10 @@ fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserV
                     .size(40.dp)
             )
             Text(
-                text = "x ${realTimeData.itemCount}",
+                text = "x ${user.itemCount}",
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
-                fontSize = 20.sp
+                fontSize = 12.sp
             )
 
         }
@@ -343,16 +345,14 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
         animationSpec = tween(durationMillis = 500)
     )
 
-
+    val displayList = userList.take(4)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.TopCenter
-
+            .background(Color.Black)
     ) {
-
+        // 중앙에 원형 게이지 표시
         CircularItemGauge(
             itemProgress = itemProgress,
             bossProgress = bossProgress,
@@ -361,17 +361,20 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
                 .align(Alignment.Center)
         )
 
-        ScalingLazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+        // 한 화면에 4줄로 표시 (스크롤 없이)
+        // FlowRow로 유저 카드를 자동 줄바꿈 배치
+        FlowRow(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp) // 카드 주위 여백
+                .align(Alignment.TopCenter),
+            mainAxisSpacing = 4.dp,  // 가로 방향 아이템 간격
+            crossAxisSpacing = 4.dp, // 세로 방향 아이템 간격
+             mainAxisAlignment = FlowMainAxisAlignment.Center,  // 가로 정렬(옵션)
+             crossAxisAlignment = FlowCrossAxisAlignment.Center // 세로 정렬(옵션)
         ) {
-            items(playerList) { player ->
-                val realTimeData = playersDataMap[player.nickname]
-                if (realTimeData != null) {
-                    UserInfoCard(player= player, realTimeData = realTimeData)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
+            displayList.forEach { user ->
+                UserInfoCard(user)
             }
         }
     }

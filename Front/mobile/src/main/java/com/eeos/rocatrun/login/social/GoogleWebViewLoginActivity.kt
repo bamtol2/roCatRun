@@ -96,8 +96,6 @@ class GoogleWebViewLoginActivity : Activity() {
                         val accessToken = loginResponse.data.token?.accessToken ?: ""
                         val refreshToken = loginResponse.data.token?.refreshToken ?: ""
 
-                        // 토큰 저장
-                        TokenStorage.saveTokens(this@GoogleWebViewLoginActivity, accessToken, refreshToken)
                         navigateToHomeActivity(loginResponse)
                     } else {
                         Log.e("GoogleWebViewLoginActivity", "리스폰스 값 null")

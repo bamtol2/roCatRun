@@ -47,6 +47,7 @@ import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.profile.api.UpdateProfileRequest
 import com.eeos.rocatrun.ui.components.ModalCustomButton
 import com.eeos.rocatrun.ui.theme.MyFontFamily
+import com.eeos.rocatrun.ui.components.ConfirmDialog
 
 
 @Composable
@@ -57,6 +58,9 @@ fun ProfileDialog(
 ) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
+
+    // 회원 탈퇴 모달 표시 여부
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     var isEditing by remember { mutableStateOf(false) } // 수정 모드 여부
 
@@ -351,10 +355,7 @@ fun ProfileDialog(
                         text = "회원 탈퇴",
                         textColor = Color(0xFFFD2727),
                         onClick = {
-                            profileViewModel.deleteMember(token)
-                            TokenStorage.clearTokens(context)
-                            val intent = Intent(context, LoginActivity::class.java)
-                            context.startActivity(intent)
+                            showDeleteConfirm  = true
                         }
                     )
 
@@ -453,9 +454,33 @@ fun ProfileDialog(
                 }
 
             }
+            // 회원 탈퇴 확인 모달
+            if (showDeleteConfirm) {
+                ConfirmDialog(
+                    imageResId = R.drawable.login_img_check,
+                    message = "정말 탈퇴할꺼냥..?",
+                    onConfirm = {
+                        // '확인'을 누르면 실제 탈퇴 진행
+                        profileViewModel.deleteMember(token)
+                        TokenStorage.clearTokens(context)
+                        val intent = Intent(context, LoginActivity::class.java)
+                        context.startActivity(intent)
+                        showDeleteConfirm = false
+                    },
+                    onCancel = {
+                        // '취소'를 누르면 모달 닫기
+                        showDeleteConfirm = false
+                    },
+                )
+            }
         }
+
+
     }
+
 }
+
+
 
 @Composable
 fun CustomTextFieldLarge(
