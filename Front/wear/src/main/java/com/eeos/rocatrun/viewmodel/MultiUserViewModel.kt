@@ -266,9 +266,10 @@ fun UserInfoCard(user: UserData) {
     Column(
         modifier = Modifier
             .width(110.dp)
-            .height(50.dp)
+            .height(35.dp)
             .background(Color(0xFF1C1C1C), shape = RoundedCornerShape(16.dp))
-            .padding(4.dp),
+            .padding(4.dp)
+
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

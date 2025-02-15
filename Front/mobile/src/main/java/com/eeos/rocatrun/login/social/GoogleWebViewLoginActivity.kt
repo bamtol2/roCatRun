@@ -95,6 +95,12 @@ class GoogleWebViewLoginActivity : Activity() {
                     if (loginResponse != null && loginResponse.data != null) {
                         val accessToken = loginResponse.data.token?.accessToken ?: ""
                         val refreshToken = loginResponse.data.token?.refreshToken ?: ""
+                        TokenStorage.saveTokens(this@GoogleWebViewLoginActivity, accessToken, refreshToken)
+                        val pref = getSharedPreferences("rocatrun_prefs", MODE_PRIVATE)
+                        val value1 = pref.getString("access_token", "저장된 엑세스 토큰")
+                        val value2 = pref.getString("refresh_token", "저장된 리프레시 토큰")
+                        Log.i("저장된 accessToken", "accessToken: $value1")
+                        Log.i("저장된 refreshToken", "refreshToken: $value2")
 
                         navigateToHomeActivity(loginResponse)
                     } else {
