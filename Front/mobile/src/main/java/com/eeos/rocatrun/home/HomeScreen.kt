@@ -359,7 +359,12 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
         // 뽑기 모달 표시
         if (showPpobgi) {
-            PpobgiDialog(onDismiss = { showPpobgi = false })
+            PpobgiDialog(
+                onDismiss = { showPpobgi = false },
+                refreshHomeData = {
+                    homeViewModel.fetchHomeInfo(token)
+                }
+            )
         }
 
     }
