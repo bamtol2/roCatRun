@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ExperimentalComposeApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,6 +48,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.closet.api.InventoryItem
 import com.eeos.rocatrun.login.data.TokenStorage
+import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.components.StrokedText
 import dev.shreyaspatil.capturable.capturable
@@ -62,16 +64,18 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
     // 아이템 목록
     val itemList = closetViewModel.itemList.value
 
+    // 착용 아이템 리스트
+    val equippedItems = closetViewModel.equippedItems.value
+
     // 이미지 캡쳐 변수
     val captureController = rememberCaptureController()
     var showSaveCheck by remember { mutableStateOf(false) }
 
     // 탭
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("전체", "물감", "머리띠", "풍선", "오라")
 
-    // 착용 아이템 리스트
-    val equippedItems = closetViewModel.equippedItems.value
+    var showInfoGrade by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -97,6 +101,24 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                 painter = painterResource(id = R.drawable.stats_icon_home),
                 contentDescription = "Ranking Icon",
                 modifier = Modifier.size(50.dp)
+            )
+        }
+
+        // 아이템 등급 정보 버튼
+        Button(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = (-10).dp, y = 70.dp)
+                .padding(10.dp),
+            onClick = { showInfoGrade = true },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            shape = RoundedCornerShape(0.dp),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.game_icon_inform),
+                contentDescription = "Ranking Icon",
+                modifier = Modifier.size(45.dp)
             )
         }
 
@@ -181,7 +203,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(vertical = 5.dp, horizontal = 30.dp)
-                            .offset(x = (-5).dp, y = 285.dp),
+                            .offset(y = 285.dp),
                     )
                 }
             }
@@ -198,6 +220,11 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                     token = token
                 )
             }
+        }
+
+        // 아이템 등급 정보 모달 표시
+        if (showInfoGrade) {
+            InfoGradeScreen(onDismiss = { showInfoGrade = false })
         }
     }
 }

@@ -219,7 +219,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 // 닉네임
                 StrokedText(
                     text = characterData.nickname,
-                    fontSize = 40,
+                    fontSize = 35,
                     strokeColor = Color(0xFF701F3D),
                     strokeWidth = 25f
                 )
