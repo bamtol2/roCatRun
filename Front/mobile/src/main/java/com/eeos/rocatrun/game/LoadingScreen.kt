@@ -358,7 +358,7 @@ fun LoadingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // 취소 버튼 -> 누르면 게임선택 창으로 돌아가게
             Box(
