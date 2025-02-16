@@ -11,6 +11,7 @@ import com.ssafy.roCatRun.domain.game.service.manager.GameRoomManager;
 import com.ssafy.roCatRun.domain.game.service.manager.GameTimerManager;
 import com.ssafy.roCatRun.domain.gameCharacter.entity.GameCharacter;
 import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepository;
+import com.ssafy.roCatRun.domain.gameCharacter.service.GameCharacterService;
 import com.ssafy.roCatRun.domain.member.entity.Member;
 import com.ssafy.roCatRun.domain.member.repository.MemberRepository;
 import com.ssafy.roCatRun.domain.stats.service.GameStatsService;
@@ -43,6 +44,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
     private final GameTimerManager gameTimerManager;
 
     private final GameCharacterRepository characterRepository;
+    private final GameCharacterService gameCharacterService;
     private final MemberRepository memberRepository;
     private final GameResultRepository gameResultRepository;
     private final GameStatsService gameStatsService;
@@ -320,21 +322,6 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 new GameOverResponse(true, "게임이 종료되었습니다."));
     }
 
-
-//    /**
-//     * 게임 종료 처리
-//     * @param room 방 정보
-//     */
-//    public void handleGameOver(GameRoom room) {
-//        room.setStatus(GameStatus.FINISHED);
-//        GameResultResponse result = createGameResult(room);
-//        server.getRoomOperations(room.getId()).sendEvent("gameOver", result);
-//        // 방에서 제외 및 방 제거 처리
-//        for(Player player : room.getPlayers()){
-//            handleUserDisconnect(player.getId(), room);
-//        }
-//    }
-
     /**
      * 유저에게서 받은 러닝 결과 처리
      * @param userId 유저식별자
@@ -350,34 +337,42 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
             throw new IllegalStateException("게임이 아직 끝나지 않았습니다.");
         }
 
-        // 결과 데이터 저장
         Map<String, PlayerRunningResultRequest> roomResults = gameResults.get(room.getId());
+        if (roomResults == null) {
+            log.error("Room results not found for room: {}", room.getId());
+            return;
+        }
+
         roomResults.put(userId, resultData);
-
-        // character 테이블에 코인, 경험치 및 레벨 갱신
-        calculateAndDistributeRewards(room, roomResults);
-
-        // 게임 결과 데이터 mySQL에 저장, 통계 데이터 저장
-        saveGameResults(room, roomResults);
 
         log.info("[Running Result] Received data from User: {}, Room: {}, Current submissions: {}/{}",
                 userId, room.getId(), roomResults.size(), room.getPlayers().size());
 
-        // 모든 플레이어의 결과가 수집되었는지 확인
         if (roomResults.size() == room.getPlayers().size()) {
-            // 최종 결과 생성 및 전송
-            broadcastFinalResult(room, roomResults);
+            try {
+                // 보상 계산 및 결과 저장
+                Map<String, GameResultInfo> finalResults = calculateAndDistributeRewards(room, roomResults);
 
-            // 임시 저장된 결과 데이터 삭제
-            gameResults.remove(room.getId());
+                // 게임 결과 DB 저장
+                finalResults = saveGameResults(room, roomResults, finalResults);  // calculateAndDistributeRewards의 결과를 전달
 
-            // 방 정리
-            cleanupRoom(room);
+                // 최종 결과 브로드캐스트 (finalResults 사용)
+                broadcastFinalResult(room, roomResults, finalResults);  // finalResults를 인자로 전달
+
+                // 정리
+                gameResults.remove(room.getId());
+                cleanupRoom(room);
+
+                log.info("Game finished successfully for room: {}", room.getId());
+            } catch (Exception e) {
+                log.error("Error processing final results for room {}: {}", room.getId(), e.getMessage());
+            }
         }
     }
 
-    private void calculateAndDistributeRewards(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
+    private Map<String, GameResultInfo> calculateAndDistributeRewards(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
         boolean isCleared = room.getBossHealth() <= 0;
+        Map<String, GameResultInfo> resultInfoMap = new HashMap<>();  // 결과 정보를 저장할 Map 추가
 
         // 아이템 사용 횟수, 거리 순으로 내림차순 정렬
         List<Map.Entry<String, PlayerRunningResultRequest>> sortedPlayers = results.entrySet().stream()
@@ -402,31 +397,65 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
             Player player = room.getPlayerById(userId);
             String characterId = player.getCharacterId();
 
+            // 순위 및 클리어 여부에 따른 보상 배율 계산
             double rankMultiplier = calculateRankMultiplier(i);
             double clearMultiplier = isCleared ? 1.5 : 0.5;
 
+            // 최종 보상량
             int finalExp = (int) (baseExp * rankMultiplier * clearMultiplier);
             int finalCoin = (int) (baseCoin * rankMultiplier * clearMultiplier);
 
-            GameCharacter userCharacter = characterRepository.findById(Long.parseLong(characterId))
-                    .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
-            userCharacter.addExperience(finalExp);
-            userCharacter.addCoin(finalCoin);
+            try {
+                // 캐릭터 조회
+                GameCharacter userCharacter = characterRepository.findById(Long.parseLong(characterId))
+                        .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
 
-            characterRepository.save(userCharacter);
+                // 경험치 추가 및 레벨업 체크
+                GameCharacterService.LevelUpResponse levelUpResponse =
+                        gameCharacterService.addExperienceAndCheckLevelUp(userCharacter.getId(), finalExp);
+
+                // 캐릭터를 다시 조회하여 최신 상태 가져오기
+                GameCharacter updatedCharacter = characterRepository.findById(Long.parseLong(characterId))
+                        .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
+
+                // 코인 추가
+                updatedCharacter.addCoin(finalCoin);
+                characterRepository.save(updatedCharacter);
+
+                // 결과 정보 저장
+                resultInfoMap.put(userId, new GameResultInfo(
+                        finalExp,
+                        finalCoin,
+                        0, // 칼로리는 나중에 계산
+                        levelUpResponse.isHasLeveledUp(),
+                        levelUpResponse.getOldLevel(),
+                        levelUpResponse.getNewLevel()
+                ));
+
+                log.debug("Rewards calculated for user {}: exp={}, coin={}, levelUp={}",
+                        userId, finalExp, finalCoin, levelUpResponse.isHasLeveledUp());
+
+            } catch (Exception e) {
+                log.error("Error processing rewards for user {}: {}", userId, e.getMessage());
+                // 에러 발생시 기본값으로 저장
+                resultInfoMap.put(userId, new GameResultInfo(finalExp, finalCoin, 0, false, 1, 1));
+            }
         }
+
+        return resultInfoMap;
     }
 
     @Transactional
-    private Map<String, GameResultInfo> saveGameResults(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
+    private Map<String, GameResultInfo> saveGameResults(GameRoom room, Map<String, PlayerRunningResultRequest> results, Map<String, GameResultInfo> rewardInfo) {
         boolean isCleared = room.getBossHealth() <= 0;
-        Map<String, GameResultInfo> resultInfoMap = new HashMap<>();
+        Map<String, GameResultInfo> updatedRewardInfo = new HashMap<>(rewardInfo);  // 원본 보존을 위해 새로운 Map 생성
 
         // 유저별 러닝 결과 데이터 가져오기
         for (Map.Entry<String, PlayerRunningResultRequest> entry : results.entrySet()) {
             try {
                 String userId = entry.getKey();
                 Long characterId = Long.parseLong(room.getPlayerById(userId).getCharacterId());
+                GameResultInfo reward = rewardInfo.get(userId);  // 전달받은 rewardInfo 사용
 
                 // 캐릭터 아이디로 캐릭터 정보 가져오기
                 GameCharacter character = characterRepository.findById(characterId)
@@ -439,12 +468,6 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 // 유저의 러닝 결과 데이터 가져오기
                 PlayerRunningResultRequest resultData = entry.getValue();
                 Player player = room.getPlayerById(userId);
-
-                // 보상 계산
-                double rankMultiplier = calculateRankMultiplier(getRank(room, userId));
-                double clearMultiplier = isCleared ? 1.5 : 0.5;
-                int rewardExp = (int) (room.getBossLevel().getBaseExp() * rankMultiplier * clearMultiplier);
-                int rewardCoin = (int) (room.getBossLevel().getBaseCoin() * rankMultiplier * clearMultiplier);
 
                 // 칼로리 계산
                 int calories = calculateCalories(member, resultData.getTotalDistance(), resultData.getRunningTimeSec());
@@ -460,24 +483,30 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         .heartRateAvg(resultData.getHeartRateAvg())
                         .cadenceAvg(resultData.getCadenceAvg())
                         .itemUseCount(player.getUsedItemCount())
-                        .rewardExp(rewardExp)
-                        .rewardCoin(rewardCoin)
+                        .rewardExp(reward.getExp())
+                        .rewardCoin(reward.getCoin())
                         .calories(calories)
                         .build();
 
                 gameResultRepository.save(gameResult);
 
-                // 결과 정보 저장
-                resultInfoMap.put(userId, new GameResultInfo(rewardExp, rewardCoin, calories));
+                // 칼로리 정보만 추가하여 업데이트
+                updatedRewardInfo.put(userId, new GameResultInfo(
+                        reward.getExp(),
+                        reward.getCoin(),
+                        calories,
+                        reward.isHasLeveledUp(),
+                        reward.getOldLevel(),
+                        reward.getNewLevel()
+                ));
 
-
-                log.info("Game result saved for character {}: cleared={}, exp={}, coin={}",
-                        characterId, isCleared, rewardExp, rewardCoin);
+                log.info("Game result saved for character {}: cleared={}, exp={}, coin={}, levelUp={}",
+                        characterId, isCleared, reward.getExp(), reward.getCoin(), reward.isHasLeveledUp());
             } catch (Exception e) {
                 log.error("Error saving game result: {}", e.getMessage());
             }
         }
-        return resultInfoMap;
+        return updatedRewardInfo;
     }
 
     private int getRank(GameRoom room, String userId) {
@@ -518,27 +547,17 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @return 소모 칼로리
      */
     private int calculateCalories(Member member, double distance, long runningTimeSec) {
-        if (member.getWeight() == null || member.getHeight() == null || member.getGender() == null) {
-            return 0; // 신체 정보가 없는 경우 0 반환
+        if (member.getWeight() == null || member.getGender() == null) {
+            return 0;
         }
 
-        // MET(Metabolic Equivalent of Task) 값 계산
-        // 달리기 속도에 따른 MET 값 (approximate values)
-        double paceMinPerKm = (runningTimeSec / 60.0) / distance; // 1km당 몇 분
-        double met;
-        if (paceMinPerKm < 5) met = 11.5;      // 5분 이하/km: 매우 빠른 달리기
-        else if (paceMinPerKm < 6) met = 10.0;  // 5-6분/km: 빠른 달리기
-        else if (paceMinPerKm < 7) met = 9.0;   // 6-7분/km: 보통 달리기
-        else if (paceMinPerKm < 8) met = 8.3;   // 7-8분/km: 조깅
-        else met = 7.0;                         // 8분 이상/km: 가벼운 조깅
-
-        // 칼로리 계산 공식: 칼로리 = MET × 체중(kg) × 시간(hour)
-        double hours = runningTimeSec / 3600.0;
-        double calories = met * member.getWeight() * hours;
+        // 기본 공식: 체중(kg) * 거리(km) * 상수
+        // 상수는 보통 0.75 ~ 0.9 사이의 값을 사용 (평균적으로 0.8)
+        double calories = member.getWeight() * distance * 0.8;
 
         // 성별에 따른 보정
         if ("women".equals(member.getGender())) {
-            calories *= 0.9; // 여성의 경우 대략 10% 감소
+            calories *= 0.9;
         }
 
         return (int) calories;
@@ -550,10 +569,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * @param room 방 정보
      * @param results 게임 결과
      */
-    private void broadcastFinalResult(GameRoom room, Map<String, PlayerRunningResultRequest> results) {
-        // 먼저 게임 결과를 저장하고 보상 정보를 받아옴
-        Map<String, GameResultInfo> rewardInfo = saveGameResults(room, results);
-
+    private void broadcastFinalResult(GameRoom room, Map<String, PlayerRunningResultRequest> results, Map<String, GameResultInfo> rewardInfo) {
         // MongoDB에 게임 통계 저장 (방 정보, 유저별 러닝 결과, 리워드 정보)
         gameStatsService.saveGameStats(room, results, rewardInfo);
 
@@ -561,7 +577,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 .map(player -> {
                     PlayerRunningResultRequest result = results.get(player.getId());
                     GameResultInfo rewards = rewardInfo.getOrDefault(player.getId(),
-                            new GameResultInfo(0, 0, 0));
+                            new GameResultInfo(0, 0, 0, false, 1, 1));
 
                     return new GameResultResponse.PlayerResult(
                             player.getId(),
@@ -570,7 +586,10 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                             result.getTotalDistance(),
                             player.getUsedItemCount(),
                             rewards.getExp(),
-                            rewards.getCoin()
+                            rewards.getCoin(),
+                            rewards.isHasLeveledUp(),
+                            rewards.getOldLevel(),
+                            rewards.getNewLevel()
                     );
                 })
                 .sorted((p1, p2) -> p2.getItemUseCount() == p1.getItemUseCount() ?
@@ -595,7 +614,10 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                     rewards.getCalories(),
                     player.getUsedItemCount(),
                     rewards.getExp(),
-                    rewards.getCoin()
+                    rewards.getCoin(),
+                    rewards.isHasLeveledUp(),  // 추가
+                    rewards.getOldLevel(),      // 추가
+                    rewards.getNewLevel()       // 추가
             );
 
             // 현재 플레이어의 순위 계산
@@ -616,7 +638,26 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
             );
 
             server.getClient(player.getSessionId()).sendEvent("gameResult", finalResult);
+
+            // 레벨업했다면 레벨업 알림 추가 전송
+            GameResultInfo reward = rewardInfo.get(player.getId());
+            if (reward.isHasLeveledUp()) {
+                LevelUpNotificationResponse levelUpNotification = new LevelUpNotificationResponse(
+                        reward.getOldLevel(),
+                        reward.getNewLevel()
+                );
+                server.getClient(player.getSessionId()).sendEvent("levelUp", levelUpNotification);
+                log.info("Level up notification sent to user {}: {} -> {}",
+                        player.getId(), reward.getOldLevel(), reward.getNewLevel());
+            }
         }
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class LevelUpNotificationResponse {
+        private final int oldLevel;
+        private final int newLevel;
     }
 
     private void cleanupRoom(GameRoom room) {
@@ -680,5 +721,8 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
         private final int exp;
         private final int coin;
         private final int calories;
+        private final boolean hasLeveledUp;
+        private final int oldLevel;
+        private final int newLevel;
     }
 }

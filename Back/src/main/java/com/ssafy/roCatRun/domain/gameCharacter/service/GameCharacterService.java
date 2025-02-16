@@ -14,6 +14,8 @@ import com.ssafy.roCatRun.global.exception.ErrorCode;
 import com.ssafy.roCatRun.global.exception.InvalidNicknameException;
 import com.ssafy.roCatRun.global.s3.service.S3Service;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -108,7 +110,7 @@ public class GameCharacterService {
         GameCharacter currentGameCharacter = getCharacterByMemberId(memberId);
 
         Long myRank = gameCharacterRepository.findRankByLevelAndExperience(
-                currentGameCharacter.getLevel(),
+                currentGameCharacter.getLevelInfo().getLevel(),
                 currentGameCharacter.getExperience()
         );
 
@@ -121,7 +123,7 @@ public class GameCharacterService {
                 .map(character -> RankingResponse.from(
                         character,
                         gameCharacterRepository.findRankByLevelAndExperience(
-                                character.getLevel(),
+                                character.getLevelInfo().getLevel(),
                                 character.getExperience()
                         )
                 ))
@@ -161,7 +163,9 @@ public class GameCharacterService {
      * @return 캐릭터 정보 응답 객체
      */
     public GameCharacterResponse createGameCharacterResponse(GameCharacter gameCharacter) {
-        Level nextLevel = levelRepository.findByLevel(gameCharacter.getLevel() + 1);
+        // 현재 레벨이 최대 레벨(50)이 아닌 경우에만 다음 레벨 정보 조회
+        Level nextLevel = gameCharacter.getLevelInfo().getLevel() < 50 ?
+                levelRepository.findByLevel(gameCharacter.getLevelInfo().getLevel() + 1) .get(): null;
         Integer requiredExp = nextLevel != null ? nextLevel.getRequiredExp() : null;
 
         return new GameCharacterResponse(gameCharacter, requiredExp);
@@ -195,5 +199,67 @@ public class GameCharacterService {
 
         character.setCharacterImage(imageUrl);
         log.debug("Character image updated for member: {}, new image URL: {}", memberId, imageUrl);
+    }
+
+    /**
+     * 경험치 추가 및 레벨업 처리를 수행하는 메서드
+     * @param characterId 캐릭터 ID
+     * @param exp 추가할 경험치
+     * @return 레벨업 결과 정보
+     */
+    @Transactional
+    public LevelUpResponse addExperienceAndCheckLevelUp(Long characterId, int exp) {
+        GameCharacter character = gameCharacterRepository.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("Character not found"));
+
+        int oldLevel = character.getLevelInfo().getLevel(); // 현재 유저 레벨&경험치 가져오기
+        character.addExperience(exp); // 보상 경험치를 기존 경험치에 더하기
+        int currentExp = character.getExperience();
+
+        Level currentLevelInfo = character.getLevelInfo(); // 캐릭터 레벨 정보 가져오기
+        boolean hasLeveledUp = false; // 레벨업 여부
+        int newLevel = oldLevel;
+
+        // 레벨업 체크 및 처리
+        while (currentExp >= currentLevelInfo.getRequiredExp()) {
+            // 최대 레벨(50) 체크
+            if (currentLevelInfo.getLevel() >= 50) {
+                character.setExperience(currentLevelInfo.getRequiredExp()); // 최대 경험치로 설정
+                break;
+            }
+
+            // 경험치 차감
+            currentExp -= currentLevelInfo.getRequiredExp();
+            // 레벨업
+            newLevel++;
+            hasLeveledUp = true;
+
+            // 다음 레벨 정보 조회
+            Level nextLevelInfo = levelRepository.findByLevel(newLevel)
+                    .orElseThrow(() -> new IllegalStateException("Next level info not found"));
+
+            // 새로운 레벨 정보 설정
+            character.setLevelInfo(nextLevelInfo);
+            currentLevelInfo = nextLevelInfo;
+        }
+
+        // 남은 경험치 설정
+        character.setExperience(currentExp);
+
+        // 변경사항 저장
+        gameCharacterRepository.save(character);
+
+        log.debug("Level up process completed for character {}: oldLevel={}, newLevel={}, hasLeveledUp={}",
+                characterId, oldLevel, newLevel, hasLeveledUp);
+
+        return new LevelUpResponse(hasLeveledUp, oldLevel, newLevel);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class LevelUpResponse {
+        private final boolean hasLeveledUp;
+        private final int oldLevel;
+        private final int newLevel;
     }
 }

@@ -29,6 +29,10 @@ public class GameResultResponse {
         private int itemUseCount;
         private int rewardExp;
         private int rewardCoin;
+        private final boolean hasLeveledUp;  // 추가
+        private final int oldLevel;          // 추가
+        private final int newLevel;          // 추가
+
     }
 
     @Getter
@@ -41,5 +45,8 @@ public class GameResultResponse {
         private final int itemUseCount;
         private final int rewardExp;
         private final int rewardCoin;
+        private final boolean hasLeveledUp;  // 추가
+        private final int oldLevel;          // 추가
+        private final int newLevel;          // 추가
     }
 }

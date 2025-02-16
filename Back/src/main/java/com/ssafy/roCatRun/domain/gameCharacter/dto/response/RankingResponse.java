@@ -19,7 +19,7 @@ public class RankingResponse {
                 rank,
                 gameCharacter.getCharacterImage(),
                 gameCharacter.getNickname(),
-                gameCharacter.getLevel()
+                gameCharacter.getLevelInfo().getLevel()
         );
     }
 }
