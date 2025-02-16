@@ -24,7 +24,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.ui.components.StrokedText
 
 @Composable
-fun InfoGradeScreen(onDismiss: () -> Unit) {
+fun GradeInfoScreen(onDismiss: () -> Unit) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(

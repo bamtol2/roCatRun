@@ -77,6 +77,9 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
 
     var showInfoGrade by remember { mutableStateOf(false) }
 
+    var showInfoItem by remember { mutableStateOf(false) }
+    var selectedItem by remember { mutableStateOf<InventoryItem?>(null) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         Image(
@@ -181,7 +184,11 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                         items(currentItems) { item ->
                             ItemCard(
                                 item = item,
-                                onClick = { closetViewModel.toggleItemEquipped(it) }
+                                onClick = { closetViewModel.toggleItemEquipped(it) },
+                                onBoxClick = {
+                                    selectedItem = item
+                                    showInfoItem = true
+                                }
                             )
                         }
 
@@ -224,7 +231,15 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
 
         // 아이템 등급 정보 모달 표시
         if (showInfoGrade) {
-            InfoGradeScreen(onDismiss = { showInfoGrade = false })
+            GradeInfoScreen(onDismiss = { showInfoGrade = false })
+        }
+
+        // 아이템 정보 모달 표시
+        if (showInfoItem && selectedItem != null) {
+            ItemInfoScreen(
+                item = selectedItem!!,
+                onDismissRequest = { showInfoItem = false }
+            )
         }
     }
 }
@@ -278,7 +293,7 @@ fun CustomTabRow(
 // Item UI
 @SuppressLint("DiscouragedApi")
 @Composable
-fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
+fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit, onBoxClick: () -> Unit) {
     val context = LocalContext.current
 
     Box(
@@ -286,6 +301,7 @@ fun ItemCard(item: InventoryItem, onClick: (InventoryItem) -> Unit) {
         modifier = Modifier
             .size(120.dp)
             .background(color = Color(0x80FFB9C7), shape = RoundedCornerShape(size = 18.dp))
+            .clickable { onBoxClick() }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
