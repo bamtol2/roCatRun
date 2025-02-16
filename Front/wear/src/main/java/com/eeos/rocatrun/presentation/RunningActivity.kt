@@ -113,6 +113,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     // 상태 변수들
     private var totalDistance by mutableDoubleStateOf(0.0)
     private var speed by mutableDoubleStateOf(0.0)
+
     private var elapsedTime by mutableLongStateOf(0L)
     private var averagePace by mutableDoubleStateOf(0.0)
     private var heartRate by mutableStateOf("---")
@@ -376,6 +377,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         heartRateData.clear()
         cadenceData.clear()
         paceList.clear()
+
     }
 
     private fun stopTracking() {
@@ -399,6 +401,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         showStats = true
         sendFinalResultToPhone(totalItemUsage)
         createAndSendGpxFile()
+
 
     }
 
@@ -714,6 +717,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     onClick = {
                         showStats = false
                         resetTrackingData()
+                        finish()
                     },
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
