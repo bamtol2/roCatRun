@@ -32,7 +32,7 @@ public interface GameCharacterRepository extends JpaRepository<GameCharacter, Lo
      * @param limit 조회할 랭킹 개수
      * @return 상위 N개의 캐릭터 목록
      */
-    @Query("SELECT c FROM GameCharacter c WHERE c.id != :characterId ORDER BY c.level DESC, c.experience DESC LIMIT :limit")
+    @Query("SELECT c FROM GameCharacter c WHERE c.id != :characterId ORDER BY c.levelInfo.level DESC, c.experience DESC LIMIT :limit")
     List<GameCharacter> findTopNByIdNotOrderByLevelDescExperienceDesc(
             @Param("characterId") Long characterId,
             @Param("limit") int limit
@@ -45,7 +45,7 @@ public interface GameCharacterRepository extends JpaRepository<GameCharacter, Lo
      * @param experience 캐릭터 경험치
      * @return 해당 캐릭터의 랭킹
      */
-    @Query("SELECT COUNT(gc) + 1 FROM GameCharacter gc WHERE gc.level > :level OR (gc.level = :level AND gc.experience > :experience)")
+    @Query("SELECT COUNT(gc) + 1 FROM GameCharacter gc WHERE gc.levelInfo.level > :level OR (gc.levelInfo.level = :level AND gc.experience > :experience)")
     Long findRankByLevelAndExperience(@Param("level") Integer level, @Param("experience") Integer experience);
 
     /**
