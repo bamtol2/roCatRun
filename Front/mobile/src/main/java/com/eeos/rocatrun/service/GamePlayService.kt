@@ -67,12 +67,12 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         // 모달 상태를 위한 LiveData 추가
         val _modalState = MutableLiveData<ModalState>()
         val modalState: LiveData<ModalState> = _modalState
-        
+
         // 결과 모달 리셋 함수
         fun resetModalState() {
             _modalState.postValue(ModalState.None)
         }
-        
+
         // 게임 결과 저장 변수
         var pendingGameResult: ModalState? = null
     }
@@ -293,11 +293,24 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                         else -> ModalState.MultiLose
                     }
 
-                    // 현재 레벨업 모달이 표시중이면 게임 결과를 대기시킴
-                    if (_modalState.value is ModalState.LevelUp) {
-                        pendingGameResult = gameResultState
-                    } else {
-                        _modalState.postValue(gameResultState)
+                    // 현재 모달 상태에 따라 처리
+                    when (val currentState = _modalState.value) {
+                        is ModalState.LevelUp -> {
+                            // 레벨업 모달이 표시 중이면 결과를 대기시킴
+                            pendingGameResult = gameResultState
+                        }
+                        ModalState.None,
+                        is ModalState.SingleWin,
+                        is ModalState.SingleLose,
+                        is ModalState.MultiWin,
+                        is ModalState.MultiLose -> {
+                            // 레벨업 모달이 아닌 경우 바로 결과 모달 표시
+                            _modalState.postValue(gameResultState)
+                        }
+                        null -> {
+                            // 초기 상태일 경우 바로 결과 모달 표시
+                            _modalState.postValue(gameResultState)
+                        }
                     }
                 }
             }
@@ -338,12 +351,8 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
 
                 Log.d("Socket", "On - levelUp: $oldLevel -> $newLevel")
 
-                // 현재 게임 결과 모달 상태를 저장
-                if (_modalState.value is ModalState.SingleWin ||
-                    _modalState.value is ModalState.SingleLose ||
-                    _modalState.value is ModalState.MultiWin ||
-                    _modalState.value is ModalState.MultiLose
-                ) {
+                // 현재 모달 상태가 None이 아니면 해당 상태를 pendingGameResult로 저장
+                if (_modalState.value != ModalState.None && _modalState.value !is ModalState.LevelUp) {
                     pendingGameResult = _modalState.value
                 }
 

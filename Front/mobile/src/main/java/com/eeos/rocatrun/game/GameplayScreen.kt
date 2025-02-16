@@ -112,7 +112,6 @@ fun GameplayScreen(onShareClick: () -> Unit) {
                     }
                 )
             }
-
         }
 
         if (gpxFileReceived) {
@@ -143,11 +142,11 @@ fun GameplayScreen(onShareClick: () -> Unit) {
                     oldLevel = currentModalState.oldLevel,
                     newLevel = currentModalState.newLevel,
                     onDismiss = {
-                        // 레벨업 모달을 닫고 대기 중인 게임 결과 모달 표시
+                        // 대기 중인 게임 결과 모달이 있으면 표시하고, 없으면 아무것도 하지 않음
                         GamePlayService.pendingGameResult?.let { result ->
                             GamePlayService._modalState.postValue(result)
                             GamePlayService.pendingGameResult = null
-                        } ?: GamePlayService.resetModalState()
+                        }
                     }
                 )
             }
