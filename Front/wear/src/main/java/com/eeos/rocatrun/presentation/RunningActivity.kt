@@ -120,6 +120,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var averageHeartRate by mutableDoubleStateOf(0.0)
     private var heartRateSum = 0
     private var heartRateCount = 0
+    private var averageCadence = calculateAverageCadence()
 
     // 걸음 센서 관련 변수
     private var initialStepCount: Int = 0
@@ -391,7 +392,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             averageHeartRate = heartRateSum.toDouble() / heartRateCount
         }
 
-        val averageCadence = calculateAverageCadence()
         Log.d("FinalStats", "Average Cadence: $averageCadence steps/min")
         sensorManager.unregisterListener(this)
 
@@ -413,6 +413,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             dataMap.putDouble("averagePace", averagePace)
             dataMap.putDouble("averageHeartRate", averageHeartRate)
             dataMap.putInt("totalItemUsage", totalItemUsage)
+            dataMap.putDouble("averageCadence", averageCadence)
         }.asPutDataRequest().setUrgent()
 
         Log.d("Final Data 전송", "총 아이템 사용 횟수: $totalItemUsage")
@@ -685,7 +686,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     @Composable
     fun ShowStatsScreen(gameViewModel: GameViewModel) {
         val totalItemUsageCount by gameViewModel.totalItemUsageCount.collectAsState()
-        val averageCadence = calculateAverageCadence()
         val statsData = listOf(
             "총 시간: ${formatUtils.formatTime(elapsedTime)}",
             "총 거리: ${"%.2f".format(totalDistance)} km",
@@ -753,11 +753,11 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
 
 
-    private fun calculateAverageCadence(): Int {
+    private fun calculateAverageCadence(): Double {
         return if (elapsedTime > 0L) {
-            (stepCount.toFloat() / (elapsedTime / 60000f)).roundToInt()
+            (stepCount.toFloat() / (elapsedTime / 60000f)).toDouble()
         } else {
-            0
+            0.0
         }
     }
 
