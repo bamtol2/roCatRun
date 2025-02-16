@@ -61,11 +61,8 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
 
-    // 아이템 목록
-    val itemList = closetViewModel.itemList.value
-
-    // 착용 아이템 리스트
-    val equippedItems = closetViewModel.equippedItems.value
+    // 인벤토리 목록
+    val inventoryList = closetViewModel.inventoryList.value
 
     // 이미지 캡쳐 변수
     val captureController = rememberCaptureController()
@@ -135,7 +132,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(modifier = Modifier.capturable(captureController)) {
-                    CharacterWithItems(wornItems = itemList.filter { it.equipped })
+                    CharacterWithItems(wornItems = inventoryList.filter { it.equipped })
                 }
             }
 
@@ -172,11 +169,11 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val currentItems = when (selectedTab) {
-                            0 -> itemList // 전체
-                            1 -> itemList.filter { it.category == "PAINT" } // 물감
-                            2 -> itemList.filter { it.category == "HEADBAND" } // 머리띠
-                            3 -> itemList.filter { it.category == "BALLOON" } // 풍선
-                            4 -> itemList.filter { it.category == "AURA" } // 오라
+                            0 -> inventoryList // 전체
+                            1 -> inventoryList.filter { it.category == "PAINT" } // 물감
+                            2 -> inventoryList.filter { it.category == "HEADBAND" } // 머리띠
+                            3 -> inventoryList.filter { it.category == "BALLOON" } // 풍선
+                            4 -> inventoryList.filter { it.category == "AURA" } // 오라
                             else -> emptyList()
                         }
 
@@ -196,11 +193,11 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
 
                     // 획득 아이템 표시 텍스트
                     val currentItemCount = when (selectedTab) {
-                        0 -> itemList.size // 전체
-                        1 -> itemList.count { it.category == "PAINT" }
-                        2 -> itemList.count { it.category == "HEADBAND" }
-                        3 -> itemList.count { it.category == "BALLOON" }
-                        4 -> itemList.count { it.category == "AURA" }
+                        0 -> inventoryList.size // 전체
+                        1 -> inventoryList.count { it.category == "PAINT" }
+                        2 -> inventoryList.count { it.category == "HEADBAND" }
+                        3 -> inventoryList.count { it.category == "BALLOON" }
+                        4 -> inventoryList.count { it.category == "AURA" }
                         else -> 0
                     }
 
@@ -231,7 +228,7 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
 
         // 아이템 등급 정보 모달 표시
         if (showInfoGrade) {
-            GradeInfoScreen(onDismiss = { showInfoGrade = false })
+            GradeInfoScreen(onDismiss = { showInfoGrade = false }, closetViewModel = closetViewModel)
         }
 
         // 아이템 정보 모달 표시

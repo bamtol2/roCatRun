@@ -76,9 +76,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     // ViewModel에서 가져온 데이터
     val homeInfoData = homeViewModel.homeData.observeAsState()
 
-    // 아이템 목록
+    // 인벤토리 목록
     val closetViewModel : ClosetViewModel = viewModel()
-    val itemList = closetViewModel.itemList.value
+    val inventoryList = closetViewModel.inventoryList.value
 
     // 프로필 관련 변수, 프로필 데이터가 없을 때만 호출
     val profileViewModel: ProfileViewModel = viewModel()
@@ -235,7 +235,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     )
                 } else {
                     Spacer(modifier = Modifier.height(16.dp))
-                    CharacterWithItems(wornItems = itemList.filter { it.equipped })
+                    CharacterWithItems(wornItems = inventoryList.filter { it.equipped })
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 Spacer(modifier = Modifier.height(16.dp))

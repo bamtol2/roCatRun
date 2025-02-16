@@ -71,7 +71,7 @@ class HomeActivity : ComponentActivity() {
 
 
                 homeViewModel.fetchHomeInfo(token)
-                closetViewModel.fetchAllItems(token)
+                closetViewModel.fetchAllInventory(token)
 
                 setContent {
                     RoCatRunTheme {

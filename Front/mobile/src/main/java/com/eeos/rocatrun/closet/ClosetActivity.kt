@@ -34,7 +34,8 @@ class ClosetActivity : ComponentActivity() {
         )
 
         val token = TokenStorage.getAccessToken(this)
-        closetViewModel.fetchAllItems(token)
+        closetViewModel.fetchAllInventory(token)
+        closetViewModel.fetchAllItem(token)
 
         setContent {
             RoCatRunTheme(

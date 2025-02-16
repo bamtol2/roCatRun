@@ -20,7 +20,7 @@ interface ClosetAPI {
     ): Response<UploadResponse>
 
     @GET("/domain/inventory/items")
-    suspend fun getAllItems(
+    suspend fun getAllInventory(
         @Header("Authorization") token: String,
     ): Response<InventoryResponse>
 
@@ -29,4 +29,9 @@ interface ClosetAPI {
         @Header("Authorization") token: String,
         @Body requestBody: EquipRequest
     ): Response<InventoryResponse>
+
+    @GET("/domain/items")
+    suspend fun getAllItems(
+        @Header("Authorization") token: String,
+    ): Response<ItemResponse>
 }

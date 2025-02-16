@@ -23,9 +23,9 @@ class ClosetViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    // 아이템 목록 데이터
-    private val _itemList = mutableStateOf<List<InventoryItem>>(emptyList())
-    val itemList: State<List<InventoryItem>> = _itemList
+    // 인벤토리 목록 데이터
+    private val _inventoryList = mutableStateOf<List<InventoryItem>>(emptyList())
+    val inventoryList: State<List<InventoryItem>> = _inventoryList
 
     private val _isItemLoading = MutableLiveData<Boolean>()
     val isItemLoading: LiveData<Boolean> = _isItemLoading
@@ -34,9 +34,13 @@ class ClosetViewModel : ViewModel() {
     private val _equippedItems = mutableStateOf<List<Int>>(emptyList())
     val equippedItems: State<List<Int>> = _equippedItems
 
+    // 아이템 목록 데이터
+    private val _itemList = mutableStateOf<List<Item>>(emptyList())
+    val itemList: State<List<Item>> = _itemList
+
     // 아이템 상태 변경 함수
     fun toggleItemEquipped(clickedItem: InventoryItem) {
-        _itemList.value = _itemList.value.map {
+        _inventoryList.value = _inventoryList.value.map {
             if (it.inventoryId == clickedItem.inventoryId) {
                 it.copy(equipped = !it.equipped)
             } else if (it.category == clickedItem.category) {
@@ -46,13 +50,13 @@ class ClosetViewModel : ViewModel() {
             }
         }
         // 장착된 아이템 리스트 업데이트
-        _equippedItems.value = _itemList.value
+        _equippedItems.value = _inventoryList.value
             .filter { it.equipped }
             .map { it.inventoryId }
     }
 
     fun initializeItemList(items: List<InventoryItem>) {
-        _itemList.value = items
+        _inventoryList.value = items
         _equippedItems.value = items.filter { it.equipped }.map { it.inventoryId }
     }
 
@@ -99,22 +103,22 @@ class ClosetViewModel : ViewModel() {
         }
     }
 
-    // 전체 아이템 조회
-    fun fetchAllItems(auth: String?) {
+    // 전체 인벤토리 조회
+    fun fetchAllInventory(auth: String?) {
         if (auth == null) {
             Log.d("debug", "토큰이 없습니다.")
             return
         }
 
         _isItemLoading.value = true
-        Log.d("api", "아이템 목록 조회 호출")
+        Log.d("api", "인벤토리 목록 조회 호출")
         viewModelScope.launch {
             try {
-                val response = retrofitInstance.getAllItems(token = "Bearer $auth",)
+                val response = retrofitInstance.getAllInventory(token = "Bearer $auth",)
 
                 if (response.isSuccessful) {
                     response.body()?.let { inventoryResponse ->
-                        _itemList.value = inventoryResponse.data
+                        _inventoryList.value = inventoryResponse.data
                         initializeItemList(inventoryResponse.data)
                         Log.d("api", "아이템 조회 성공")
                     }
@@ -145,7 +149,7 @@ class ClosetViewModel : ViewModel() {
 
                 if (response.isSuccessful) {
                     response.body()?.let { inventoryResponse ->
-                        _itemList.value = inventoryResponse.data
+                        _inventoryList.value = inventoryResponse.data
                         initializeItemList(inventoryResponse.data)
                     }
                     Log.d("api", "아이템 착용 상태 변경 성공")
@@ -154,6 +158,33 @@ class ClosetViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("api", "API 호출 중 오류 발생: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    // 전체 아이템 조회
+    fun fetchAllItem(auth: String?) {
+        if (auth == null) {
+            Log.d("debug", "토큰이 없습니다.")
+            return
+        }
+
+        Log.d("api", "아이템 목록 조회 호출")
+        viewModelScope.launch {
+            try {
+                val response = retrofitInstance.getAllItems(token = "Bearer $auth",)
+
+                if (response.isSuccessful) {
+                    response.body()?.let { itemResponse ->
+                        _itemList.value = itemResponse.data
+                        Log.d("api", "아이템 조회 성공")
+                    }
+                } else {
+                    Log.d("api", "응답 실패: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.d("api", "예외 발생: ${e.message}")
+            } finally {
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.closet
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,18 +14,29 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.closet.api.ClosetViewModel
+import com.eeos.rocatrun.closet.api.Item
 import com.eeos.rocatrun.ui.components.StrokedText
 
 @Composable
-fun GradeInfoScreen(onDismiss: () -> Unit) {
+fun GradeInfoScreen(onDismiss: () -> Unit, closetViewModel: ClosetViewModel) {
+    // 아이템 목록
+    val itemList = closetViewModel.itemList.value
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -81,7 +93,7 @@ fun GradeInfoScreen(onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     StrokedText(
                         text = "등급별 획득 확률",
@@ -92,7 +104,7 @@ fun GradeInfoScreen(onDismiss: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(5.dp))
 
-                    RarityItem("NORMAL", "일반냥", "45%",  Color.White, Color(0xFFA3A1A5))
+                    RarityItem("NORMAL", "일반냥", "45%", Color.White, Color(0xFFA3A1A5))
                     RarityItem("RARE", "레어냥", "38%", Color(0xFF018F2C), Color.White)
                     RarityItem("UNIQUE", "에픽냥", "28%", Color(0xFF1646CB), Color.White)
                     RarityItem("EPIC", "유니크냥", "4%", Color(0xFF6C13E1), Color.White)
@@ -107,11 +119,7 @@ fun GradeInfoScreen(onDismiss: () -> Unit) {
                         strokeColor = Color(0xFF00E2B1),
                     )
 
-                    Image(
-                        painter = painterResource(id = R.drawable.closet_img_item_list),
-                        contentDescription = "list",
-                        modifier = Modifier.fillMaxWidth().height(400.dp)
-                    )
+                    ItemCategories(itemList)
                 }
             }
         }
@@ -159,6 +167,79 @@ private fun RarityItem(
                 color = Color.White,
                 fontSize = 16.sp
             )
+        }
+    }
+}
+
+
+@Composable
+fun ItemCategories(itemList: List<Item>) {
+    val groupedItems = itemList.groupBy { it.category }
+    val categoryNames = mapOf(
+        "BALLOON" to "풍선",
+        "AURA" to "오라",
+        "HEADBAND" to "머리띠",
+        "PAINT" to "물감"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        groupedItems.forEach { (category, items) ->
+            val categoryTitle = "${categoryNames[category] ?: category} - ${items.size}개"
+            CategoryRow(categoryTitle, items)
+        }
+    }
+}
+
+@SuppressLint("DiscouragedApi")
+@Composable
+fun CategoryRow(categoryTitle: String, itemList: List<Item>) {
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(90.dp)
+            .background(Color(0xFF1A3B2A), RoundedCornerShape(10.dp))
+    ) {
+        Text(
+            text = categoryTitle,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 10.dp, top = 10.dp, bottom = 8.dp)
+        )
+
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp)
+        ) {
+            LazyRow() {
+                items(itemList) { item ->
+                    val resourceId =
+                        context.resources.getIdentifier(
+                            "${item.name}_off",
+                            "drawable",
+                            context.packageName
+                        )
+                    val imageUrl = if (resourceId != 0) {
+                        "android.resource://${context.packageName}/$resourceId"
+                    } else {
+                        "android.resource://com.eeos.rocatrun/${R.drawable.closet_img_x}"
+                    }
+
+                    Image(
+                        painter = rememberAsyncImagePainter(imageUrl),
+                        contentDescription = "아이템",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            }
+
+
         }
     }
 }
