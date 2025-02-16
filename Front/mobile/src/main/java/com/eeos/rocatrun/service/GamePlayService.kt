@@ -67,6 +67,11 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         // 모달 상태를 위한 LiveData 추가
         private val _modalState = MutableLiveData<ModalState>()
         val modalState: LiveData<ModalState> = _modalState
+        
+        // 결과 모달 리셋 함수
+        fun resetModalState() {
+            _modalState.postValue(ModalState.None)
+        }
     }
 
     // ModalState sealed class 추가

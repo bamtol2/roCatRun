@@ -45,6 +45,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.service.GamePlayService
 import kotlinx.coroutines.delay
 import com.eeos.rocatrun.ui.components.formatTime
 import com.eeos.rocatrun.ui.components.formatPace
@@ -169,6 +170,8 @@ fun MultiWinScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults:
                             shape = RoundedCornerShape(7.dp)
                         )
                         .clickable {
+                            // 모달 상태 초기화
+                            GamePlayService.resetModalState()
                             // 홈화면으로 이동.
                             val intent = Intent(context, HomeActivity::class.java)
                             context.startActivity(intent)
