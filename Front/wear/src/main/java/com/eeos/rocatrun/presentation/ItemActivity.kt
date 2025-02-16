@@ -168,7 +168,9 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
         if (itemCount > 0) {
             Button(
                 onClick = {
-                    gameViewModel.notifyItemUsage()
+                    if (!gameViewModel.itemUsedSignal.value) {  // 중복 실행 방지
+                        gameViewModel.notifyItemUsage()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF00FFCC)
