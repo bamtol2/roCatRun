@@ -112,9 +112,8 @@ fun PpobgiDialog(
                     ) {
                         GifImage(
                             modifier = Modifier.fillMaxSize(),
-                            gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.ppobgi_gif_giftbox}"
+                            gifUrl = "android.resource://com.eeos.rocatrun/${getRarityGifUrl(drawResult?.rarity)}"
                         )
-
                     }
                 }
                 showResult -> {
@@ -356,8 +355,19 @@ fun getRarityColors(rarity: String): Pair<Color, Color> {
         "NORMAL" -> Color.White to Color(0xFFA3A1A5)
         "RARE" -> Color.White to Color(0xFF018F2C)
         "UNIQUE" -> Color.White to Color(0xFF1646CB)
-        "EPIC" -> Color.White to Color(0xFFE6C13E)
+        "EPIC" -> Color.White to Color(0xFF6C13E1)
         "LEGENDARY" -> Color(0xFFFF0080) to Color(0xFFFFFF00)
         else -> Color.White to Color.White
+    }
+}
+
+fun getRarityGifUrl(rarity: String?): Int {
+    return when (rarity) {
+        "NORMAL" -> R.drawable.ppobgi_gif_box_r
+        "RARE" -> R.drawable.ppobgi_gif_box_g
+        "UNIQUE" -> R.drawable.ppobgi_gif_box_b
+        "EPIC" -> R.drawable.ppobgi_gif_box_p
+        "LEGENDARY" -> R.drawable.ppobgi_gif_box_y
+        else -> R.drawable.ppobgi_gif_box_r  // 기본값
     }
 }
