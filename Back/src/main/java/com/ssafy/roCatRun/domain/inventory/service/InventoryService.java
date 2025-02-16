@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,8 +28,9 @@ public class InventoryService {
     /**
      * 현재 로그인한 회원의 캐릭터가 보유한 전체 인벤토리 아이템을 조회합니다.
      * SecurityContext에서 현재 인증된 회원의 ID를 가져와 조회합니다.
+     * 같은 아이템끼리 연속되도록 정렬하여 반환합니다.
      *
-     * @return 회원이 보유한 모든 아이템 목록
+     * @return 회원이 보유한 모든 아이템 목록 (같은 아이템끼리 연속 정렬됨)
      */
     public List<InventoryResponse> getInventoryItems() {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
@@ -36,15 +38,17 @@ public class InventoryService {
                 .stream()
                 .filter(inventory -> inventory.getItem() != null)  // 아이템이 있는 인벤토리만 필터링
                 .map(InventoryResponse::from)
+                .sorted(Comparator.comparing(response -> response.getName()))  // 아이템 이름으로 정렬
                 .collect(Collectors.toList());
     }
 
     /**
      * 현재 로그인한 회원의 캐릭터가 보유한 아이템을 카테고리별로 조회합니다.
      * SecurityContext에서 현재 인증된 회원의 ID를 가져와 조회합니다.
+     * 같은 아이템끼리 연속되도록 정렬하여 반환합니다.
      *
      * @param category 조회할 아이템 카테고리 (effect/balloon/headband/paint)
-     * @return 해당 카테고리의 아이템 목록
+     * @return 해당 카테고리의 아이템 목록 (같은 아이템끼리 연속 정렬됨)
      * @throws IllegalArgumentException 잘못된 카테고리가 입력된 경우
      */
     public List<InventoryResponse> getInventoryItemsByCategory(String category) {
@@ -56,6 +60,7 @@ public class InventoryService {
                 .stream()
                 .filter(inventory -> inventory.getItem() != null)  // 아이템이 있는 인벤토리만 필터링
                 .map(InventoryResponse::from)
+                .sorted(Comparator.comparing(response -> response.getName()))  // 아이템 이름으로 정렬
                 .collect(Collectors.toList());
     }
 
@@ -132,7 +137,7 @@ public class InventoryService {
      * 요청된 아이템들만 착용 상태로 변경하고 나머지는 모두 해제합니다.
      *
      * @param inventoryIds 착용할 인벤토리 아이템 ID 리스트
-     * @return 변경된 전체 인벤토리 아이템 목록
+     * @return 변경된 전체 인벤토리 아이템 목록 (같은 아이템끼리 연속 정렬됨)
      */
     @Transactional
     public List<InventoryResponse> equipItems(List<Long> inventoryIds) {
@@ -151,7 +156,7 @@ public class InventoryService {
 
         return allInventories.stream()
                 .map(InventoryResponse::from)
+                .sorted(Comparator.comparing(response -> response.getName()))  // 아이템 이름으로 정렬
                 .collect(Collectors.toList());
     }
-
 }

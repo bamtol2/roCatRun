@@ -2,12 +2,13 @@ package com.ssafy.roCatRun.domain.item.controller;
 
 import com.ssafy.roCatRun.domain.item.dto.request.ItemDrawRequest;
 import com.ssafy.roCatRun.domain.item.dto.response.ItemDrawResponse;
+import com.ssafy.roCatRun.domain.item.dto.response.ItemResponse;
 import com.ssafy.roCatRun.domain.item.service.ItemService;
 import com.ssafy.roCatRun.global.common.ApiResponse;
-import com.ssafy.roCatRun.domain.member.entity.Member;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 아이템 뽑기 관련 API를 처리하는 컨트롤러
@@ -30,5 +31,14 @@ public class ItemController {
         } catch (IllegalArgumentException e) {
             return ApiResponse.error(e.getMessage());
         }
+    }
+
+    /**
+     * 전체 아이템 목록 조회 API
+     * 게임에 존재하는 모든 아이템 정보를 반환합니다.
+     */
+    @GetMapping
+    public ApiResponse<List<ItemResponse>> getAllItems() {
+        return ApiResponse.success("전체 아이템 조회 성공", itemService.getAllItems());
     }
 }

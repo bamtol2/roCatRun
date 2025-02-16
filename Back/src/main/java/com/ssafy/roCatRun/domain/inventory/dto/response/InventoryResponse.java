@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class InventoryResponse {
     private Long inventoryId;       // 인벤토리 ID
-    private String name;            // 아이템 영문 이름 (DB 컬럼명과 일치)
+    private Long itemId;            // 아이템 ID
+    private String name;            // 아이템 영문 이름
     private String koreanName;      // 아이템 한글 이름
     private String description;     // 아이템 설명
     private Boolean isGif;          // GIF 이미지 여부
@@ -26,9 +27,9 @@ public class InventoryResponse {
         response.inventoryId = inventory.getId();
 
         Item item = inventory.getItem();
-        // item이 존재할 때만 아이템 정보 설정
         if (item != null) {
-            response.name = item.getName();          // itemName -> name으로 변경
+            response.name = item.getName();
+            response.itemId = item.getId();
             response.koreanName = item.getKoreanName();
             response.description = item.getDescription();
             response.isGif = item.getIsGif();
@@ -36,8 +37,7 @@ public class InventoryResponse {
             response.rarity = item.getRarity().name();
             response.price = item.getPrice();
         } else {
-            // 빈 인벤토리인 경우 기본값 설정
-            response.name = "empty_slot";           // itemName -> name으로 변경
+            response.name = "empty_slot";
             response.koreanName = "빈 슬롯";
             response.description = "비어있는 인벤토리 슬롯입니다.";
             response.isGif = false;

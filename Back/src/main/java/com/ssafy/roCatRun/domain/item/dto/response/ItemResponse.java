@@ -14,6 +14,7 @@ public class ItemResponse {
     private Boolean isGif;          // GIF 이미지 여부
     private Item.Category category; // 아이템 카테고리
     private Item.ItemRarity rarity; // 아이템 희귀도
+    private Double probability;     // 뽑기 확률
     private Integer price;          // 판매 가격
 
     public static ItemResponse from(Item item) {
@@ -25,6 +26,7 @@ public class ItemResponse {
         response.isGif = item.getIsGif();
         response.category = item.getCategory();
         response.rarity = item.getRarity();
+        response.probability = item.getProbability();
         response.price = item.getPrice();
         return response;
     }

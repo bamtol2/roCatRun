@@ -5,6 +5,7 @@ import com.ssafy.roCatRun.domain.gameCharacter.repository.GameCharacterRepositor
 import com.ssafy.roCatRun.domain.inventory.entity.Inventory;
 import com.ssafy.roCatRun.domain.inventory.repository.InventoryRepository;
 import com.ssafy.roCatRun.domain.item.dto.response.ItemDrawResponse;
+import com.ssafy.roCatRun.domain.item.dto.response.ItemResponse;
 import com.ssafy.roCatRun.domain.item.entity.Item;
 import com.ssafy.roCatRun.domain.item.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -79,5 +80,16 @@ public class ItemService {
         }
 
         return items.get(random.nextInt(items.size()));
+    }
+
+    /**
+     * 전체 아이템 목록을 조회합니다.
+     *
+     * @return 모든 아이템 정보 목록
+     */
+    public List<ItemResponse> getAllItems() {
+        return itemRepository.findAll().stream()
+                .map(ItemResponse::from)
+                .collect(Collectors.toList());
     }
 }
