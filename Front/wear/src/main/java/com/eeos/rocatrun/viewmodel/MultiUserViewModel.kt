@@ -262,7 +262,7 @@ fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserV
                 fontFamily = FontFamily(Font(R.font.neodgm)),
             )
             Text(
-                text = " ${"%.1f".format(realTimeData.distance)}km",
+                text = " ${"%.2f".format(realTimeData.distance)}km",
                 color = Color.White,
                 fontSize = 12.sp,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
