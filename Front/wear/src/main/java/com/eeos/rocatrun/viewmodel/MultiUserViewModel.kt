@@ -42,17 +42,10 @@ import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 
-data class UserData(
-    val nickname: String,
-    val distance: Double,
-    val itemCount: Int
-)
 // ViewModel 정의
 class MultiUserViewModel(application: Application) : AndroidViewModel(application), DataClient.OnDataChangedListener {
 
     private lateinit var dataClient: DataClient
-    private val _userList = MutableStateFlow<List<UserData>>(emptyList())
-    val userList: StateFlow<List<UserData>> get() = _userList
     // 플레이어 리스트
     private val _playerList = MutableStateFlow<List<PlayerData>>(emptyList())
     val playerList: StateFlow<List<PlayerData>> get() = _playerList
@@ -134,12 +127,6 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             }.addOnFailureListener { exception ->
                 Log.e("MultiUserViewModel", "캐시된 데이터 조회 실패", exception)
             }
-            while (true) {
-                delay(1000)  // 1초마다 데이터 갱신
-                val updatedList = generateMockData()
-                _userList.emit(updatedList)
-            }
-
         }
     }
 
@@ -246,16 +233,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         }
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }
-    private fun generateMockData(): List<UserData> {
-        val users = listOf("마이애미", "과즙가람")
-        return users.map {
-            UserData(
-                nickname = it,
-                distance = Random.nextDouble(4.0, 5.0),
-                itemCount = Random.nextInt(1, 5)
-            )
-        }
-    }
+
 }
 
 
@@ -322,7 +300,6 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
     val playerList by viewModel.playerList.collectAsState()
     val playersDataMap by viewModel.playersDataMap.collectAsState()
 
-    val userList by viewModel.userList.collectAsState()
 
 
     // GameViewModel에서 가져온 게이지 값
@@ -344,7 +321,6 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
         animationSpec = tween(durationMillis = 500)
     )
 
-    val displayList = userList.take(4)
 
     Box(
         modifier = Modifier

@@ -81,7 +81,7 @@ class GameViewModel : ViewModel() {
 
             incrementTotalItemUsageCount()
             viewModelScope.launch {
-                delay(1000) // 중복 전송 방지하기 위한 딜레이
+                delay(500) // 중복 전송 방지하기 위한 딜레이
                 _avaliableItemCount.value = maxOf(_avaliableItemCount.value - 1, 0)
                 _itemUsedSignal.value = false
                 _showItemGif.value = false
@@ -93,12 +93,6 @@ class GameViewModel : ViewModel() {
 
     }
 
-    // 아이템 게이지 증가
-//    fun increaseItemGauge(amount : Int) {
-//        // 현재 게이지 값에 양을 추가하며, 최대 100을 넘지 않도록 제한
-//        _itemGaugeValue.value = (_itemGaugeValue.value + amount).coerceAtMost(100)
-//        Log.d("아이템 게이지", "현재 게이지 값: ${_itemGaugeValue.value}, 증가량: $amount")
-//    }
     fun setItemGauge(value: Int) {
         _itemGaugeValue.value = value.coerceIn(0, 100)
         Log.d("GameViewModel", "Item gauge set to ${_itemGaugeValue.value}")
@@ -119,32 +113,28 @@ class GameViewModel : ViewModel() {
             _avaliableItemCount.value++
             _itemUsageCount.value++
 //            _showItemGif.value = true
-            delay(1000)
+            delay(500)
 //            _showItemGif.value = false
             vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
             val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(1000), intArrayOf(100), -1)
             vibrator?.vibrate(vibrationEffect)
-            var tts: TextToSpeech? = null
-            tts = TextToSpeech(context) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    val result = tts?.setLanguage(java.util.Locale.KOREAN)
-                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.e("TTS", "한국어 TTS를 지원하지 않습니다.")
-                    } else {
-                        // 사용 가능한 아이템 개수를 알림
-                        val text = "사용 가능한 아이템 개수는 ${_avaliableItemCount.value}개 입니다."
-                        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
-                    }
-                } else {
-                    Log.e("TTS", "TTS 초기화 실패")
-                }
-            }
+//            var tts: TextToSpeech? = null
+//            tts = TextToSpeech(context) { status ->
+//                if (status == TextToSpeech.SUCCESS) {
+//                    val result = tts?.setLanguage(java.util.Locale.KOREAN)
+//                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+//                        Log.e("TTS", "한국어 TTS를 지원하지 않습니다.")
+//                    } else {
+//                        // 사용 가능한 아이템 개수를 알림
+//                        val text = "사용 가능한 아이템 개수는 ${_avaliableItemCount.value}개 입니다."
+//                        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+//                    }
+//                } else {
+//                    Log.e("TTS", "TTS 초기화 실패")
+//                }
+//            }
 //            delay(1000)
 //            tts.shutdown()
-
-
-
-
 
             _itemGaugeValue.value = 0
             isHandlingGauge = false
