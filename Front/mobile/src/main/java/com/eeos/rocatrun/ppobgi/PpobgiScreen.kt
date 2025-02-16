@@ -103,7 +103,11 @@ fun PpobgiDialog(
                     Box(
                         modifier = Modifier
                             .size(500.dp)
-                            .padding(16.dp),
+                            .padding(16.dp)
+                            .clickable {
+                                isDrawing = false
+                                showResult = true
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         GifImage(
@@ -232,106 +236,113 @@ fun PpobgiDialog(
                     // 초기 뽑기 버튼 화면
                     Box (
                         modifier = Modifier
-                            .padding(horizontal = 40.dp)
-                            .fillMaxWidth()
-                    ){
-
+                            .fillMaxSize()
+                            .clickable { onDismiss() }
+                    ) {
                         Box(
                             modifier = Modifier
-                                .width(324.dp)
-                                .height(250.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(color = Color(0xFFF6C0FA))
-                                .border(
-                                    width = 3.dp,
-                                    color = Color(0xFF9A9FE4),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .zIndex(1f)  // zIndex 설정
-                        ){
-                            // 닫기 아이콘
-                            Image(
-                                painter = painterResource(id = R.drawable.game_icon_close),
-                                contentDescription = "Close",
-                                modifier = Modifier
-                                    .align(Alignment.TopStart)  // 왼쪽 중앙 정렬
-                                    .padding(start = 16.dp, top = 16.dp)  // 패딩 조정
-                                    .size(24.dp)
-                                    .clickable { onDismiss() }
-                            )
-                            // 내용을 담을 Column
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 60.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
+                                .padding(horizontal = 40.dp)
+                                .fillMaxWidth()
+                                .align(Alignment.Center)
+                        ) {
 
-                                StrokedText(
-                                    text = "어떤 아이템이 나올까냥?",
-                                    fontSize = 23,
-                                    color = Color(0xFF100810),
-                                    strokeColor = Color(0xFFD599C5),
-                                    modifier = Modifier.padding(vertical = 10.dp),
-                                )
-                                StrokedText(
-                                    text = "뽑아보라냥~(⁎˃ᆺ˂)",
-                                    fontSize = 23,
-                                    color = Color(0xFF100810),
-                                    strokeColor = Color(0xFFD599C5),
-                                    modifier = Modifier.padding(vertical = 10.dp),
-                                )
-                                Row (
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ){
-
-                                    // 뽑기 버튼
-                                    CustomButton(
-                                        text = "뽑기",
-                                        onClick = {
-                                            if (token != null) {
-                                                Log.d("뽑기", "뽑기 시작 - 토큰: ${token.take(10)}...")
-                                                viewModel.drawItem(token, 1)
-                                                isDrawing = true
-                                            } else {
-                                                Log.d("뽑기", "토큰 에러")
-                                            }
-                                        },
-                                        showCoin = true,
-                                        coinAmount = "x 100",
-                                        buttonHeight = 150,
-                                        modifier = Modifier.weight(0.5f)
+                            Box(
+                                modifier = Modifier
+                                    .width(324.dp)
+                                    .height(250.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(color = Color(0xFFF6C0FA))
+                                    .border(
+                                        width = 3.dp,
+                                        color = Color(0xFF9A9FE4),
+                                        shape = RoundedCornerShape(10.dp)
                                     )
+                                    .zIndex(1f)  // zIndex 설정
+                            ) {
+                                // 닫기 아이콘
+                                Image(
+                                    painter = painterResource(id = R.drawable.game_icon_close),
+                                    contentDescription = "Close",
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)  // 왼쪽 중앙 정렬
+                                        .padding(start = 16.dp, top = 16.dp)  // 패딩 조정
+                                        .size(24.dp)
+                                        .clickable { onDismiss() }
+                                )
+                                // 내용을 담을 Column
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 60.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+
+                                    StrokedText(
+                                        text = "어떤 아이템이 나올까냥?",
+                                        fontSize = 23,
+                                        color = Color(0xFF100810),
+                                        strokeColor = Color(0xFFD599C5),
+                                        modifier = Modifier.padding(vertical = 10.dp),
+                                    )
+                                    StrokedText(
+                                        text = "뽑아보라냥~(⁎˃ᆺ˂)",
+                                        fontSize = 23,
+                                        color = Color(0xFF100810),
+                                        strokeColor = Color(0xFFD599C5),
+                                        modifier = Modifier.padding(vertical = 10.dp),
+                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+
+                                        // 뽑기 버튼
+                                        CustomButton(
+                                            text = "뽑기",
+                                            onClick = {
+                                                if (token != null) {
+                                                    Log.d("뽑기", "뽑기 시작 - 토큰: ${token.take(10)}...")
+                                                    viewModel.drawItem(token, 1)
+                                                    isDrawing = true
+                                                } else {
+                                                    Log.d("뽑기", "토큰 에러")
+                                                }
+                                            },
+                                            showCoin = true,
+                                            coinAmount = "x 100",
+                                            buttonHeight = 150,
+                                            modifier = Modifier.weight(0.5f)
+                                        )
+                                    }
                                 }
                             }
-                        }
 
-                        // 에러 처리
-                        LaunchedEffect(error) {
-                            error?.let {
-                                // 코인 수 모자라면 모달 띄워주어야 함
-                                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                            // 에러 처리
+                            LaunchedEffect(error) {
+                                error?.let {
+                                    // 코인 수 모자라면 모달 띄워주어야 함
+                                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                }
                             }
-                        }
 
-                        // Rainbow gif
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .offset(y = (-120).dp)
-                                .zIndex(2f),
-                            contentAlignment = Alignment.TopCenter
-                        ) {
-                            GifImage(
+                            // Rainbow gif
+                            Box(
                                 modifier = Modifier
-                                    .width(250.dp)
-                                    .height(180.dp),
-                                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.ppobgi_gif_rainbow}"
-                            )
+                                    .fillMaxWidth()
+                                    .offset(y = (-120).dp)
+                                    .zIndex(2f),
+                                contentAlignment = Alignment.TopCenter
+                            ) {
+                                GifImage(
+                                    modifier = Modifier
+                                        .width(250.dp)
+                                        .height(180.dp),
+                                    gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.ppobgi_gif_rainbow}"
+                                )
+                            }
                         }
                     }
                 }

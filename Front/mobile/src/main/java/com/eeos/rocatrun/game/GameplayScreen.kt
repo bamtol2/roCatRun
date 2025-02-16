@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,9 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,15 +32,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.result.LevelUpScreen
 import com.eeos.rocatrun.result.MultiLoseScreen
 import com.eeos.rocatrun.result.MultiWinScreen
 import com.eeos.rocatrun.result.SingleLoseScreen
 import com.eeos.rocatrun.result.SingleWinScreen
 import com.eeos.rocatrun.service.GamePlayService
-import com.eeos.rocatrun.socket.SocketHandler
-import com.google.android.gms.wearable.PutDataMapRequest
-import com.google.android.gms.wearable.Wearable
-import org.json.JSONObject
 import com.eeos.rocatrun.ui.components.GifImage
 
 
@@ -59,8 +51,6 @@ fun GameplayScreen(onShareClick: () -> Unit) {
     val modalState by GamePlayService.modalState.observeAsState(GamePlayService.ModalState.None)
 
     val context = LocalContext.current
-    val dataClient = Wearable.getDataClient(context)
-    val cleared by remember { mutableStateOf(false) }  // 추가
 
     LaunchedEffect(modalState) {
         Log.d("Modal", "Modal state changed: $modalState")
@@ -147,7 +137,20 @@ fun GameplayScreen(onShareClick: () -> Unit) {
         }
 
         // 모달 표시
-        when (modalState) {
+        when (val currentModalState = modalState) {
+            is GamePlayService.ModalState.LevelUp -> {
+                LevelUpScreen(
+                    oldLevel = currentModalState.oldLevel,
+                    newLevel = currentModalState.newLevel,
+                    onDismiss = {
+                        // 레벨업 모달을 닫고 대기 중인 게임 결과 모달 표시
+                        GamePlayService.pendingGameResult?.let { result ->
+                            GamePlayService._modalState.postValue(result)
+                            GamePlayService.pendingGameResult = null
+                        } ?: GamePlayService.resetModalState()
+                    }
+                )
+            }
             is GamePlayService.ModalState.MultiWin ->
                 MultiWinScreen(myResult = myResult, myRank = myRank, playerResults = playerResults)
             is GamePlayService.ModalState.MultiLose ->

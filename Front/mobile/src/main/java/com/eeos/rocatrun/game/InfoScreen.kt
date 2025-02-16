@@ -50,12 +50,12 @@ fun InfoScreen(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .fillMaxWidth()
-                .height(700.dp)
+                .height(600.dp)
                 .border(
                     width = 3.dp,
                     color = Color(0xFFCC00FF)
                 )
-                .background(color = Color(0xE50C010E))
+                .background(color = Color(0xFF0C010E))
         ) {
             Column(
                 modifier = Modifier
@@ -93,30 +93,19 @@ fun InfoScreen(
                     )
                 }
                 Column (
-                    verticalArrangement = Arrangement.spacedBy(30.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     StrokedText(
                         text = "게임 시작 전 워치를 꼭 연결 하라냥!",
                         fontSize = 17,
                         strokeWidth = 15f,
                         color = Color.Black,
-                        strokeColor = Color(0xFFEEABFF)
+                        strokeColor = Color(0xFFEEABFF),
                     )
-
-                    Box (
-                    modifier = Modifier
-                        .padding(horizontal = 30.dp)
-                    ){
-                        Text(
-                            text = "아래 자세한 게임 설명을 읽고,\n보스들을 해치워서 화성까지 달려보자냥!",
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            lineHeight = 18.sp
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -192,7 +181,7 @@ fun InfoScreen(
                                 .padding(end = 1.dp)
                                 .size(50.dp)
                             ) {
-                                if (pagerState.currentPage < 5) {
+                                if (pagerState.currentPage < 4) {
                                     Text(
                                         text = ">",
                                         color = Color.White,
