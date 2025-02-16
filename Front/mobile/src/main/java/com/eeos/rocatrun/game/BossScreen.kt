@@ -53,7 +53,7 @@ fun BossScreen(
                     width = 3.dp,
                     color = Color(0xFF00E2B1)
                 )
-                .background(color = Color(0xB2000000))
+                .background(color = Color(0xFF000000))
         ) {
             Column(
                 modifier = Modifier
@@ -98,8 +98,21 @@ fun BossScreen(
 //                        .weight(1f)  // 남은 공간 모두 차지
                         .verticalScroll(rememberScrollState())  // 스크롤 가능하도록 설정
                         .padding(30.dp),
-                    verticalArrangement = Arrangement.spacedBy(30.dp)
+                    verticalArrangement = Arrangement.spacedBy(25.dp)
                 ) {
+
+                    Box (
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                    ){
+                        Text(
+                            text = "아래는 보스들의 세부 설명이다냥!\n무찌르고 화성까지 달려보자냥!",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            lineHeight = 20.sp
+                        )
+                    }
+
                     // 상
                     BossInfoSection(
                         difficulty = "상",

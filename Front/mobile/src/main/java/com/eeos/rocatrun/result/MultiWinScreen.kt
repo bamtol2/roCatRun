@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.ui.components.GifImage
@@ -196,9 +198,7 @@ fun MultiWinScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults:
                 )
             }
         }
-
     }
-
 }
 
 @Composable
@@ -333,7 +333,6 @@ private fun RankingWinRow(
     totalParticipants: Int
 ) {
     val context = LocalContext.current
-    val imageResId = getDrawableResourceId(context, profileImage)
 
     // 닉네임을 5자 이상일 때만 4자로 제한
     val displayNickname = if (nickname.length >= 5) {
@@ -386,12 +385,19 @@ private fun RankingWinRow(
                 }
 
                 Spacer(modifier = Modifier.width(5.dp))
-                Image(
-                    painter = painterResource(id = imageResId),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(profileImage)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "user profile image",
+                    modifier = Modifier.size(24.dp),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(id = R.drawable.game_img_wincat) // 에러시 기본 이미지
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
                     text = displayNickname,
                     color = Color.White,
@@ -419,15 +425,4 @@ private fun RankingWinRow(
             )
         }
     }
-}
-
-// 이미지 리소스 ID를 가져오는 함수
-private fun getDrawableResourceId(context: Context, filename: String): Int {
-    val resourceId = context.resources.getIdentifier(
-        filename.substringBeforeLast("."), // 확장자 제거
-        "drawable",
-        context.packageName
-    )
-    // 리소스를 찾지 못하면 기본 이미지 반환
-    return if (resourceId != 0) resourceId else R.drawable.game_img_wincat
 }

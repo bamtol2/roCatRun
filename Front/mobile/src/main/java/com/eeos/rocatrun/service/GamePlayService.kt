@@ -65,13 +65,16 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         val myRank: LiveData<Int> = _myRank
 
         // 모달 상태를 위한 LiveData 추가
-        private val _modalState = MutableLiveData<ModalState>()
+        val _modalState = MutableLiveData<ModalState>()
         val modalState: LiveData<ModalState> = _modalState
         
         // 결과 모달 리셋 함수
         fun resetModalState() {
             _modalState.postValue(ModalState.None)
         }
+        
+        // 게임 결과 저장 변수
+        var pendingGameResult: ModalState? = null
     }
 
     // ModalState sealed class 추가
@@ -81,6 +84,9 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         object SingleLose : ModalState()
         object MultiWin : ModalState()
         object MultiLose : ModalState()
+        data class LevelUp(
+            val oldLevel: Int,
+            val newLevel: Int) : ModalState()
     }
 
     private val NOTIFICATION_ID = 1
@@ -273,20 +279,26 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                     _playerResults.postValue(newPlayerResults)
                     _myRank.postValue(responseJson.optInt("myRank", 0))
 
-                    // 모달 상태 업데이트
-                    _modalState.postValue(
-                        when {
-                            cleared && newPlayerResults.size == 1 -> ModalState.SingleWin
-                            cleared -> ModalState.MultiWin
-                            newPlayerResults.size == 1 -> ModalState.SingleLose
-                            else -> ModalState.MultiLose
-                        }
-                    )
 
                     Log.d(
                         "Socket",
                         "On - gameResult: cleared: $cleared, myResult: $_myResult"
                     )
+
+                    // 모달 상태 업데이트 부분
+                    val gameResultState = when {
+                        cleared && newPlayerResults.size == 1 -> ModalState.SingleWin
+                        cleared -> ModalState.MultiWin
+                        newPlayerResults.size == 1 -> ModalState.SingleLose
+                        else -> ModalState.MultiLose
+                    }
+
+                    // 현재 레벨업 모달이 표시중이면 게임 결과를 대기시킴
+                    if (_modalState.value is ModalState.LevelUp) {
+                        pendingGameResult = gameResultState
+                    } else {
+                        _modalState.postValue(gameResultState)
+                    }
                 }
             }
         }
@@ -295,7 +307,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         SocketHandler.mSocket.on("gameOver") {
 
             Log.d("Socket", "On - gameOver")
-//            isGameOver = true
+            isGameOver = true
 
             // 워치에 게임 종료 메세지 보내기
             val putDataMapRequest = PutDataMapRequest.create("/game_end")
@@ -313,6 +325,32 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 }
         }
 
+        // 웹소켓 - 레벨업 이벤트 수신 -> 레벨업 모달 띄우고 -> 결과 모달 띄우기
+        SocketHandler.mSocket.on("levelUp") { args ->
+            Log.d("Socket", "레벨업 이벤트 리스너 동작 확인")
+
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                Log.d("Socket", "레벨업 args 존재: ${args[0]}")
+
+                val responseJson = args[0] as JSONObject
+                val oldLevel = responseJson.optInt("oldLevel")
+                val newLevel = responseJson.optInt("newLevel")
+
+                Log.d("Socket", "On - levelUp: $oldLevel -> $newLevel")
+
+                // 현재 게임 결과 모달 상태를 저장
+                if (_modalState.value is ModalState.SingleWin ||
+                    _modalState.value is ModalState.SingleLose ||
+                    _modalState.value is ModalState.MultiWin ||
+                    _modalState.value is ModalState.MultiLose
+                ) {
+                    pendingGameResult = _modalState.value
+                }
+
+                // 레벨업 모달 표시
+                _modalState.postValue(ModalState.LevelUp(oldLevel, newLevel))
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -329,9 +367,10 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         SocketHandler.mSocket.off("gameOver")
         SocketHandler.mSocket.off("feverTimeStarted")
         SocketHandler.mSocket.off("feverTimeEnded")
+        SocketHandler.mSocket.off("levelUp")
     }
 
-     override fun onDataChanged(dataEvents: DataEventBuffer) {
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED) {
                 val dataItem = event.dataItem
@@ -347,10 +386,10 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
 
     // 워치에서 실시간 러닝데이터 받아오는 함수
     private fun processRunningData(dataItem: DataItem) {
-        // 게임 오버 상태면 데이터 전송하지 않음
+
+        // 게임 오버 상태면 데이터 처리 자체를 중단
         if (isGameOver) {
-            Log.d("Wear", "게임 오버 상태 - 러닝 데이터 전송 중단")
-            return
+            return  // 여기서 바로 리턴
         }
 
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
@@ -373,7 +412,8 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 distance = getDouble("distance"),
                 time = getLong("time"),
                 averagePace = getDouble("averagePace"),
-                averageHeartRate = getDouble("averageHeartRate")
+                averageHeartRate = getDouble("averageHeartRate"),
+                averageCadence = getDouble("averageCadence")
             )
         }
 
@@ -385,6 +425,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
             시간: ${resultData.time}
             평균 페이스: ${resultData.averagePace}
             평균 심박수: ${resultData.averageHeartRate}
+            평균 케이던스: ${resultData.averageCadence}
         """.trimIndent()
         )
         // _resultData.value를 기다리지 않고 local 변수 resultData를 바로 사용
@@ -393,7 +434,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
             resultData.distance,
             resultData.averagePace,
             resultData.averageHeartRate,
-            0.0
+            resultData.averageCadence
         )
     }
 

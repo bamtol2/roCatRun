@@ -56,7 +56,7 @@ class GamePlay : ComponentActivity(){
         val time: Long,
         val averagePace: Double,
         val averageHeartRate: Double,
-//        val averageCadence?? - 케이던스 어케할건징
+        val averageCadence: Double
 //        val totalItemUsage: Int,
     )
 
