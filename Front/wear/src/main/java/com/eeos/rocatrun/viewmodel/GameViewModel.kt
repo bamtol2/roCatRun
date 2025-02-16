@@ -81,7 +81,7 @@ class GameViewModel : ViewModel() {
 
             incrementTotalItemUsageCount()
             viewModelScope.launch {
-                delay(500) // 중복 전송 방지하기 위한 딜레이
+                delay(1000) // 중복 전송 방지하기 위한 딜레이
                 _avaliableItemCount.value = maxOf(_avaliableItemCount.value - 1, 0)
                 _itemUsedSignal.value = false
                 _showItemGif.value = false
