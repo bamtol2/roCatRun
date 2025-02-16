@@ -56,12 +56,11 @@ import java.util.*
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
+fun MonStatsScreen(monStatsData: WeekMonStatsResponse?, noMonData: Boolean) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
 
     val statsViewModel: StatsViewModel = viewModel()
-    val noMonData = statsViewModel.noMonData.observeAsState(initial = false)
 
     // 다이얼로그의 표시 여부 상태
     var isDialogVisible by remember { mutableStateOf(false) }
@@ -151,7 +150,7 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
                 contentAlignment = Alignment.Center
             ) {
                 StrokedText(
-                    text = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.totalDistance?.let { roundToFirstDecimal(it) }} km",
+                    text = if (noMonData) "0" else "${monStatsData?.data?.summary?.totalDistance?.let { roundToFirstDecimal(it) }} km",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,
@@ -167,11 +166,11 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem(label = "러닝", value = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.totalRuns}")
-                StatItem(label = "페이스", value = if (noMonData.value) "0" else "${monStatsData?.data?.summary?.averagePace}")
+                StatItem(label = "러닝", value = if (noMonData) "0" else "${monStatsData?.data?.summary?.totalRuns}")
+                StatItem(label = "페이스", value = if (noMonData) "0" else "${monStatsData?.data?.summary?.averagePace}")
                 StatItem(
                     label = "총 시간",
-                    value = if (noMonData.value) "00:00:00" else formatTotalTime(monStatsData?.data?.summary?.totalTime ?: "00:00:00")
+                    value = if (noMonData) "00:00:00" else formatTotalTime(monStatsData?.data?.summary?.totalTime ?: "00:00:00")
                 )
             }
 
@@ -184,7 +183,7 @@ fun MonStatsScreen(monStatsData: WeekMonStatsResponse?) {
                     .height(300.dp)
                     .background(Color(0x8200001E), RoundedCornerShape(8.dp))
             ) {
-                BarGraphMon(month = sMonth, year = sYear, monStatsData = monStatsData, noMonData = noMonData.value)
+                BarGraphMon(month = sMonth, year = sYear, monStatsData = monStatsData, noMonData = noMonData)
             }
         }
     }

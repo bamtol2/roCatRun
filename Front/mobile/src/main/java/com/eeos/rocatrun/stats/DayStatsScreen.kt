@@ -30,19 +30,32 @@ import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
-fun DayStatsScreen(games: List<Game>) {
+fun DayStatsScreen(games: List<Game>?, noDayData: Boolean) {
     // 세부 모달을 위한 상태: 클릭한 게임의 데이터를 저장
     var selectedGame by remember { mutableStateOf<Game?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        if (games.isEmpty()) {
-            Text(text = "게임 데이터가 없습니다.", color = Color.White, textAlign = TextAlign.Center)
-        } else {
-            games.forEach { game ->
+    if (noDayData) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center,
+            ) {
+            Text(
+                text = "데이터가 없다냥!\n달리기를 시작하라냥..!",
+                color = Color.White,
+                fontSize = 24.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 40.sp
+            )
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+
+            games?.forEach { game ->
                 DayStatCard(
                     date = game.date,
                     status = if (game.result) "정복완료" else "정복실패",
@@ -284,8 +297,8 @@ fun DayStatCard(
                             modifier = Modifier.weight(0.5f)
                         )
                         Image(
-                            painter = painterResource(id = R.drawable.stats_img_can),
-                            contentDescription = "Can Img",
+                            painter = painterResource(id = R.drawable.all_img_fishbone),
+                            contentDescription = "fishbone Img",
                             modifier = Modifier
                                 .size(25.dp)
                                 .weight(0.3f)

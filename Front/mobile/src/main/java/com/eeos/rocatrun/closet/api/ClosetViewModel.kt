@@ -49,8 +49,6 @@ class ClosetViewModel : ViewModel() {
         _equippedItems.value = _itemList.value
             .filter { it.equipped }
             .map { it.inventoryId }
-
-        Log.d("api", _equippedItems.value.toString())
     }
 
     fun initializeItemList(items: List<InventoryItem>) {
@@ -89,7 +87,7 @@ class ClosetViewModel : ViewModel() {
 
                 if (response.isSuccessful) {
                     _sendImageResult.value = response.body()
-                    Log.d("api", "업로드 성공: ${_sendImageResult.value}")
+                    Log.d("api", "업로드 성공")
                 } else {
                     Log.e("api", "Error: ${response.errorBody()?.string()}")
                 }
@@ -118,7 +116,7 @@ class ClosetViewModel : ViewModel() {
                     response.body()?.let { inventoryResponse ->
                         _itemList.value = inventoryResponse.data
                         initializeItemList(inventoryResponse.data)
-                        Log.d("api", "아이템 조회 성공: ${inventoryResponse.data}")
+                        Log.d("api", "아이템 조회 성공")
                     }
                 } else {
                     Log.d("api", "응답 실패: ${response.message()}")

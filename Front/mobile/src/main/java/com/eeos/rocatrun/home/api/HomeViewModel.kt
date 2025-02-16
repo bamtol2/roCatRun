@@ -25,7 +25,7 @@ class HomeViewModel : ViewModel() {
                 override fun onResponse(call: Call<HomeInfoResponse>, response: Response<HomeInfoResponse>) {
                     if (response.isSuccessful) {
                         _homeData.value = response.body()
-                        Log.d("api", "메인 성공 ${_homeData.value.toString()}")
+                        Log.d("api", "메인 성공")
                     } else {
                         Log.d("api", "메인 실패 ${response.toString()}")
                     }

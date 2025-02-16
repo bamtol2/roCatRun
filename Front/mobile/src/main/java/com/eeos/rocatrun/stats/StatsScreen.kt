@@ -1,6 +1,7 @@
 package com.eeos.rocatrun.stats
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -31,14 +32,17 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
     // Daily stats - ViewModel에서 가져온 데이터를 관찰
     val dailyStatsData = statsViewModel.dailyStatsData.observeAsState()
     val dailyLoading = statsViewModel.dailyLoading.observeAsState(initial = false)
+    val noDayData = statsViewModel.noDayData.observeAsState(initial = false)
 
     // Week stats
     val weekStatsData = statsViewModel.weekStatsData.observeAsState()
     val weekLoading = statsViewModel.weekLoading.observeAsState(initial = false)
+    val noWeekData = statsViewModel.noWeekData.observeAsState(initial = false)
 
     // Mon stats
     val monStatsData = statsViewModel.monStatsData.observeAsState()
     val monLoading = statsViewModel.monLoading.observeAsState(initial = false)
+    val noMonData = statsViewModel.noMonData.observeAsState(initial = false)
 
     // Tab Settings
     val coroutineScope = rememberCoroutineScope()
@@ -139,9 +143,9 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
                 } else {
                     HorizontalPager(state = pagerState, userScrollEnabled = true) { page ->
                         when (page) {
-                            0 -> dailyStatsData.value?.let { DayStatsScreen(games = it.games) }
-                            1 -> weekStatsData.value?.let { WeekStatsScreen(weekStatsData = it) }
-                            2 -> monStatsData.value?.let { MonStatsScreen(monStatsData = it) }
+                            0 -> DayStatsScreen(games = dailyStatsData.value?.games, noDayData = noDayData.value)
+                            1 -> WeekStatsScreen(weekStatsData = weekStatsData.value, noWeekData = noWeekData.value)
+                            2 -> MonStatsScreen(monStatsData = monStatsData.value, noMonData = noMonData.value)
                         }
                     }
                 }

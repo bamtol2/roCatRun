@@ -56,12 +56,11 @@ import ir.ehsannarmani.compose_charts.models.PopupProperties
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
+fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?, noWeekData: Boolean) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
 
     val statsViewModel: StatsViewModel = viewModel()
-    val noWeekData = statsViewModel.noWeekData.observeAsState(initial = false)
 
     // 다이얼로그의 표시 여부 상태
     var isDialogVisible by remember { mutableStateOf(false) }
@@ -153,7 +152,7 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
             ) {
 
                 StrokedText(
-                    text = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.totalDistance?.let { roundToFirstDecimal(it) }} km",
+                    text = if (noWeekData) "0" else "${weekStatsData?.data?.summary?.totalDistance?.let { roundToFirstDecimal(it) }} km",
                     color = Color.White,
                     strokeColor = Color(0xFF34B4C0),
                     fontSize = 50,
@@ -169,9 +168,9 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
                     .padding(horizontal = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem(label = "러닝", value = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.totalRuns}")
-                StatItem(label = "페이스", value = if (noWeekData.value) "0" else "${weekStatsData?.data?.summary?.averagePace}")
-                StatItem(label = "총 시간", value = if (noWeekData.value) "00:00:00" else formatTotalTime(weekStatsData?.data?.summary?.totalTime ?: "00:00:00"))
+                StatItem(label = "러닝", value = if (noWeekData) "0" else "${weekStatsData?.data?.summary?.totalRuns}")
+                StatItem(label = "페이스", value = if (noWeekData) "0" else "${weekStatsData?.data?.summary?.averagePace}")
+                StatItem(label = "총 시간", value = if (noWeekData) "00:00:00" else formatTotalTime(weekStatsData?.data?.summary?.totalTime ?: "00:00:00"))
             }
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -183,7 +182,7 @@ fun WeekStatsScreen(weekStatsData: WeekMonStatsResponse?) {
                     .height(300.dp)
                     .background(Color(0x8200001E), RoundedCornerShape(8.dp))
             ) {
-                BarGraphWeek(weekStatsData = weekStatsData, noWeekData = noWeekData.value)
+                BarGraphWeek(weekStatsData = weekStatsData, noWeekData = noWeekData)
             }
         }
     }

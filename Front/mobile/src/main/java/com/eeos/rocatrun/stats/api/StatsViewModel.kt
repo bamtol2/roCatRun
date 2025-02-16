@@ -24,6 +24,9 @@ class StatsViewModel : ViewModel() {
     val monLoading: LiveData<Boolean> = _monLoading
 
     // Data
+    private val _noDayData = MutableLiveData<Boolean>(false)
+    val noDayData: LiveData<Boolean> = _noDayData
+
     private val _noWeekData = MutableLiveData<Boolean>(false)
     val noWeekData: LiveData<Boolean> = _noWeekData
 
@@ -81,6 +84,7 @@ class StatsViewModel : ViewModel() {
 
         if (auth != null) {
             Log.d("api", "일별 통계 페이지 호출 시작")
+            _noDayData.value = false
             retrofitInstance.getDailyStats("Bearer $auth")
                 .enqueue(object : Callback<DailyStatsResponse> {
                     override fun onResponse(
@@ -91,8 +95,11 @@ class StatsViewModel : ViewModel() {
                             _dailyStatsData.value = response.body()
                             Log.d("api", "일별 통계 호출 성공")
                         } else {
-                            println("Error: ${response.errorBody()}")
-                            Log.d("api", response.toString())
+                            if (response.code() == 404 || response.code() == 400) {
+                                _noDayData.value = true
+                            } else {
+                                Log.d("api", response.toString())
+                            }
                         }
                         _dailyLoading.value = false
                     }
@@ -128,7 +135,6 @@ class StatsViewModel : ViewModel() {
                             if (response.code() == 404 || response.code() == 400) {
                                 _noWeekData.value = true
                             } else {
-                                println("Error: ${response.errorBody()}")
                                 Log.d("api", response.toString())
                             }
                         }
@@ -166,7 +172,6 @@ class StatsViewModel : ViewModel() {
                             if (response.code() == 404 || response.code() == 400) {
                                 _noMonData.value = true
                             } else {
-                                println("Error: ${response.errorBody()}")
                                 Log.d("api", response.toString())
                             }
                         }
