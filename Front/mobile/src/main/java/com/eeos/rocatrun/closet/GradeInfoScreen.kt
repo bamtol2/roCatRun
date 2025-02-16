@@ -35,12 +35,12 @@ fun GradeInfoScreen(onDismiss: () -> Unit) {
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .fillMaxWidth()
-                .height(310.dp)
+                .height(800.dp)
                 .border(
                     width = 3.dp,
                     color = Color(0xFF00E2B1)
                 )
-                .background(color = Color(0xB2000000))
+                .background(color = Color(0xE1000000))
                 .wrapContentSize(Alignment.Center)
         ) {
             Column(
@@ -54,7 +54,6 @@ fun GradeInfoScreen(onDismiss: () -> Unit) {
                         .fillMaxWidth()
                         .background(Color(0xFF00E2B1))
                         .height(50.dp)
-
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.game_icon_close),
@@ -67,7 +66,7 @@ fun GradeInfoScreen(onDismiss: () -> Unit) {
                     )
 
                     Text(
-                        text = "아이템 획득 확률",
+                        text = "아이템 정보",
                         style = MaterialTheme.typography.titleLarge.copy(
                             color = Color.Black,
                             fontSize = 28.sp,
@@ -81,14 +80,38 @@ fun GradeInfoScreen(onDismiss: () -> Unit) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(30.dp),
+                        .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    StrokedText(
+                        text = "등급별 획득 확률",
+                        fontSize = 26,
+                        color = Color.Black,
+                        strokeWidth = 15f,
+                        strokeColor = Color(0xFF00E2B1),
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+
                     RarityItem("NORMAL", "일반냥", "45%",  Color.White, Color(0xFFA3A1A5))
                     RarityItem("RARE", "레어냥", "38%", Color(0xFF018F2C), Color.White)
                     RarityItem("UNIQUE", "에픽냥", "28%", Color(0xFF1646CB), Color.White)
                     RarityItem("EPIC", "유니크냥", "4%", Color(0xFF6C13E1), Color.White)
                     RarityItem("LEGENDARY", "레전드리냥", "1%", Color(0xFFFF0080), Color(0xFFFFFF00))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    StrokedText(
+                        text = "아이템 종류",
+                        fontSize = 26,
+                        color = Color.Black,
+                        strokeWidth = 15f,
+                        strokeColor = Color(0xFF00E2B1),
+                    )
+
+                    Image(
+                        painter = painterResource(id = R.drawable.closet_img_item_list),
+                        contentDescription = "list",
+                        modifier = Modifier.fillMaxWidth().height(400.dp)
+                    )
                 }
             }
         }
