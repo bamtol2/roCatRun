@@ -64,6 +64,7 @@ import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.profile.api.ProfileViewModel
 import com.eeos.rocatrun.ranking.RankingDialog
 import com.eeos.rocatrun.ranking.api.RankingViewModel
+import com.eeos.rocatrun.shop.ShopActivity
 import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.components.StrokedText
 
@@ -152,7 +153,19 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         modifier = Modifier.size(60.dp)
                     )
                 }
-
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { context.startActivity(Intent(context, ShopActivity::class.java)) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_shop),
+                        contentDescription = "Shop Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
             }
 
 
