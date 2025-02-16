@@ -95,7 +95,17 @@ fun RankingItem(rankData: Ranking, highlight: Boolean) {
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "${rankData.rank}위", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textColor)
+        Box(
+            modifier = Modifier.width(35.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = "${rankData.rank}위",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
 
         val imageUrl = if (rankData.characterImage == "default.png") {
