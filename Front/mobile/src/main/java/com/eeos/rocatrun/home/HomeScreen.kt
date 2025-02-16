@@ -266,7 +266,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
                             // 레벨 게이지
                             val progress =
-                                (characterData.experience.toFloat() / 1000f).coerceIn(0f, 1f)
+                                (characterData.experience.toFloat() / characterData.requiredExpForNextLevel.toFloat()).coerceIn(0f, 1f)
                             Box(
                                 modifier = Modifier
                                     .width(170.dp)
