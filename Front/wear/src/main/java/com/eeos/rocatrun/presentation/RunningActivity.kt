@@ -399,6 +399,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         showStats = true
         sendFinalResultToPhone(totalItemUsage)
         createAndSendGpxFile()
+
     }
 
     // 최종 결과를 모바일로 전송
@@ -513,13 +514,13 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             HorizontalPager(state = pagerState) { page ->
                 when (page) {
                     0 -> CircularLayout(gameViewModel)
-                    1 -> ControlButtons { stopTracking() }
-                    2 -> Box(modifier = Modifier.fillMaxSize()) {
+                    1 -> Box(modifier = Modifier.fillMaxSize()) {
                         GameScreen(gameViewModel, multiUserViewModel)
                     }
-                    3 -> Box(modifier = Modifier.fillMaxSize()) {
+                    2 -> Box(modifier = Modifier.fillMaxSize()) {
                         MultiUserScreen(multiUserViewModel,gameViewModel)
                     }
+                    3 -> ControlButtons { stopTracking() }
                 }
             }
         }
