@@ -49,16 +49,11 @@ public class Inventory {
     private Boolean isEquipped = false;
 
     /**
-     * 아이템 카테고리
-     * - 아이템의 카테고리 정보를 별도로 저장하여 조회 성능 최적화
-     */
-    @Column(name = "category")
-    @Enumerated(EnumType.STRING)
-    private Item.Category category;
-
-    /**
      * 초기 인벤토리 생성을 위한 팩토리 메서드
      * - 캐릭터 생성 시 함께 생성되는 빈 인벤토리
+     *
+     * @param gameCharacter 인벤토리를 소유할 캐릭터
+     * @return 생성된 빈 인벤토리
      */
     public static Inventory createInitialInventory(GameCharacter gameCharacter) {
         Inventory inventory = new Inventory();
@@ -71,13 +66,15 @@ public class Inventory {
     /**
      * 아이템이 있는 인벤토리 생성을 위한 팩토리 메서드
      * - 아이템 획득 시 사용
-     * - 아이템의 카테고리 정보도 함께 저장
+     *
+     * @param gameCharacter 인벤토리를 소유할 캐릭터
+     * @param item 저장할 아이템
+     * @return 생성된 인벤토리
      */
     public static Inventory createInventory(GameCharacter gameCharacter, Item item) {
         Inventory inventory = new Inventory();
         inventory.setGameCharacter(gameCharacter);
         inventory.setItem(item);
-        inventory.setCategory(item.getCategory());
         inventory.setIsEquipped(false);
         return inventory;
     }
@@ -93,7 +90,17 @@ public class Inventory {
             return;
         }
 
-        this.gameCharacter.unequipCategoryItems(this.category);
+        this.gameCharacter.unequipCategoryItems(this.getItem().getCategory());
         this.isEquipped = true;
+    }
+
+    /**
+     * 아이템의 카테고리를 반환하는 메서드
+     * - 아이템이 없는 경우 null 반환
+     *
+     * @return 아이템의 카테고리 또는 null
+     */
+    public Item.Category getCategory() {
+        return item != null ? item.getCategory() : null;
     }
 }

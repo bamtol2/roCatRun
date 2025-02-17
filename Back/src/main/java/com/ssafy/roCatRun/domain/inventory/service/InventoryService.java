@@ -91,31 +91,44 @@ public class InventoryService {
         return InventoryResponse.from(inventory);
     }
 
+
     /**
-     * 인벤토리의 아이템을 판매합니다.
-     * 착용 중인 아이템은 판매할 수 없으며, 판매 시 아이템 가격의 50%를 코인으로 받습니다.
+     * 여러 인벤토리 아이템을 한 번에 판매합니다.
+     * 착용 중인 아이템이 포함되어 있으면 판매할 수 없습니다.
      *
-     * @param inventoryId 판매할 인벤토리 아이템 ID
-     * @return 판매 결과 정보 (판매된 아이템 ID, 받은 코인, 현재 보유 코인)
+     * @param inventoryIds 판매할 인벤토리 아이템 ID 리스트
+     * @param totalPrice 판매 총액
+     * @return 판매 결과 정보 (마지막으로 판매된 아이템 ID, 받은 코인, 현재 보유 코인)
      * @throws IllegalArgumentException 인벤토리 아이템이 존재하지 않거나 접근 권한이 없는 경우
-     * @throws IllegalStateException 착용 중인 아이템을 판매하려고 할 경우
+     * @throws IllegalStateException 착용 중인 아이템이 포함된 경우
      */
     @Transactional
-    public ItemSellResponse sellItem(Long inventoryId) {
+    public ItemSellResponse sellMultipleItems(List<Long> inventoryIds, int totalPrice) {
         Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
-        Inventory inventory = validateInventoryAccess(inventoryId, memberId);
-        GameCharacter character = inventory.getGameCharacter();
 
-        if (inventory.getIsEquipped()) {
+        // 판매할 모든 인벤토리 아이템 조회
+        List<Inventory> inventories = inventoryIds.stream()
+                .map(id -> validateInventoryAccess(id, memberId))
+                .collect(Collectors.toList());
+
+        // 착용 중인 아이템이 있는지 확인
+        if (inventories.stream().anyMatch(Inventory::getIsEquipped)) {
             throw new IllegalStateException("착용 중인 아이템은 판매할 수 없습니다.");
         }
 
-        int sellPrice = inventory.getItem().getPrice() / 2;  // 판매가는 구매가의 50%
-        character.addCoin(sellPrice);
+        // 캐릭터의 코인 증가
+        GameCharacter character = inventories.get(0).getGameCharacter();
+        character.addCoin(totalPrice);
 
-        inventoryRepository.delete(inventory);
+        // 인벤토리에서 아이템 삭제
+        inventoryRepository.deleteAllById(inventoryIds);
 
-        return new ItemSellResponse(inventoryId, sellPrice, character.getCoin());
+        // 마지막 아이템 ID, 받은 코인, 현재 보유 코인 반환
+        return new ItemSellResponse(
+                inventoryIds.get(inventoryIds.size() - 1),
+                totalPrice,
+                character.getCoin()
+        );
     }
 
     /**
@@ -157,6 +170,61 @@ public class InventoryService {
         return allInventories.stream()
                 .map(InventoryResponse::from)
                 .sorted(Comparator.comparing(response -> response.getName()))  // 아이템 이름으로 정렬
+                .collect(Collectors.toList());
+    }
+    /**
+     * 현재 로그인한 회원의 캐릭터가 보유한 전체 인벤토리 아이템을 중복 제거하여 조회합니다.
+     * 같은 아이템은 하나만 표시됩니다.
+     * SecurityContext에서 현재 인증된 회원의 ID를 가져와 조회합니다.
+     *
+     * @return 중복 제거된 아이템 목록
+     */
+    public List<InventoryResponse> getDistinctInventoryItems() {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        return inventoryRepository.findByGameCharacter_Member_Id(memberId)
+                .stream()
+                .filter(inventory -> inventory.getItem() != null)
+                .map(InventoryResponse::from)
+                .collect(Collectors.groupingBy(
+                        InventoryResponse::getItemId,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> list.get(0)
+                        )
+                ))
+                .values()
+                .stream()
+                .sorted(Comparator.comparing(InventoryResponse::getName))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 현재 로그인한 회원의 캐릭터가 보유한 아이템을 카테고리별로 중복 제거하여 조회합니다.
+     * 같은 아이템은 하나만 표시됩니다.
+     * SecurityContext에서 현재 인증된 회원의 ID를 가져와 조회합니다.
+     *
+     * @param category 조회할 아이템 카테고리 (effect/balloon/headband/paint)
+     * @return 중복 제거된 해당 카테고리의 아이템 목록
+     */
+    public List<InventoryResponse> getDistinctInventoryItemsByCategory(String category) {
+        Long memberId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        return inventoryRepository.findByGameCharacter_Member_IdAndItem_Category(
+                        memberId,
+                        Item.Category.valueOf(category.toUpperCase())
+                )
+                .stream()
+                .filter(inventory -> inventory.getItem() != null)
+                .map(InventoryResponse::from)
+                .collect(Collectors.groupingBy(
+                        InventoryResponse::getItemId,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> list.get(0)
+                        )
+                ))
+                .values()
+                .stream()
+                .sorted(Comparator.comparing(InventoryResponse::getName))
                 .collect(Collectors.toList());
     }
 }
