@@ -41,10 +41,13 @@ import com.eeos.rocatrun.ui.CircularItemGauge
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
+import java.util.*
+import android.speech.tts.TextToSpeech
 
 // ViewModel 정의
 class MultiUserViewModel(application: Application) : AndroidViewModel(application), DataClient.OnDataChangedListener {
 
+    private var tts : TextToSpeech? = null
     private lateinit var dataClient: DataClient
     // 플레이어 리스트
     private val _playerList = MutableStateFlow<List<PlayerData>>(emptyList())
@@ -52,6 +55,10 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     // 실시간 플레이어 데이터(닉네임을 key로 관리)
     private val _playersDataMap = MutableStateFlow<Map<String, PlayersData>>(emptyMap())
     val playersDataMap: StateFlow<Map<String, PlayersData>> get() = _playersDataMap
+
+    // 종료된 플레이어
+    private val _playerLeftMessage = MutableStateFlow<String?>(null)
+    val playerLeftMessage: StateFlow<String?> get() = _playerLeftMessage
 
 
     private var playersData by mutableStateOf<PlayersData?>(null)
@@ -111,6 +118,15 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
     // 테스트용 데이터 주기적 업데이트
     init {
+        tts = TextToSpeech(getApplication()) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.setLanguage(Locale.KOREAN)
+            } else {
+                Log.e("MultiUserViewModel", "TTS 초기화 실패")
+            }
+        }
+
+
         viewModelScope.launch {
             dataClient = Wearable.getDataClient(context)
             dataClient.addListener(this@MultiUserViewModel)
@@ -134,6 +150,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     override fun onCleared() {
         super.onCleared()
         dataClient.removeListener(this)
+        tts?.shutdown()
         Log.d("MultiUserViewModel", "데이터 리스너 제거됨")
     }
 
@@ -148,6 +165,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                     "/fever_end" -> processFeverEndData(dataItem)
                     "/first_boss_health" -> processFirstBossHealthData(dataItem)
                     "/game_end" -> processGameEndData(dataItem)
+                    "/player_left" -> processPlayerLeftData(dataItem)
                 }
             }
 
@@ -232,6 +250,22 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
+    }
+
+    private fun processPlayerLeftData(dataItem: DataItem){
+        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+        val nickName  = dataMap.getString("nickName")
+        if(nickName != null){
+            _playersDataMap.value = _playersDataMap.value.toMutableMap().apply {
+                remove(nickName)
+            }
+            _playerList.value = _playerList.value.filter { it.nickname != nickName }
+            tts?.speak("$nickName 님이 떠났습니다.", TextToSpeech.QUEUE_FLUSH, null, null)
+            Log.d("MultiUserViewModel", "플레이어 퇴장: $nickName")
+
+        }else{
+            Log.d("MultiUserViewModel" , " playerLeft 데이터에 nickName이 없음")
+        }
     }
 
 }
