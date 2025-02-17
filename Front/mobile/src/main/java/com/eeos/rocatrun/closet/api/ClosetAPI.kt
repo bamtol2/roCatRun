@@ -19,7 +19,8 @@ interface ClosetAPI {
         @Part image: MultipartBody.Part
     ): Response<UploadResponse>
 
-    @GET("/domain/inventory/items")
+    // 중복 제거된 api
+    @GET("/domain/inventory/items/distinct")
     suspend fun getAllInventory(
         @Header("Authorization") token: String,
     ): Response<InventoryResponse>
