@@ -189,7 +189,9 @@ fun ShopScreen(shopViewModel: ShopViewModel) {
                                 onBoxClick = {
                                     shopViewModel.toggleItemSelection(
                                         item.inventoryId,
-                                        item.price
+                                        item.price,
+                                        item.equipped,
+                                        context
                                     )
                                 }
                             )
