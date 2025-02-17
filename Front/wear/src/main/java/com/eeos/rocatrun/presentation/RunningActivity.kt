@@ -524,7 +524,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     2 -> Box(modifier = Modifier.fillMaxSize()) {
                         MultiUserScreen(multiUserViewModel,gameViewModel)
                     }
-                    3 -> ControlButtons { stopTracking() }
+                    3 -> ControlButtons()
                 }
             }
         }
@@ -639,7 +639,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     @Composable
-    fun ControlButtons(stopTracking: () -> Unit) {
+    fun ControlButtons() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -651,10 +651,26 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             Button(onClick = { startTracking() }) {
                 Text("시작", fontFamily = FontFamily(Font(R.font.neodgm)))
             }
-            Button(onClick = { stopTracking() }) {
+            Button(onClick = {
+                stopTrackingAndShowStats()
+
+            }) {
                 Text("종료", fontFamily = FontFamily(Font(R.font.neodgm)))
             }
         }
+    }
+
+    private fun stopTrackingAndShowStats() {
+        showStats = true
+        isRunning = false
+        handler.removeCallbacks(updateRunnable)
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+
+        // 센서 해제
+        sensorManagerHelper.unregisterSensors()  // ✅ 센서 관리 헬퍼에서 해제
+        sensorManager.unregisterListener(this)  // ✅ 직접 등록한 센서도 해제
+
+        Log.d("RunningActivity", "Tracking stopped, sensors unregistered")
     }
 
     // 폰에 데이터 전송

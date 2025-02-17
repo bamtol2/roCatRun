@@ -32,14 +32,14 @@ import com.eeos.rocatrun.ui.theme.MyFontFamily
 @Composable
 fun DayStatsScreen(games: List<Game>?, noDayData: Boolean) {
     // 세부 모달을 위한 상태: 클릭한 게임의 데이터를 저장
-    var selectedGame by remember { mutableStateOf<Game?>(null) }
+    var selectedGame by remember { mutableStateOf<Pair<Game, Int>?>(null) }
 
     if (noDayData) {
         Box(
             modifier = Modifier
                 .fillMaxSize(),
             contentAlignment = Alignment.Center,
-            ) {
+        ) {
             Text(
                 text = "데이터가 없다냥!\n달리기를 시작하라냥..!",
                 color = Color.White,
@@ -55,7 +55,7 @@ fun DayStatsScreen(games: List<Game>?, noDayData: Boolean) {
                 .verticalScroll(rememberScrollState())
         ) {
 
-            games?.forEach { game ->
+            games?.forEachIndexed {index, game ->
                 DayStatCard(
                     date = game.date,
                     status = if (game.result) "정복완료" else "정복실패",
@@ -70,7 +70,7 @@ fun DayStatsScreen(games: List<Game>?, noDayData: Boolean) {
                     },
                     isSuccess = game.result,
                     difficulty = game.difficulty,
-                    onClick = { selectedGame = game }
+                    onClick = { selectedGame = Pair(game,index) }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -78,10 +78,11 @@ fun DayStatsScreen(games: List<Game>?, noDayData: Boolean) {
     }
 
     // 세부 모달 표시: selectedGame이 null이 아닐 때만 보여줌
-    selectedGame?.let { game ->
+    selectedGame?.let { (game,index) ->
         DetailDialog(
             date = game.date,
             details = game.details,  // game.details 전달
+            recordIndex = index,
             onDismiss = { selectedGame = null }
         )
     }

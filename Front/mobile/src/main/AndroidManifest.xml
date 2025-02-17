@@ -112,6 +112,9 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location|dataSync" />
+        <meta-data
+            android:name="com.mapbox.maps.token"
+            android:value="@string/mapbox_access_token"/>
     </application>
 
 </manifest>

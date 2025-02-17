@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -19,14 +20,20 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.stats.api.GameDetails
+import com.eeos.rocatrun.textgpxviewer.gpx.GpxFileHandler
+import com.eeos.rocatrun.textgpxviewer.map.MapboxGPXViewer
 import com.eeos.rocatrun.ui.components.StrokedText
 import com.eeos.rocatrun.ui.theme.MyFontFamily
 
 
 @Composable
-fun DetailDialog(date: String, details: GameDetails, onDismiss: () -> Unit) {
+fun DetailDialog(date: String, details: GameDetails,recordIndex: Int, onDismiss: () -> Unit) {
     val dateWithoutTime = date.substringBefore("T").replace("-", "/")
-
+    val context = LocalContext.current
+    // 로컬 저장소에서 GPX 파일 목록을 가져옴
+    val gpxFiles = remember { GpxFileHandler.getGpxFileList(context) }
+    // 기록 순서에 맞는 GPX 파일 선택
+    val selectedGpxFile = if (recordIndex in gpxFiles.indices) gpxFiles[recordIndex] else null
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
@@ -78,14 +85,22 @@ fun DetailDialog(date: String, details: GameDetails, onDismiss: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(30.dp))
 
-                Image(
-                    painter = painterResource(id = R.drawable.stats_img_map),
-                    contentDescription = "Route Map",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                )
+                // 기존의 정적인 지도 이미지 대신 GPX 경로를 표시하는 지도 컴포저블 사용
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)) {
+                    if (selectedGpxFile != null) {
+                        MapboxGPXViewer(selectedFile = selectedGpxFile)
+                    } else {
+                        // GPX 파일이 없을 경우 기존 이미지로 대체하거나 에러 메시지 출력
+                        Image(
+                            painter = painterResource(id = R.drawable.stats_img_map),
+                            contentDescription = "Route Map",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(40.dp))
 
                 // 확인 버튼

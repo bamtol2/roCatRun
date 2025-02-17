@@ -9,6 +9,7 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        maven { url = uri("https://api.mapbox.com/downloads/v2/releases/maven") }
     }
 }
 dependencyResolutionManagement {
@@ -17,6 +18,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven(url = "https://devrepo.kakao.com/nexus/content/groups/public/")
+        maven { url = uri("https://api.mapbox.com/downloads/v2/releases/maven") }
     }
 }
 

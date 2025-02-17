@@ -63,6 +63,9 @@ dependencies {
 //    implementation("com.navercorp.nid:oauth:5.10.0")
 //    implementation("com.navercorp.nid:oauth-jdk8:5.10.0")
 
+    //Mapbox
+    implementation("com.mapbox.maps:android:11.9.0")
+
     // Retrofit
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
