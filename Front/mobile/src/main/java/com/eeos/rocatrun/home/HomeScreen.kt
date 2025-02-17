@@ -4,9 +4,13 @@ import android.content.Intent
 import android.graphics.BlurMaskFilter
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import android.speech.tts.TextToSpeech
 import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,6 +29,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -44,12 +49,16 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.eeos.rocatrun.R
@@ -67,6 +76,11 @@ import com.eeos.rocatrun.ranking.api.RankingViewModel
 import com.eeos.rocatrun.shop.ShopActivity
 import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.components.StrokedText
+import com.eeos.rocatrun.ui.theme.MyFontFamily
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.yield
+import java.util.Locale
+import kotlin.random.Random
 
 
 @Composable
@@ -99,6 +113,46 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
     // 뽑기 모달 변수
     var showPpobgi by remember { mutableStateOf(false) }
+
+    // 랜덤 텍스트
+    var showText by remember { mutableStateOf(false) }
+    var randomX by remember { mutableStateOf(0f) }
+    var randomY by remember { mutableStateOf(0f) }
+    var randomText by remember { mutableStateOf("") }
+    val animatedX by animateFloatAsState(targetValue = randomX, animationSpec = tween(100))
+    val animatedY by animateFloatAsState(targetValue = randomY, animationSpec = tween(100))
+    val textList = listOf(
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "잠온다냥...",
+        "배고프다냥!",
+        "언제 달리냥??",
+    )
+
+    // 음성으로 출력
+    var tts: TextToSpeech? by remember { mutableStateOf(null) }
+    LaunchedEffect(Unit) {
+        tts = TextToSpeech(context, TextToSpeech.OnInitListener { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale.KOREAN
+            }
+        })
+    }
+
+    // 랜덤 텍스트 생성 및 위치 업데이트
+    LaunchedEffect(showText) {
+        if (showText) {
+            randomX = Random.nextFloat() * 200f - 30f
+            randomY = Random.nextFloat() * 200f - 30f
+            randomText = textList[Random.nextInt(textList.size)]
+            tts?.speak(randomText, TextToSpeech.QUEUE_FLUSH, null, null)
+            delay(1000)
+            showText = false
+        }
+    }
 
     LaunchedEffect(rankingData) {
         if (rankingData == null) {
@@ -238,18 +292,40 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 )
 
                 // 캐릭터 이미지
-                if (characterData.characterImage == "default.png") {
-                    Image(
-                        painter = rememberAsyncImagePainter("android.resource://com.eeos.rocatrun/${R.drawable.all_img_whitecat}"),
-                        contentDescription = "Cat Character",
-                        modifier = Modifier
-                            .size(230.dp)
-                            .offset(x = 20.dp)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    CharacterWithItems(wornItems = inventoryList.filter { it.equipped })
-                    Spacer(modifier = Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier.clickable { showText = true }
+                ) {
+                    if (characterData.characterImage == "default.png") {
+                        Image(
+                            painter = rememberAsyncImagePainter("android.resource://com.eeos.rocatrun/${R.drawable.all_img_whitecat}"),
+                            contentDescription = "Cat Character",
+                            modifier = Modifier
+                                .size(230.dp)
+                                .offset(x = 20.dp)
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CharacterWithItems(wornItems = inventoryList.filter { it.equipped })
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // 랜덤 텍스트
+                    if (showText) {
+                        Box(
+                            modifier = Modifier
+                                .offset(animatedX.dp, animatedY.dp)
+                                .background(Color.Black, shape = RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .zIndex(1f)
+                        ) {
+                            Text(
+                                text = randomText,
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -381,6 +457,15 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
         }
 
     }
+
+    // 음성 리소스 해제
+    DisposableEffect(tts) {
+        onDispose {
+            tts?.stop()
+            tts?.shutdown()
+        }
+    }
+
 }
 
 

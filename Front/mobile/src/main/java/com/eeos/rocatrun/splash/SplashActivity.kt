@@ -31,10 +31,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import com.eeos.rocatrun.MainActivity
 import com.eeos.rocatrun.R
-import com.eeos.rocatrun.shop.ShopScreen
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.theme.RoCatRunTheme
 import kotlinx.coroutines.delay
@@ -42,9 +40,7 @@ import kotlinx.coroutines.delay
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : ComponentActivity() {
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
@@ -66,7 +62,6 @@ class SplashActivity : ComponentActivity() {
     @Preview
     @Composable
     fun SplashScreen() {
-//        val context = LocalContext.current
 
         val alpha = remember { Animatable(0f) }
         LaunchedEffect(key1 = Unit) {
@@ -84,43 +79,12 @@ class SplashActivity : ComponentActivity() {
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            // 배경 이미지
-            Image(
+            GifImage(
                 modifier = Modifier
                     .fillMaxSize()
                     .alpha(alpha.value),
-                painter = painterResource(id = R.drawable.splash_bg_img),
-                contentScale = ContentScale.FillBounds,
-                contentDescription = "배경"
+                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.splash}"
             )
-
-            // 로고 이미지
-            Image(
-                modifier = Modifier
-                    .width(400.dp)
-                    .height(200.dp)
-                    .alpha(alpha.value)
-                    .align(Alignment.Center),
-                painter = painterResource(id = R.drawable.splash_logo_img),
-                contentDescription = "로고",
-            )
-
-//            val resourceId =
-//                context.resources.getIdentifier("balloon_blue_on", "drawable", context.packageName)
-//            val imageUrl = if (resourceId != 0) {
-//                "android.resource://${context.packageName}/$resourceId"
-//            } else {
-//                "android.resource://com.eeos.rocatrun/${R.drawable.closet_img_x}"
-//            }
-//
-//            GifImage(
-//                modifier = Modifier
-//                    .width(400.dp)
-//                    .height(200.dp)
-//                    .alpha(alpha.value)
-//                    .align(Alignment.Center),
-//                gifUrl = imageUrl
-//            )
         }
     }
 }
