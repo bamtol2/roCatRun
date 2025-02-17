@@ -383,7 +383,9 @@ fun ProfileDialog(
                             profileViewModel.fetchLogout(token)
                             TokenStorage.clearTokens(context)
                             // 로그인 화면으로 이동
-                            val intent = Intent(context, LoginActivity::class.java)
+                            val intent = Intent(context, LoginActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            }
                             context.startActivity(intent)
                         },
                     ) {

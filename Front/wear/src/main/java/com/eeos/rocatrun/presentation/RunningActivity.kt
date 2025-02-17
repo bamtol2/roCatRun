@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -643,26 +644,31 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.DarkGray)
+                .background(Color.Black)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(onClick = { startTracking() }) {
-                Text("시작", fontFamily = FontFamily(Font(R.font.neodgm)))
-            }
             Button(onClick = {
                 stopTrackingAndShowStats()
 
-            }) {
-                Text("종료", fontFamily = FontFamily(Font(R.font.neodgm)))
+            },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00FFCC)
+                )) {
+                Text("종료",
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily(Font(R.font.neodgm)))
             }
         }
     }
 
     private fun stopTrackingAndShowStats() {
-        showStats = true
+//        showStats = true
         isRunning = false
+        resetTrackingData()
+        finish()
         handler.removeCallbacks(updateRunnable)
         fusedLocationClient.removeLocationUpdates(locationCallback)
 

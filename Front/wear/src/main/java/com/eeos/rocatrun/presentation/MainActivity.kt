@@ -164,36 +164,36 @@ fun SplashScreen() {
             }
 
             // 게임 시작 버튼
-            Button(
-                onClick = {
-                    Log.i("확인", "ㅇㅇㅇ $context")
-                    val intent = Intent(context, RunningActivity::class.java)
-                    context.startActivity(intent)
-                    Log.i("로그인", "시도")
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFA500)
-                ),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .width(69.dp)
-                    .height(34.dp)
-                    .padding(horizontal = 3.dp)
-            ) {
-                Text(
-                    text = "게임",
-                    style = TextStyle(
-                        fontSize = 16.sp,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily(Font(R.font.neodgm))
-                    ),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    softWrap = false  // 줄바꿈 방지
-                )
-            }
+//            Button(
+//                onClick = {
+//                    Log.i("확인", "ㅇㅇㅇ $context")
+//                    val intent = Intent(context, RunningActivity::class.java)
+//                    context.startActivity(intent)
+//                    Log.i("로그인", "시도")
+//                },
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = Color(0xFFFFA500)
+//                ),
+//                shape = RoundedCornerShape(16.dp),
+//                contentPadding = PaddingValues(0.dp),
+//                modifier = Modifier
+//                    .width(69.dp)
+//                    .height(34.dp)
+//                    .padding(horizontal = 3.dp)
+//            ) {
+//                Text(
+//                    text = "게임",
+//                    style = TextStyle(
+//                        fontSize = 16.sp,
+//                        color = Color.Black,
+//                        fontWeight = FontWeight.Bold,
+//                        fontFamily = FontFamily(Font(R.font.neodgm))
+//                    ),
+//                    textAlign = TextAlign.Center,
+//                    maxLines = 1,
+//                    softWrap = false  // 줄바꿈 방지
+//                )
+//            }
         }
 
     }

@@ -117,7 +117,7 @@ class NaverWebViewLoginActivity : Activity() {
     private fun navigateToHomeActivity(loginResponse: LoginResponse) {
         val intent = Intent(this, LoginActivity::class.java).apply {
             putExtra("login_response", loginResponse)
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         Log.i("naverNavigate", "리스폰스 보냄")
         startActivity(intent)
