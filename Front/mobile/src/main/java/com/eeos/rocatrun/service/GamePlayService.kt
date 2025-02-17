@@ -360,6 +360,32 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 _modalState.postValue(ModalState.LevelUp(oldLevel, newLevel))
             }
         }
+
+        // 웹소켓 - 특정 유저 게임 이탈 -> 워치 송신
+        SocketHandler.mSocket.on("playerDisconnected") { args ->
+            if (args.isNotEmpty() && args[0] is JSONObject) {
+                Log.d("Socket", "playerDisconnected: ${args[0]}")
+
+                val responseJson = args[0] as JSONObject
+                val nickName = responseJson.optString("nickName")
+
+                Log.d("Socket", "On - playerDisconnected: $nickName")
+
+                // 워치에 떠난 사람 메세지 보내기
+                val putDataMapRequest = PutDataMapRequest.create("/player_left")
+                putDataMapRequest.dataMap.apply {
+                    putString("nickName", nickName)
+                }
+                val request = putDataMapRequest.asPutDataRequest().setUrgent()
+                dataClient.putDataItem(request)
+                    .addOnSuccessListener { _ ->
+                        Log.d("Wear", "$nickName 게임 떠남")
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("Wear", "게임 떠남 실패", exception)
+                    }
+            }
+        }
     }
 
     override fun onDestroy() {
