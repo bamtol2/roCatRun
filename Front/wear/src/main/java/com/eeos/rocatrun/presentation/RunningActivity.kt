@@ -317,11 +317,11 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
 
                 segmentDistance += distanceMoved
-                // 현재 거리 진행률 계산 (테스트용 100m)
-                if (segmentDistance >= 0.1) {
+                // 현재 거리 진행률 계산 (200m)
+                if (segmentDistance >= 0.2) {
                     // 100m 이상 이동
                     gameViewModel.handleGaugeFull(this)
-                    segmentDistance -= 0.1
+                    segmentDistance -= 0.2
                 } else {
                     // 현재 거리 비율(0~100) 계산
                     val gaugePercentage = ((segmentDistance / 0.1) * 100).toInt()
