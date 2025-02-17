@@ -3,6 +3,7 @@ package com.eeos.rocatrun.shop
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.drawable.Icon
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -190,8 +191,6 @@ fun ShopScreen(shopViewModel: ShopViewModel) {
                                     shopViewModel.toggleItemSelection(
                                         item.inventoryId,
                                         item.price,
-                                        item.equipped,
-                                        context
                                     )
                                 }
                             )
@@ -235,14 +234,21 @@ fun ShopScreen(shopViewModel: ShopViewModel) {
 @Composable
 fun ShopItemCard(item: InventoryItem, isSelected: Boolean, onBoxClick: () -> Unit) {
     val context = LocalContext.current
-    val boxColor = if (isSelected) Color(0xFFFBF8C5) else Color(0x80FFB9C7)
+    val boxColor = when {
+        item.equipped -> Color(0xD855454F)
+        isSelected -> Color(0xFFFBF8C5)
+        else -> Color(0x80FFB9C7)
+    }
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(120.dp)
             .background(color = boxColor, shape = RoundedCornerShape(size = 18.dp))
-            .clickable { onBoxClick() }
+            .then(
+                if (!item.equipped) Modifier.clickable { onBoxClick() }
+                else Modifier  // 장착된 아이템은 클릭 불가
+            )
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -280,7 +286,13 @@ fun ShopItemCard(item: InventoryItem, isSelected: Boolean, onBoxClick: () -> Uni
                 modifier = Modifier
                     .width(70.dp)
                     .height(33.dp)
-                    .clickable { onBoxClick() }
+                    .clickable {
+                        if (item.equipped) {
+                            Toast.makeText(context, "장착된 아이템은 선택할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            onBoxClick()
+                        }
+                    }
             ) {
                 Image(
                     painter = painterResource(
@@ -292,7 +304,7 @@ fun ShopItemCard(item: InventoryItem, isSelected: Boolean, onBoxClick: () -> Uni
                     modifier = Modifier.matchParentSize()
                 )
                 Text(
-                    text = if (isSelected) "해제" else "선택",
+                    text = if (item.equipped) "장착 중" else if (isSelected) "해제" else "선택",
                     color = Color.White,
                     fontSize = 13.sp,
                     modifier = Modifier.align(Alignment.Center)

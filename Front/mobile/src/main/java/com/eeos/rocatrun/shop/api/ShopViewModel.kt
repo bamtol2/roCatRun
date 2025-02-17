@@ -29,12 +29,7 @@ class ShopViewModel : ViewModel() {
     val totalPrice: State<Int> = _totalPrice
 
     // 아이템 선택 여부 및 금액 관리
-    fun toggleItemSelection(itemId: Int, price: Int, equipped: Boolean, context: Context) {
-        if (equipped) {
-            Toast.makeText(context, "장착 중인 아이템은 판매할 수 없습니다.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
+    fun toggleItemSelection(itemId: Int, price: Int) {
         if (_selectedItems.value.contains(itemId)) {
             _selectedItems.value = _selectedItems.value.filter { it != itemId }
             _totalPrice.value -= price
