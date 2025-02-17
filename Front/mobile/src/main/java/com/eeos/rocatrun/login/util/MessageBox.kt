@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
+import com.eeos.rocatrun.intro.IntroActivity
 
 
 @Composable
@@ -109,7 +110,7 @@ fun MessageBox(
                         .padding(vertical = 4.dp, horizontal = 16.dp)
                         .offset(y = 50.dp)
                         .clickable {
-                            val intent = Intent(context, HomeActivity::class.java)
+                            val intent = Intent(context, IntroActivity::class.java)
                             context.startActivity(intent)
                         }
                 )
