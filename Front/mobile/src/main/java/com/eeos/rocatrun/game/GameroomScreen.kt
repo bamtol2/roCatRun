@@ -141,6 +141,7 @@ fun TopNavigation(
     ) {
         IconButton(onClick = {
             val intent = Intent(context, HomeActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             context.startActivity(intent)
         }) {
             Image(

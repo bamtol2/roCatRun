@@ -369,6 +369,7 @@ fun LoadingScreen(
                     Log.d("Socket", "Emit - cancelMatch")
 
                     val intent = Intent(context, GameRoom::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                     context.startActivity(intent)
                 }
             ) {

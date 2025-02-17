@@ -169,7 +169,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
             Button(
                 onClick = {
                     if (!gameViewModel.itemUsedSignal.value) {  // 중복 실행 방지
-                        gameViewModel.notifyItemUsage()
+                        gameViewModel.notifyItemUsage(context)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(

@@ -82,6 +82,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                     Log.d("토큰 확인(LoginScreen)", "회원 : $token" )
                     Log.d("회원 체크" , "1. $response, 2. ${response.body()}")
                     val intent = Intent(context, HomeActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                     context.startActivity(intent)
                 } else {
                     // 회원 정보가 없으면 회원가입 모달 띄우기
@@ -159,6 +160,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                 iconResId = R.drawable.login_icon_kakao,
                 onClick = {
                     val intent = Intent(context, KakaoWebViewLoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                     context.startActivity(intent)
 
 
@@ -171,6 +173,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                 iconResId = R.drawable.login_icon_naver,
                 onClick = {
                     val intent = Intent(context, NaverWebViewLoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                     context.startActivity(intent)
                 }
             )
@@ -181,6 +184,7 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
                 iconResId = R.drawable.login_icon_google,
                 onClick = {
                     val intent = Intent(context, GoogleWebViewLoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                     context.startActivity(intent)
                 }
             )

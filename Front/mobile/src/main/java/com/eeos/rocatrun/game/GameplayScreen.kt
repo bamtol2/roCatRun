@@ -108,6 +108,7 @@ fun GameplayScreen(onShareClick: () -> Unit) {
                     fontSize = 30.sp,
                     modifier = Modifier.clickable {
                         val intent = Intent(context, HomeActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                         context.startActivity(intent)
                     }
                 )

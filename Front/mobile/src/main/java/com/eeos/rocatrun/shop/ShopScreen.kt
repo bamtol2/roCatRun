@@ -60,7 +60,11 @@ fun ShopScreen() {
                 .align(Alignment.TopStart)
                 .offset(x = 20.dp, y = 70.dp)
                 .padding(10.dp),
-            onClick = { context.startActivity(Intent(context, HomeActivity::class.java)) },
+            onClick = {
+                val intent = Intent(context, HomeActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                context.startActivity(intent)
+                      },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             shape = RoundedCornerShape(0.dp),
             contentPadding = PaddingValues(0.dp)

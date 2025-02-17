@@ -221,6 +221,7 @@ fun MatchingScreen(
 
                     // 방페이지로 이동
                     val intent = Intent(context, GameRoom::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                     context.startActivity(intent)
                 }
             ) {

@@ -101,7 +101,9 @@ fun SaveCheckScreen(
                             .padding(vertical = 4.dp, horizontal = 16.dp)
                             .offset(y = 43.dp)
                             .clickable {
-                                context.startActivity(Intent(context, HomeActivity::class.java))
+                                val intent = Intent(context, HomeActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                context.startActivity(intent)
                             }
                     )
 
@@ -124,7 +126,9 @@ fun SaveCheckScreen(
                                         closetViewModel.changeEquipStatus(auth = token, inventoryIds = closetViewModel.equippedItems.value)
 //                                        onDismissRequest()
                                         delay(500)
-                                        context.startActivity(Intent(context, HomeActivity::class.java))
+                                        val intent = Intent(context, HomeActivity::class.java)
+                                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                        context.startActivity(intent)
                                     } catch (error: Throwable) {
                                         Toast.makeText(
                                             context,

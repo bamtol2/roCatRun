@@ -29,6 +29,7 @@ class HomeActivity : ComponentActivity() {
 //        SocketHandler.initialize(this)
 //        SocketHandler.connect()
 
+
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
@@ -45,6 +46,7 @@ class HomeActivity : ComponentActivity() {
 //            }
 //        }
     }
+
 
     private fun requestPermissions() {
         val permissions = arrayOf(

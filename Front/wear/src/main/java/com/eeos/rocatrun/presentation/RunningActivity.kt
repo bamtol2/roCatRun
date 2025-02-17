@@ -175,7 +175,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         armGestureDetector = ArmGestureDetector(
             context = this,
             onArmSwing = {
-                gameViewModel.notifyItemUsage()
+                gameViewModel.notifyItemUsage(this)
                 Log.d("ArmDectector", "팔 휘두르기 감지")
             }
 

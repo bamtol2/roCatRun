@@ -74,12 +74,15 @@ class GameViewModel : ViewModel() {
 
 
     // 아이템 사용 시 호출하는함수
-    fun notifyItemUsage(){
+    fun notifyItemUsage(context: Context){
         if (_avaliableItemCount.value > 0){
             _itemUsedSignal.value = true
             _showItemGif.value = true
-
             incrementTotalItemUsageCount()
+            vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(1000), intArrayOf(100), -1)
+            vibrator?.vibrate(vibrationEffect)
+
             viewModelScope.launch {
                 delay(1000) // 중복 전송 방지하기 위한 딜레이
                 _avaliableItemCount.value = maxOf(_avaliableItemCount.value - 1, 0)

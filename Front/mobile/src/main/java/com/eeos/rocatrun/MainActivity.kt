@@ -84,6 +84,7 @@ class MainActivity : ComponentActivity() {
 
     private fun navigateToHome(){
         val intent = Intent(this, HomeActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
         startActivity(intent)
         finish()
     }
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, LoginActivity::class.java).apply {
             putExtra("message", "회원가입(캐릭터 생성)이 필요합니다.")
         }
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
         startActivity(intent)
         finish()
     }

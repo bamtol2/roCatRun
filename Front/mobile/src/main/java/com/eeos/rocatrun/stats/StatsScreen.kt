@@ -75,7 +75,12 @@ fun StatsScreen(statsViewModel: StatsViewModel) {
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 10.dp, y = 0.dp),
-                onClick = { context.startActivity(Intent(context, HomeActivity::class.java)) },
+                onClick = {
+                    val intent = Intent(context, HomeActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    context.startActivity(intent)
+
+                          },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 shape = RoundedCornerShape(0.dp),
                 contentPadding = PaddingValues(0.dp)
