@@ -4,8 +4,10 @@ import lombok.Getter;
 
 @Getter
 public enum BossLevel {
-    EASY(1000, 1800, 300, 100),    // 1km당 1000HP, 30분
-    NORMAL(1250, 1800, 500, 200),  // 1km당 1000HP, 30분
+//    EASY(1000, 1800, 300, 100),    // 1km당 1000HP, 30분
+    EASY(250, 300, 300, 100),    // 1km당 1000HP, 30분
+//    NORMAL(1250, 1800, 500, 200),  // 1km당 1000HP, 30분
+    NORMAL(1250, 60, 500, 200),  // 1km당 1000HP, 30분
     HARD(1500, 1800, 800, 350);    // 1km당 1000HP, 30분
 
     private final int hpPerKm;   // 1km당 HP

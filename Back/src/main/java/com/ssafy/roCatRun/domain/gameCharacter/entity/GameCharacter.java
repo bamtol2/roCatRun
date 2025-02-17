@@ -181,6 +181,30 @@ public class GameCharacter {
                 .forEach(inv -> inv.setIsEquipped(false));
     }
 
+    // GameCharacter.java에 추가할 메서드
+
+    /**
+     * 게임 결과를 반영하여 통계를 업데이트하는 메서드
+     * @param isCleared 보스 클리어 여부
+     */
+    public void updateGameStats(boolean isCleared) {
+        this.totalGames++;
+        if (isCleared) {
+            this.wins++;
+        } else {
+            this.losses++;
+        }
+    }
+
+    /**
+     * 현재 승률을 계산하는 메서드
+     * @return 승률 (퍼센트)
+     */
+    public double getWinRate() {
+        if (totalGames == 0) return 0.0;
+        return (double) wins / totalGames * 100;
+    }
+
     @Getter
     @AllArgsConstructor
     public static class LevelUpResult {

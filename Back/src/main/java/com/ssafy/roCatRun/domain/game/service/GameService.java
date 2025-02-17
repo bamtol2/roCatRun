@@ -461,6 +461,9 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                 GameCharacter character = characterRepository.findById(characterId)
                         .orElseThrow(() -> new IllegalStateException("Character not found with ID: " + characterId));
 
+                // 게임 통계 업데이트
+                character.updateGameStats(isCleared);
+
                 // 멤버 아이디로 멤버 정보 가져오기
                 Member member = memberRepository.findById(Long.parseLong(userId))
                         .orElseThrow(() -> new IllegalStateException("Member not found"));
@@ -489,6 +492,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         .build();
 
                 gameResultRepository.save(gameResult);
+                characterRepository.save(character); // 변경된 캐릭터 정보 저장
 
                 // 칼로리 정보만 추가하여 업데이트
                 updatedRewardInfo.put(userId, new GameResultInfo(
@@ -500,8 +504,9 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         reward.getNewLevel()
                 ));
 
-                log.info("Game result saved for character {}: cleared={}, exp={}, coin={}, levelUp={}",
-                        characterId, isCleared, reward.getExp(), reward.getCoin(), reward.isHasLeveledUp());
+                log.info("Game result saved for character {}: cleared={}, exp={}, coin={}, levelUp={}, totalGames={}, wins={}, losses={}",
+                        characterId, isCleared, reward.getExp(), reward.getCoin(), reward.isHasLeveledUp(),
+                        character.getTotalGames(), character.getWins(), character.getLosses());
             } catch (Exception e) {
                 log.error("Error saving game result: {}", e.getMessage());
             }
