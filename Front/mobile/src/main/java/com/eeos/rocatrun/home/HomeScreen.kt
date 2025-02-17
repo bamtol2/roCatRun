@@ -1,5 +1,6 @@
 package com.eeos.rocatrun.home
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
@@ -14,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -162,22 +164,61 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     val textList = listOf(
         "왜 건드리냥?",
         "간식 줄거냥?",
+        "달려서\n화성 갈끄니까~",
         "놀아주고 싶냥?",
         "쓰다듬지 마냥!",
         "피곤하다냥~",
         "잠온다냥...",
         "배고프다냥!",
         "언제 달리냥??",
+        "흥!",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "잠온다냥...",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "규리다냥",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "잠온다냥...",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "잠온다냥...",
+        "먀오~",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "이 편지는 싸피에서\n최초로 시작되어\n일년에 한 바퀴\n돌면서 받는\n사람에게 행운을\n주었고...",
+        "잠온다냥...",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "흥!",
     )
 
     // 랜덤 텍스트 생성 및 위치 업데이트
-    LaunchedEffect(showText) {
+    LaunchedEffect(key1=showText) {
         if (showText) {
+            randomText = textList[Random.nextInt(textList.size)]
             randomX = Random.nextFloat() * 200f - 30f
             randomY = Random.nextFloat() * 200f - 30f
-            randomText = textList[Random.nextInt(textList.size)]
             delay(1000)
             showText = false
+            randomText=""
         }
     }
 
@@ -473,6 +514,8 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
             }
         }
 
+        VersionInfo()
+
         // 랭킹 모달 표시
         if (showRanking) {
             RankingDialog(onDismiss = { showRanking = false }, rankingData = rankingData)
@@ -594,5 +637,26 @@ fun ReusableInfoBox(
                 )
             }
         }
+    }
+}
+
+//버전 정보 표시
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+fun VersionInfo() {
+    val context = LocalContext.current
+    val versionText = context.getString(R.string.app_version)
+
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            text = versionText,
+            color = Color.White,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 15.dp)
+        )
     }
 }
