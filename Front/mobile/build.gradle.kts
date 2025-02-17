@@ -1,3 +1,9 @@
+import java.util.Properties
+import java.io.FileInputStream
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -11,11 +17,20 @@ android {
     namespace = "com.eeos.rocatrun"
     compileSdk = 34
 
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+    }
+
     defaultConfig {
         applicationId = "com.eeos.rocatrun"
         minSdk = 31
         targetSdk = 34
-        versionCode = 340050202
+        versionCode = 340050302
         versionName = "0.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -30,6 +45,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
             ndk {
                 debugSymbolLevel = "FULL"
             }
