@@ -39,7 +39,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
+        <activity
+            android:name=".intro.IntroActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RoCatRun"/>
         <activity
             android:name=".game.GameRoom"
             android:exported="true" />

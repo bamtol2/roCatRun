@@ -91,7 +91,7 @@ fun PpobgiDialog(
             // 상태 전환을 위한 LaunchedEffect
             LaunchedEffect(drawResult) {
                 if (drawResult != null && isDrawing) {
-                    delay(7000) // 애니메이션 시간
+                    delay(6000) // 애니메이션 시간
                     isDrawing = false
                     showResult = true
                 }

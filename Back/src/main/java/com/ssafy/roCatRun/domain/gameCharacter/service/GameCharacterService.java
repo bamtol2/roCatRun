@@ -47,10 +47,14 @@ public class GameCharacterService {
 
     /**
      * 새로운 캐릭터를 생성합니다.
-     * @param request 캐릭터 생성 요청 정보
+     * 닉네임 유효성 검사는 @ValidNickname 어노테이션에서 수행되며,
+     * 여기서는 중복 검사만 수행합니다.
+     *
+     * @param request 캐릭터 생성 요청 정보 (닉네임, 키, 몸무게, 나이, 성별)
      * @param memberId 회원 ID
      * @return 생성된 캐릭터
-     * @throws IllegalArgumentException 회원을 찾을 수 없거나, 닉네임이 유효하지 않은 경우
+     * @throws IllegalArgumentException 회원을 찾을 수 없는 경우
+     * @throws InvalidNicknameException 닉네임이 중복된 경우
      */
     @Transactional
     public GameCharacter createCharacter(GameCharacterCreateRequest request, Long memberId) {
@@ -58,7 +62,10 @@ public class GameCharacterService {
                 .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         String nickname = request.getNickname();
-        validateNickname(nickname);
+        // 중복 검사만 수행
+        if (checkNicknameDuplicate(nickname)) {
+            throw new InvalidNicknameException(ErrorCode.NICKNAME_DUPLICATE);
+        }
 
         member.setHeight(request.getHeight());
         member.setWeight(request.getWeight());
@@ -70,13 +77,21 @@ public class GameCharacterService {
 
     /**
      * 캐릭터의 닉네임을 수정합니다.
+     * 닉네임 유효성 검사는 @ValidNickname 어노테이션에서 수행되며,
+     * 여기서는 중복 검사만 수행합니다.
+     *
      * @param memberId 회원 ID
      * @param newNickname 새로운 닉네임
-     * @throws IllegalArgumentException 닉네임이 유효하지 않거나, 캐릭터를 찾을 수 없는 경우
+     * @throws InvalidNicknameException 닉네임이 중복된 경우
+     * @throws IllegalArgumentException 캐릭터를 찾을 수 없는 경우
      */
     @Transactional
     public void updateNickname(Long memberId, String newNickname) {
-        validateNickname(newNickname);
+        // 중복 검사만 수행
+        if (checkNicknameDuplicate(newNickname)) {
+            throw new InvalidNicknameException(ErrorCode.NICKNAME_DUPLICATE);
+        }
+
         GameCharacter gameCharacter = getCharacterByMemberId(memberId);
         log.debug("Found character: {}, updating nickname to: {}", gameCharacter.getNickname(), newNickname);
         gameCharacter.setNickname(newNickname);
@@ -165,7 +180,7 @@ public class GameCharacterService {
     public GameCharacterResponse createGameCharacterResponse(GameCharacter gameCharacter) {
         // 현재 레벨이 최대 레벨(50)이 아닌 경우에만 다음 레벨 정보 조회
         Level nextLevel = gameCharacter.getLevelInfo().getLevel() < 50 ?
-                levelRepository.findByLevel(gameCharacter.getLevelInfo().getLevel() + 1) .get(): null;
+                levelRepository.findByLevel(gameCharacter.getLevelInfo().getLevel() + 1).get(): null;
         Integer requiredExp = nextLevel != null ? nextLevel.getRequiredExp() : null;
 
         return new GameCharacterResponse(gameCharacter, requiredExp);

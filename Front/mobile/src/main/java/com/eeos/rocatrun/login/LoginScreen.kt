@@ -52,6 +52,7 @@ import com.eeos.rocatrun.login.util.Register
 import com.eeos.rocatrun.login.util.MessageBox
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import com.eeos.rocatrun.intro.IntroActivity
 import com.eeos.rocatrun.login.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -250,7 +251,7 @@ fun UserInfoDialog(
     var showErrorModal by remember { mutableStateOf(false) }
 
 
-    Dialog(onDismissRequest = {}) {
+    Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -597,9 +598,7 @@ fun UserInfoDialog(
                     }
                 }
 
-
-
-
+                // 회원정보 입력 확인 버튼
                 Image(
                     painter = painterResource(id = okButtonImageResId),
                     contentDescription = "OK Button",
@@ -629,7 +628,6 @@ fun UserInfoDialog(
                                         onShowMessageBox()
                                         onDismiss()
                                         Log.i("회원가입 성공", "회원가입 성공")
-
                                     }else{
 
                                     }
