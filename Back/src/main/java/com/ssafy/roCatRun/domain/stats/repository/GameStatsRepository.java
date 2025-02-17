@@ -10,6 +10,9 @@ import java.util.List;
 
 @Repository
 public interface GameStatsRepository extends MongoRepository<GameStats, String> {
-    List<GameStats> findByUserIdAndDateBetween(String userId, LocalDateTime start, LocalDateTime end);
-    List<GameStats> findByUserId(String userId);
+    // 기간 조회 시 날짜 내림차순 정렬
+    List<GameStats> findByUserIdAndDateBetweenOrderByDateDesc(String userId, LocalDateTime start, LocalDateTime end);
+
+    // 전체 조회 시 날짜 내림차순 정렬
+    List<GameStats> findByUserIdOrderByDateDesc(String userId);
 }

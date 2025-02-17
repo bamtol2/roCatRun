@@ -121,7 +121,7 @@ public class GameStatsService {
 
     // 일별 통계 조회
     public DailyStatsResponse  getDailyStats(String userId) {
-        List<GameStats> dailyGames = gameStatsRepository.findByUserId(userId);
+        List<GameStats> dailyGames = gameStatsRepository.findByUserIdOrderByDateDesc(userId);
         if (dailyGames.isEmpty()) {
             throw new GameStatsNotFoundException(
                     String.format("해당 유저의 게임 기록이 존재하지 않습니다. (유저 ID: %s)", userId)
@@ -142,7 +142,7 @@ public class GameStatsService {
 //        List<GameStats> dailyGames = gameStatsRepository.findByUserIdAndDateBetween(
 //                userId, startOfDay, endOfDay);
 
-        List<GameStats> dailyGames = gameStatsRepository.findByUserId(userId);
+        List<GameStats> dailyGames = gameStatsRepository.findByUserIdOrderByDateDesc(userId);
         if (dailyGames.isEmpty()) {
             throw new GameStatsNotFoundException(
                     String.format("해당 유저의 게임 기록이 존재하지 않습니다. (유저 ID: %s)", userId)
@@ -221,7 +221,7 @@ public class GameStatsService {
         LocalDateTime startDateTime = startOfWeek.atStartOfDay();
         LocalDateTime endDateTime = endOfWeek.atTime(23, 59, 59);
 
-        List<GameStats> weeklyGames = gameStatsRepository.findByUserIdAndDateBetween(
+        List<GameStats> weeklyGames = gameStatsRepository.findByUserIdAndDateBetweenOrderByDateDesc(
                 userId, startDateTime, endDateTime);
 
         // 데이터가 없는 경우 빈 통계 반환
@@ -246,7 +246,7 @@ public class GameStatsService {
         LocalDateTime endDateTime = endOfMonth.plusDays(1).atStartOfDay();
 
         // 해당 기간의 게임 기록 조회
-        List<GameStats> monthlyGames = gameStatsRepository.findByUserIdAndDateBetween(
+        List<GameStats> monthlyGames = gameStatsRepository.findByUserIdAndDateBetweenOrderByDateDesc(
                 userId,
                 startDateTime,
                 endDateTime
