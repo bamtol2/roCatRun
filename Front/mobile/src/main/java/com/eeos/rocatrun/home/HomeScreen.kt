@@ -4,8 +4,6 @@ import android.content.Intent
 import android.graphics.BlurMaskFilter
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
-import android.speech.tts.TextToSpeech
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -26,10 +24,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -49,11 +45,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -76,10 +69,7 @@ import com.eeos.rocatrun.ranking.api.RankingViewModel
 import com.eeos.rocatrun.shop.ShopActivity
 import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.components.StrokedText
-import com.eeos.rocatrun.ui.theme.MyFontFamily
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.yield
-import java.util.Locale
 import kotlin.random.Random
 
 
@@ -132,23 +122,12 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
         "언제 달리냥??",
     )
 
-    // 음성으로 출력
-    var tts: TextToSpeech? by remember { mutableStateOf(null) }
-    LaunchedEffect(Unit) {
-        tts = TextToSpeech(context, TextToSpeech.OnInitListener { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                tts?.language = Locale.KOREAN
-            }
-        })
-    }
-
     // 랜덤 텍스트 생성 및 위치 업데이트
     LaunchedEffect(showText) {
         if (showText) {
             randomX = Random.nextFloat() * 200f - 30f
             randomY = Random.nextFloat() * 200f - 30f
             randomText = textList[Random.nextInt(textList.size)]
-            tts?.speak(randomText, TextToSpeech.QUEUE_FLUSH, null, null)
             delay(1000)
             showText = false
         }
@@ -456,14 +435,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
             )
         }
 
-    }
-
-    // 음성 리소스 해제
-    DisposableEffect(tts) {
-        onDispose {
-            tts?.stop()
-            tts?.shutdown()
-        }
     }
 
 }
