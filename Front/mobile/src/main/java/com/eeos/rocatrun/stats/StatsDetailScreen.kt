@@ -80,7 +80,7 @@ fun DetailDialog(date: String, details: GameDetails,recordIndex: Int, onDismiss:
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatColumn(label = "거리", value = "${roundToFirstDecimal(details.distance)}spm")
+                    StatColumn(label = "거리", value = "${roundToFirstDecimal(details.distance)}km")
                     StatColumn(label = "시간", value = details.runningTime)
                 }
                 Spacer(modifier = Modifier.height(30.dp))
