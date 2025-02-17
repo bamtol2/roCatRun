@@ -139,6 +139,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                     putString("nickName", nickName)
                     putDouble("distance", returnedDistance)
                     putInt("itemUseCount", itemUseCount)
+                    putLong("timestamp", System.currentTimeMillis())
                 }
                 val request = putDataMapRequest.asPutDataRequest().setUrgent()
                 dataClient.putDataItem(request)
@@ -403,6 +404,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         SocketHandler.mSocket.off("feverTimeStarted")
         SocketHandler.mSocket.off("feverTimeEnded")
         SocketHandler.mSocket.off("levelUp")
+        SocketHandler.mSocket.off("playerDisconnected")
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {

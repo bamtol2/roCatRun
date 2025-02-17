@@ -1,9 +1,13 @@
 package com.eeos.rocatrun.home
 
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.BlurMaskFilter
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -58,6 +62,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.CharacterWithItems
 import com.eeos.rocatrun.closet.ClosetActivity
 import com.eeos.rocatrun.closet.api.ClosetViewModel
+import com.eeos.rocatrun.game.AlertScreen
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
 import com.eeos.rocatrun.login.data.TokenStorage
@@ -69,7 +74,13 @@ import com.eeos.rocatrun.ranking.api.RankingViewModel
 import com.eeos.rocatrun.shop.ShopActivity
 import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.components.StrokedText
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
 
@@ -77,6 +88,43 @@ import kotlin.random.Random
 fun HomeScreen(homeViewModel: HomeViewModel) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
+
+    // 알림창 상태 관리
+    var showAlert by remember { mutableStateOf(false) }
+    var alertMessage by remember { mutableStateOf("") }
+
+    // 블루투스/워치 연결 확인 함수
+    fun checkBluetoothAndWear() {
+        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothAdapter = bluetoothManager.adapter
+
+        when {
+            bluetoothAdapter == null -> {
+                alertMessage = "이 기기는 블루투스를 지원하지 않는다냥!"
+                showAlert = true
+            }
+            !bluetoothAdapter.isEnabled -> {
+                alertMessage = "블루투스를 켜달라냥!"
+                showAlert = true
+            }
+            else -> {
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                        if (nodes.isNotEmpty()) {
+                            context.startActivity(Intent(context, GameRoom::class.java))
+                        } else {
+                            alertMessage = "워치를 연결 하라냥!"
+                            showAlert = true
+                        }
+                    } catch (e: Exception) {
+                        alertMessage = "워치 연결 상태를 확인할 수 없다냥!"
+                        showAlert = true
+                    }
+                }
+            }
+        }
+    }
 
     // ViewModel에서 가져온 데이터
     val homeInfoData = homeViewModel.homeData.observeAsState()
@@ -384,7 +432,9 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
 
                 // START 버튼
                 Button(
-                    onClick = { context.startActivity(Intent(context, GameRoom::class.java)) },
+                    onClick = {
+                        checkBluetoothAndWear()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     shape = RoundedCornerShape(0.dp),
                     contentPadding = PaddingValues(0.dp),
@@ -412,6 +462,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         )
                     }
                 }
+
+                // 알림창 표시
+                if (showAlert) {
+                    AlertScreen(
+                        message = alertMessage,
+                        onDismissRequest = { showAlert = false }
+                    )
+                }
             }
         }
 
@@ -434,9 +492,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 }
             )
         }
-
     }
-
 }
 
 
