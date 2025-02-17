@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">roCatRun</string>
+    <string name="app_version">Ver. 0.0.9</string>
     <string name = "kakao_app_key">ee4a19a75c1dad14d8d226e4285b1cba</string>
     <string name="scheme_kakao_app_key">kakaoee4a19a75c1dad14d8d226e4285b1cba</string>
     <string name="google_app_id">1:38473355620:android:8b353a2dcf4b361951aa71</string>

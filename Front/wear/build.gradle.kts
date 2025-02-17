@@ -27,9 +27,13 @@ android {
         applicationId = "com.eeos.rocatrun"
         minSdk = 31
         targetSdk = 34
-        versionCode = 340080101
-        versionName = "0.0.8"
+        versionCode = 340090101
+        versionName = "0.0.9"
 
+    }
+
+    buildFeatures {
+        buildConfig = true // BuildConfig 생성 활성화
     }
 
     buildTypes {

@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
 fun SplashScreen() {
     val context = LocalContext.current
     val mainActivity = context as MainActivity  // MainActivity의 메서드 호출을 위해 캐스팅
+    val versionText = context.getString(R.string.app_version)
 
     Column(
         modifier = Modifier
@@ -163,6 +164,7 @@ fun SplashScreen() {
                 )
             }
 
+
             // 게임 시작 버튼
 //            Button(
 //                onClick = {
@@ -195,6 +197,16 @@ fun SplashScreen() {
 //                )
 //            }
         }
+        Spacer(modifier = Modifier.height(10.dp))
 
+        // 버전 정보 표시
+        Text(
+            text = versionText,
+            style = TextStyle(
+                fontSize = 10.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        )
     }
 }
