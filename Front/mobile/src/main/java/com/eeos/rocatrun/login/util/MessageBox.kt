@@ -111,6 +111,7 @@ fun MessageBox(
                         .offset(y = 50.dp)
                         .clickable {
                             val intent = Intent(context, IntroActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                             context.startActivity(intent)
                         }
                 )

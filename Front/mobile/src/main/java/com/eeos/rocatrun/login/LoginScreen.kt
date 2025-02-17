@@ -251,7 +251,7 @@ fun UserInfoDialog(
     var showErrorModal by remember { mutableStateOf(false) }
 
 
-    Dialog(onDismissRequest = {}) {
+    Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()

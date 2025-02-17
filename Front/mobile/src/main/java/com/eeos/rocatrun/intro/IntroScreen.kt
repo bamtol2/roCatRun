@@ -103,6 +103,7 @@ fun IntroScreen(
                     .padding(end = 10.dp)
                     .clickable {
                         val intent = Intent(context, HomeActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                         context.startActivity(intent)
                         onClose()
                     }
