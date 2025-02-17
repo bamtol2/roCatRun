@@ -51,7 +51,7 @@ object GpxFileHandler {
             val nodeList = doc.getElementsByTagName("trkpt")
 
             if (nodeList.length == 0) {
-                println("⚠️ GPX 파일에 유효한 위도/경도 데이터가 없음.")
+                Log.d("GPX","⚠️ GPX 파일에 유효한 위도/경도 데이터가 없음.")
                 return emptyList()
             }
 
@@ -62,7 +62,7 @@ object GpxFileHandler {
 
                 // 위도, 경도가 없는 경우 예외 처리
                 if (latStr.isNullOrEmpty() || lonStr.isNullOrEmpty()) {
-                    println("⚠️ GPX 파일의 일부 데이터에서 위도/경도가 누락됨. 건너뜀.")
+                    Log.d("GPX","⚠️ GPX 파일의 일부 데이터에서 위도/경도가 누락됨. 건너뜀.")
                     continue
                 }
 
@@ -72,12 +72,12 @@ object GpxFileHandler {
                 if (lat != null && lon != null) {
                     points.add(Point.fromLngLat(lon, lat))
                 } else {
-                    println("⚠️ GPX 파일의 위도/경도 형식이 잘못됨. 건너뜀.")
+                    Log.d("GPX","⚠️ GPX 파일의 위도/경도 형식이 잘못됨. 건너뜀.")
                 }
             }
             points
         } catch (e: Exception) {
-            println("GPX 파일 파싱 중 오류 발생: ${e.message}")
+            Log.d("GPX","GPX 파일 파싱 중 오류 발생: ${e.message}")
             emptyList()
         }
     }

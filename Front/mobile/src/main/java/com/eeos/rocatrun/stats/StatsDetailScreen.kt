@@ -93,12 +93,16 @@ fun DetailDialog(date: String, details: GameDetails,recordIndex: Int, onDismiss:
                         MapboxGPXViewer(selectedFile = selectedGpxFile)
                     } else {
                         // GPX 파일이 없을 경우 기존 이미지로 대체하거나 에러 메시지 출력
-                        Image(
-                            painter = painterResource(id = R.drawable.stats_img_map),
-                            contentDescription = "Route Map",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "경로가 없습니다.",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(40.dp))
