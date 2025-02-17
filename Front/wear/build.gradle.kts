@@ -33,21 +33,30 @@ android {
     }
 
     buildTypes {
-        getByName("debug") { isMinifyEnabled = false }
-        getByName("release") {
-            isDebuggable = true
-            isMinifyEnabled = true
-            isShrinkResources = true
+//        getByName("debug") { isMinifyEnabled = false }
+//        getByName("release") {
+//            isDebuggable = true
+//            isMinifyEnabled = true
+//            isShrinkResources = true
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro"
+//            )
+//            signingConfig = signingConfigs.getByName("release")
+//            ndk {
+//                debugSymbolLevel = "FULL"
+//            }
+//        }
+        release {
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
-            ndk {
-                debugSymbolLevel = "FULL"
-            }
         }
     }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

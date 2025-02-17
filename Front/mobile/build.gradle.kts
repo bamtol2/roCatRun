@@ -30,25 +30,33 @@ android {
         applicationId = "com.eeos.rocatrun"
         minSdk = 31
         targetSdk = 34
-        versionCode = 340050302
+        versionCode = 340050402
         versionName = "0.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
-        getByName("debug") { isMinifyEnabled = false }
-        getByName("release") {
-            isMinifyEnabled = true
-            isShrinkResources = true
+//        getByName("debug") { isMinifyEnabled = false }
+//        getByName("release") {
+//            isMinifyEnabled = true
+//            isShrinkResources = true
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro"
+//            )
+//            signingConfig = signingConfigs.getByName("release")
+//            ndk {
+//                debugSymbolLevel = "FULL"
+//            }
+//        }
+        release {
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
-            ndk {
-                debugSymbolLevel = "FULL"
-            }
         }
     }
     compileOptions {
