@@ -32,20 +32,20 @@ import com.eeos.rocatrun.R
 //import android.content.Context
 //import android.widget.Toast
 
-class ResultActivity : ComponentActivity() {
+class NetworkErrorActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            SplashScreen2()
+            ErrorScreen()
         }
     }
 
 }
 @Composable
-fun SplashScreen2() {
+fun ErrorScreen() {
     val context = LocalContext.current
-    val resultActivity = context as ResultActivity
+    val networkErrorActivity = context as NetworkErrorActivity
 
     Column(
         modifier = Modifier
@@ -66,7 +66,7 @@ fun SplashScreen2() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "폰으로 이동해서\n결과를 확인하세요",
+            text = "게임이 종료되었습니다.",
             style = TextStyle(
                 fontSize = 20.sp,
                 color = Color.White,
@@ -79,7 +79,7 @@ fun SplashScreen2() {
         // 확인 버튼
         Button(
             onClick = {
-                resultActivity.finish()
+                networkErrorActivity.finish()
             },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF00FFCC)

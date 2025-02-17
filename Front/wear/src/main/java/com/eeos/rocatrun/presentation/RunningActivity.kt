@@ -246,6 +246,26 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 }
             }
         }
+
+        // 네트워크 에러 이벤트 구독
+        lifecycleScope.launch {
+            multiUserViewModel.networkErrorEventFlow.collect { networkError ->
+                if (networkError) {
+                    stopTrackingAndShowStats()
+                    navigateToNetworkErrorScreen(this@RunningActivity)
+                    Log.d("RunningActivity", "네트워크 에러 이벤트 수신, 네트워크 에러 화면으로 전환")
+                }
+            }
+        }
+
+    }
+
+    // 네트워크 에러 화면으로 전환하는 함수
+    private fun navigateToNetworkErrorScreen(context: Context) {
+        val intent = Intent(context, NetworkErrorActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        context.startActivity(intent)
     }
 
 
@@ -385,6 +405,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private fun stopTracking() {
         isRunning = false
         handler.removeCallbacks(updateRunnable)
+        stopService(Intent(this, LocationForegroundService::class.java))
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
         val totalItemUsage = gameViewModel.totalItemUsageCount.value
@@ -668,6 +689,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 //        showStats = true
         isRunning = false
         resetTrackingData()
+        stopService(Intent(this, LocationForegroundService::class.java))
         finish()
         handler.removeCallbacks(updateRunnable)
         fusedLocationClient.removeLocationUpdates(locationCallback)

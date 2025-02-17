@@ -31,7 +31,7 @@ fun DetailDialog(date: String, details: GameDetails,recordIndex: Int, onDismiss:
     val dateWithoutTime = date.substringBefore("T").replace("-", "/")
     val context = LocalContext.current
     // 로컬 저장소에서 GPX 파일 목록을 가져옴
-    val gpxFiles = remember { GpxFileHandler.getGpxFileList(context) }
+    val gpxFiles = remember { GpxFileHandler.getGpxFileList(context).reversed() }
     // 기록 순서에 맞는 GPX 파일 선택
     val selectedGpxFile = if (recordIndex in gpxFiles.indices) gpxFiles[recordIndex] else null
     Dialog(onDismissRequest = onDismiss) {

@@ -65,6 +65,11 @@
             android:exported="true"
             android:theme="@style/Theme.AppCompat">
         </activity>
+        <activity
+            android:name=".presentation.NetworkErrorActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat">
+        </activity>
         <service
             android:name=".service.LocationForegroundService"
             android:exported="false"

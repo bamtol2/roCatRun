@@ -60,6 +60,11 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private val _playerLeftMessage = MutableStateFlow<String?>(null)
     val playerLeftMessage: StateFlow<String?> get() = _playerLeftMessage
 
+    private var lastPlayerDataReceivedTime = System.currentTimeMillis()
+
+    // 네트워크 에러 이벤트 플로우
+    private val _networkErrorEventFlow = MutableSharedFlow<Boolean>()
+    val networkErrorEventFlow: SharedFlow<Boolean> get() = _networkErrorEventFlow
 
     private var playersData by mutableStateOf<PlayersData?>(null)
     private var bossHealthData by mutableStateOf<BossHealthData?>(null)
@@ -68,6 +73,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private var firstBossHealthData by mutableStateOf<FirstBossHealthData?>(null)
     private var gameEndData by mutableStateOf<GameEndData?>(null)
 
+    private var firstDataReceived = false
 
 
     // 데이터 클래스 정의
@@ -144,6 +150,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.e("MultiUserViewModel", "캐시된 데이터 조회 실패", exception)
             }
         }
+
     }
 
     // ViewModel이 소멸될 때 호출되는 메서드
@@ -182,7 +189,21 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         _playersDataMap.value = _playersDataMap.value.toMutableMap().apply {
             put(nickname, newData)
         }
+        lastPlayerDataReceivedTime = System.currentTimeMillis()
         Log.d("MultiUserViewModel", "실시간 플레이어 데이터 업데이트: $newData")
+        if (!firstDataReceived) {
+            firstDataReceived = true
+            viewModelScope.launch {
+                while (true) {
+                    delay(1000) // 1초마다 체크
+                    if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 2000) {
+                        _networkErrorEventFlow.emit(true)
+                        Log.d("MultiUserViewModel", "네트워크 연결 끊김 감지, 네트워크 에러 이벤트 발행")
+                        break
+                    }
+                }
+            }
+        }
     }
 
     // 실시간 보스 체력 데이터 (Repository에 업데이트)
