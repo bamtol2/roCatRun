@@ -354,7 +354,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 // 정보
                 Box(
@@ -428,7 +428,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // START 버튼
                 Button(
