@@ -13,7 +13,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import com.eeos.rocatrun.api.RetrofitInstance
 import androidx.compose.runtime.State
-import com.eeos.rocatrun.login.data.RetrofitClient.apiService
+
 
 class ClosetViewModel : ViewModel() {
     // 전송 완료 응답 데이터
@@ -55,7 +55,7 @@ class ClosetViewModel : ViewModel() {
             .map { it.inventoryId }
     }
 
-    fun initializeItemList(items: List<InventoryItem>) {
+    private fun initializeItemList(items: List<InventoryItem>) {
         _inventoryList.value = items
         _equippedItems.value = items.filter { it.equipped }.map { it.inventoryId }
     }
@@ -103,7 +103,7 @@ class ClosetViewModel : ViewModel() {
         }
     }
 
-    // 전체 인벤토리 조회
+    // 전체 인벤토리 조회 (중복 제거)
     fun fetchAllInventory(auth: String?) {
         if (auth == null) {
             Log.d("debug", "토큰이 없습니다.")
@@ -134,7 +134,7 @@ class ClosetViewModel : ViewModel() {
     }
 
     // 아이템 착용 상태 변경
-    fun changeEquipStatus(auth: String, inventoryIds: List<Int>) {
+    fun changeEquipStatus(auth: String?, inventoryIds: List<Int>) {
         if (auth == null) {
             Log.d("debug", "토큰이 없습니다.")
             return
