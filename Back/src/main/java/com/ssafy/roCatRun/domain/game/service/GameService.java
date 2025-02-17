@@ -480,7 +480,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         .character(character)
                         .bossLevel(room.getBossLevel())
                         .isCleared(isCleared)
-                        .runningTime(resultData.getRunningTimeSec())
+                        .runningTime(resultData.getRunningTimeMillis())
                         .totalDistance(resultData.getTotalDistance())
                         .paceAvg(resultData.getPaceAvg())
                         .heartRateAvg(resultData.getHeartRateAvg())
@@ -548,10 +548,10 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
      * 달린 거리에 따른 칼로리 계산
      * @param member 유저정보
      * @param distance 러닝 거리
-     * @param runningTimeSec 러닝 시간
+     * @param runningTimeMillis 러닝 시간
      * @return 소모 칼로리
      */
-    private int calculateCalories(Member member, double distance, long runningTimeSec) {
+    private int calculateCalories(Member member, double distance, long runningTimeMillis) {
         if (member.getWeight() == null || member.getGender() == null) {
             return 0;
         }
