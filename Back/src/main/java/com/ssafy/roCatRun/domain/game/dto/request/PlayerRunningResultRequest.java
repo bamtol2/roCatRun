@@ -12,9 +12,13 @@ import java.time.Duration;
 @NoArgsConstructor // 기본 생성자 추가
 @AllArgsConstructor // 전체 필드 생성자 유지
 public class PlayerRunningResultRequest {
-    private long runningTimeSec; // 초 단위 저장
+    private long runningTimeMillis; // 초 단위 저장
     private double totalDistance;
     private double paceAvg;
     private double heartRateAvg;
     private double cadenceAvg;
+
+    public long getRunningTimeSec() {
+        return runningTimeMillis / 1000;
+    }
 }
