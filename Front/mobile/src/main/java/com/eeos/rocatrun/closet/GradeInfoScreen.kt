@@ -104,9 +104,9 @@ fun GradeInfoScreen(onDismiss: () -> Unit, closetViewModel: ClosetViewModel) {
                     )
                     Spacer(modifier = Modifier.height(5.dp))
 
-                    RarityItem("NORMAL", "일반냥", "45%", Color.White, Color(0xFFA3A1A5))
-                    RarityItem("RARE", "레어냥", "38%", Color(0xFF018F2C), Color.White)
-                    RarityItem("UNIQUE", "에픽냥", "28%", Color(0xFF1646CB), Color.White)
+                    RarityItem("NORMAL", "일반냥", "40%", Color.White, Color(0xFFA3A1A5))
+                    RarityItem("RARE", "레어냥", "30%", Color(0xFF018F2C), Color.White)
+                    RarityItem("UNIQUE", "에픽냥", "20%", Color(0xFF1646CB), Color.White)
                     RarityItem("EPIC", "유니크냥", "4%", Color(0xFF6C13E1), Color.White)
                     RarityItem("LEGENDARY", "레전드리냥", "1%", Color(0xFFFF0080), Color(0xFFFFFF00))
                     Spacer(modifier = Modifier.height(10.dp))
