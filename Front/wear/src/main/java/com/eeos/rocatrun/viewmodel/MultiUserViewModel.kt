@@ -61,6 +61,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     val playerLeftMessage: StateFlow<String?> get() = _playerLeftMessage
 
     private var lastPlayerDataReceivedTime = System.currentTimeMillis()
+    private var firstPlayerDataReceivedTime = System.currentTimeMillis()
 
     // 네트워크 에러 이벤트 플로우
     private val _networkErrorEventFlow = MutableSharedFlow<Boolean>()
@@ -74,6 +75,8 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private var gameEndData by mutableStateOf<GameEndData?>(null)
 
     private var firstDataReceived = false
+
+    private var startDataReceived = false
 
 
     // 데이터 클래스 정의
@@ -252,6 +255,21 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.d("MultiUserViewModel", "플레이어 목록 업데이트: $players")
             } else {
                 Log.w("MultiUserViewModel", "playerNicknames 데이터가 null 입니다.")
+            }
+
+            lastPlayerDataReceivedTime = System.currentTimeMillis()
+            if (!startDataReceived) {
+                startDataReceived = true
+                viewModelScope.launch {
+                    while (true) {
+                        delay(1000) // 1초마다 체크
+                        if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 5000) {
+                            _networkErrorEventFlow.emit(true)
+                            Log.d("MultiUserViewModel", "네트워크 연결 끊김 감지, 네트워크 에러 이벤트 발행")
+                            break
+                        }
+                    }
+                }
             }
         }
         Log.d("MultiUserViewModel", "보스 초기 체력 데이터 : $firstBossHealthData")
