@@ -255,7 +255,7 @@ fun DayStatCard(
                         }
 
                         if (status == "정복완료" && rankImage != null) {
-                            
+
                             Image(
                                 painter = painterResource(id = rankImage),
                                 contentDescription = "${player.rank}등 이미지",

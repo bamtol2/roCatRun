@@ -68,6 +68,7 @@ fun ShopScreen(shopViewModel: ShopViewModel) {
     
     // 모달 변수
     var showAlert by remember { mutableStateOf(false) }
+    var showEmptySelectionAlert by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
@@ -126,9 +127,13 @@ fun ShopScreen(shopViewModel: ShopViewModel) {
                 // 판매 버튼
                 Button(
                     onClick = {
-                        showAlert = true
-                        shopViewModel.postSellItem(token, selectedItems, totalPrice)
-                        shopViewModel.fetchAllInventoryShop(token)
+                        if (selectedItems.isEmpty()) {
+                            showEmptySelectionAlert = true
+                        } else {
+                            showAlert = true
+                            shopViewModel.postSellItem(token, selectedItems, totalPrice)
+                            shopViewModel.fetchAllInventoryShop(token)
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     shape = RoundedCornerShape(0.dp),
@@ -222,6 +227,13 @@ fun ShopScreen(shopViewModel: ShopViewModel) {
         if (showAlert) {
             AlertScreen(
                 message = "판매완료다냥!",
+                onDismissRequest = {showAlert = false}
+            )
+        }
+
+        if (showEmptySelectionAlert) {
+            AlertScreen(
+                message = "선택한 아이템이 없다냥!",
                 onDismissRequest = {showAlert = false}
             )
         }
