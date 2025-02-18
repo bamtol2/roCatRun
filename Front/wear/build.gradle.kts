@@ -27,7 +27,7 @@ android {
         applicationId = "com.eeos.rocatrun"
         minSdk = 31
         targetSdk = 34
-        versionCode = 34001011
+        versionCode = 340100101
         versionName = "0.0.10"
 
     }

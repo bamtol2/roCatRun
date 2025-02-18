@@ -30,7 +30,7 @@ android {
         applicationId = "com.eeos.rocatrun"
         minSdk = 31
         targetSdk = 34
-        versionCode = 340010012
+        versionCode = 340100102
         versionName = "0.0.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
