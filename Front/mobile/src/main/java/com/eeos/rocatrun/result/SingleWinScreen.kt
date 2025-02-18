@@ -42,6 +42,7 @@ import com.eeos.rocatrun.service.GamePlayService
 import kotlinx.coroutines.delay
 import com.eeos.rocatrun.ui.components.formatPace
 import com.eeos.rocatrun.ui.components.formatTime
+import com.eeos.rocatrun.ui.components.formatTimeSec
 
 
 @Composable
@@ -174,7 +175,7 @@ private fun FirstResultPage(myResult: GamePlay.MyResultData?) {
                     horizontalArrangement = Arrangement.spacedBy(23.dp)
                 ) {
                     ResultItem("거리", "${myResult?.totalDistance?.let { "%.1f".format(it) }}km")
-                    ResultItem("시간", formatTime(myResult?.runningTime ?: 0))
+                    ResultItem("시간", formatTimeSec(myResult?.runningTime ?: 0))
                 }
                 Spacer(modifier = Modifier.height(25.dp))
                 Row(

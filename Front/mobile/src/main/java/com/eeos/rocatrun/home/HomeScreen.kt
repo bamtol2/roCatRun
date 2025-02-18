@@ -67,6 +67,7 @@ import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.game.AlertScreen
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
+import com.eeos.rocatrun.intro.IntroActivity
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.ppobgi.PpobgiDialog
 import com.eeos.rocatrun.profile.ProfileDialog
@@ -120,7 +121,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                             showAlert = true
                         }
                     } catch (e: Exception) {
-                        alertMessage = "워치 연결 상태를 확인할 수 없다냥!"
+                        alertMessage = "워치를 확인할 수 없다냥!"
                         showAlert = true
                     }
                 }
@@ -249,20 +250,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 modifier = Modifier
                     .align(Alignment.TopStart)
             ) {
-                // 왼쪽 상단 버튼들 (랭킹, 뽑기)
-                Button(
-                    onClick = { showRanking = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_ranking),
-                        contentDescription = "Ranking Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
+                // 왼쪽 상단 버튼들 (뽑기, 옷장, 상점)
                 Button(
                     onClick = { showPpobgi = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -272,52 +260,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     Image(
                         painter = painterResource(id = R.drawable.home_icon_ppobgi),
                         contentDescription = "Ppobgi Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { context.startActivity(Intent(context, ShopActivity::class.java)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_shop),
-                        contentDescription = "Shop Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-            }
-
-
-            // 오른쪽 상단 세로 버튼들 (프로필, 통계, 옷장)
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd),
-            ) {
-                Button(
-                    onClick = { showProfile = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_profile),
-                        contentDescription = "Profile Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { context.startActivity(Intent(context, StatsActivity::class.java)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_stats),
-                        contentDescription = "Statistics Icon",
                         modifier = Modifier.size(60.dp)
                     )
                 }
@@ -341,6 +283,65 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         modifier = Modifier.size(60.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { context.startActivity(Intent(context, ShopActivity::class.java)) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_shop),
+                        contentDescription = "Shop Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            }
+
+
+            // 오른쪽 상단 세로 버튼들 (프로필, 랭킹, 통계)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd),
+            ) {
+                Button(
+                    onClick = { showProfile = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_profile),
+                        contentDescription = "Profile Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { showRanking = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_ranking),
+                        contentDescription = "Ranking Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { context.startActivity(Intent(context, StatsActivity::class.java)) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_stats),
+                        contentDescription = "Statistics Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
             }
         }
 
@@ -356,7 +357,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     text = characterData.nickname,
                     fontSize = 35,
                     strokeColor = Color(0xFF701F3D),
-                    strokeWidth = 25f
+                    strokeWidth = 25f,
+                    modifier = Modifier.clickable {
+                        context.startActivity(Intent(context, IntroActivity::class.java))
+                    }
                 )
 
                 // 캐릭터 이미지

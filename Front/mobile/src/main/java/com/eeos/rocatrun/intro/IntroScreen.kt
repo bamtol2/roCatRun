@@ -62,6 +62,22 @@ fun IntroScreen(
                 )
             }
         }
+        Box(
+            modifier = Modifier
+                .padding(30.dp)
+                .align(Alignment.BottomStart)
+        ) {
+            Text(
+                text = "Skip",
+                fontSize = 24.sp,
+                modifier = Modifier
+                    .clickable {
+                        val intent = Intent(context, HomeActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        context.startActivity(intent)
+                    }
+            )
+        }
 
         if (pagerState.currentPage > 0) {
             Image(

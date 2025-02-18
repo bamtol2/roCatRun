@@ -14,3 +14,10 @@ fun formatPace(paceInMinutesPerKm: Double): String {
     val seconds = ((paceInMinutesPerKm - minutes) * 60).toInt()
     return String.format("%02d'%02d\"", minutes, seconds)
 }
+
+fun formatTimeSec(timeInSecs: Long): String {
+    val hours = timeInSecs / 3600
+    val minutes = (timeInSecs % 3600) / 60
+    val seconds = (timeInSecs % 60)
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
