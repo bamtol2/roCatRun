@@ -234,7 +234,7 @@ fun ShopScreen(shopViewModel: ShopViewModel) {
         if (showEmptySelectionAlert) {
             AlertScreen(
                 message = "선택한 아이템이 없다냥!",
-                onDismissRequest = {showAlert = false}
+                onDismissRequest = {showEmptySelectionAlert = false}
             )
         }
     }
