@@ -327,6 +327,7 @@ fun PpobgiDialog(
                                 error?.let {
                                     // 코인 수 모자라면 모달 띄워주어야 함
                                     Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                    context.startActivity(Intent(context, HomeActivity::class.java))
                                 }
                             }
 
