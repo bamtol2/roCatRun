@@ -177,6 +177,7 @@ fun MultiWinScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults:
                             GamePlayService.resetModalState()
                             // 홈화면으로 이동.
                             val intent = Intent(context, HomeActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                             context.startActivity(intent)
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
