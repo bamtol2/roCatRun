@@ -115,7 +115,13 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     try {
                         val nodes = Wearable.getNodeClient(context).connectedNodes.await()
                         if (nodes.isNotEmpty()) {
-                            context.startActivity(Intent(context, GameRoom::class.java))
+                            if (nodes.first().isNearby) {
+                                Log.d("WearApp", "노드 : ${nodes.first().isNearby}")
+                                context.startActivity(Intent(context, GameRoom::class.java))
+                            }else{
+                                alertMessage = "워치를 연결 하라냥!"
+                                showAlert = true
+                            }
                         } else {
                             alertMessage = "워치를 연결 하라냥!"
                             showAlert = true
