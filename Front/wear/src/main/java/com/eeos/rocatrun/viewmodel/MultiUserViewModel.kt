@@ -263,7 +263,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 viewModelScope.launch {
                     while (true) {
                         delay(1000) // 1초마다 체크
-                        if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 5000) {
+                        if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 7000) {
                             _networkErrorEventFlow.emit(true)
                             Log.d("MultiUserViewModel", "네트워크 연결 끊김 감지, 네트워크 에러 이벤트 발행")
                             break
