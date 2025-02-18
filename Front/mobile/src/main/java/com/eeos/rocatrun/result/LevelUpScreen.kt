@@ -1,7 +1,9 @@
 package com.eeos.rocatrun.result
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheetDefaults.properties
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eeos.rocatrun.R
+import com.eeos.rocatrun.service.GamePlayService
 import com.eeos.rocatrun.ui.components.StrokedText
 
 @Composable
@@ -79,20 +83,41 @@ fun LevelUpScreen(
                     )
                 )
 
-                Text(
-                    text = "확인",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 18.sp,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    ),
+                Box(
                     modifier = Modifier
                         .padding(vertical = 4.dp, horizontal = 16.dp)
                         .offset(y = 33.dp)
                         .clickable {
+                            Log.d("LevelUp", "확인 버튼 클릭")
                             onDismiss()
                         }
-                )
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = "확인",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 18.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                }
+
+//                Text(
+//                    text = "확인",
+//                    style = MaterialTheme.typography.titleLarge.copy(
+//                        fontSize = 18.sp,
+//                        color = Color.White,
+//                        textAlign = TextAlign.Center
+//                    ),
+//                    modifier = Modifier
+//                        .padding(vertical = 4.dp, horizontal = 16.dp)
+//                        .offset(y = 33.dp)
+//                        .clickable {
+//                            Log.d("Wear", "levelup 확인")
+//                            onDismiss()
+//                        }
+//                )
             }
         }
     }

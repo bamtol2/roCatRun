@@ -115,26 +115,26 @@ fun GameplayScreen(onShareClick: () -> Unit) {
             }
         }
 
-        if (gpxFileReceived) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .background(Color.Green)
-                    .padding(8.dp)
-            ) {
-                Text("GPX 파일 수신 완료", color = Color.White)
-            }
-
-            Button(
-                onClick = onShareClick,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
-            ) {
-                Text("GPX 파일 공유")
-            }
-        }
+//        if (gpxFileReceived) {
+//            Box(
+//                modifier = Modifier
+//                    .align(Alignment.TopEnd)
+//                    .padding(16.dp)
+//                    .background(Color.Green)
+//                    .padding(8.dp)
+//            ) {
+//                Text("GPX 파일 수신 완료", color = Color.White)
+//            }
+//
+//            Button(
+//                onClick = onShareClick,
+//                modifier = Modifier
+//                    .align(Alignment.BottomCenter)
+//                    .padding(bottom = 16.dp)
+//            ) {
+//                Text("GPX 파일 공유")
+//            }
+//        }
 
         // 모달 표시
         when (val currentModalState = modalState) {
@@ -143,10 +143,13 @@ fun GameplayScreen(onShareClick: () -> Unit) {
                     oldLevel = currentModalState.oldLevel,
                     newLevel = currentModalState.newLevel,
                     onDismiss = {
-                        // 대기 중인 게임 결과 모달이 있으면 표시하고, 없으면 아무것도 하지 않음
-                        GamePlayService.pendingGameResult?.let { result ->
-                            GamePlayService._modalState.postValue(result)
+                        if (GamePlayService.pendingGameResult != null) {
+// 대기 중인 게임 결과 모달이 있으면 해당 모달 상태를 적용
+                            GamePlayService._modalState.postValue(GamePlayService.pendingGameResult)
                             GamePlayService.pendingGameResult = null
+                        } else {
+// 대기 중인 결과 모달이 없다면 모달 상태를 초기화 (모달 닫기)
+                            GamePlayService.resetModalState()
                         }
                     }
                 )

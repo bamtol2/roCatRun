@@ -78,6 +78,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         // 결과 모달 리셋 함수
         fun resetModalState() {
             _modalState.postValue(ModalState.None)
+            pendingGameResult = null
         }
 
         // 게임 결과 저장 변수
@@ -148,8 +149,8 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 val currentTime = System.currentTimeMillis()
                 val timeDifference = currentTime - lastDataReceivedTime
 
-                // 5초 이상 데이터가 없으면 홈으로 이동
-                if (timeDifference > 5000) {
+                // 7초 이상(5초 카운트 포함) 데이터가 없으면 홈으로 이동
+                if (timeDifference > 7000) {
                     Log.d("Wear", "데이터 수신 타임아웃: $timeDifference ms")
                     navigateToHome()
                     break
@@ -407,7 +408,10 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 Log.d("Socket", "On - levelUp: $oldLevel -> $newLevel")
 
                 // 현재 모달 상태가 None이 아니면 해당 상태를 pendingGameResult로 저장
-                if (_modalState.value != ModalState.None && _modalState.value !is ModalState.LevelUp) {
+//                if (_modalState.value != ModalState.None && _modalState.value !is ModalState.LevelUp) {
+//                    pendingGameResult = _modalState.value
+//                }
+                if (_modalState.value != ModalState.None) {
                     pendingGameResult = _modalState.value
                 }
 

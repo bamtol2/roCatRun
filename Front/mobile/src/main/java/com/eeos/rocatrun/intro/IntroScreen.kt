@@ -62,22 +62,22 @@ fun IntroScreen(
                 )
             }
         }
-        Box(
-            modifier = Modifier
-                .padding(30.dp)
-                .align(Alignment.BottomStart)
-        ) {
-            Text(
-                text = "Skip",
-                fontSize = 24.sp,
-                modifier = Modifier
-                    .clickable {
-                        val intent = Intent(context, HomeActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        context.startActivity(intent)
-                    }
-            )
-        }
+//        Box(
+//            modifier = Modifier
+//                .padding(30.dp)
+//                .align(Alignment.BottomStart)
+//        ) {
+//            Text(
+//                text = "Skip",
+//                fontSize = 24.sp,
+//                modifier = Modifier
+//                    .clickable {
+//                        val intent = Intent(context, HomeActivity::class.java)
+//                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+//                        context.startActivity(intent)
+//                    }
+//            )
+//        }
 
         if (pagerState.currentPage > 0) {
             Image(
@@ -111,6 +111,23 @@ fun IntroScreen(
                         }
                     }
             )
+
+            Box(
+                modifier = Modifier
+                    .padding(40.dp)
+                    .align(Alignment.BottomStart)
+            ) {
+                Text(
+                    text = "Skip",
+                    fontSize = 24.sp,
+                    modifier = Modifier
+                        .clickable {
+                            val intent = Intent(context, HomeActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            context.startActivity(intent)
+                        }
+                )
+            }
         } else {
             // 시작하기 버튼 (마지막 페이지)
             Box(
@@ -132,7 +149,7 @@ fun IntroScreen(
                     Text(
                         text = "시작하기",
                         style = TextStyle(
-                            color = Color.White,
+                            color = Color.Yellow,
                             fontSize = 20.sp,
                             fontFamily = FontFamily(Font(R.font.neodgm))
                         )
@@ -140,7 +157,7 @@ fun IntroScreen(
                     Text(
                         text = ">",
                         style = TextStyle(
-                            color = Color.White,
+                            color = Color.Yellow,
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(R.font.neodgm))
                         )

@@ -287,7 +287,7 @@ private fun SecondResultPage(playerResults: List<GamePlay.PlayersResultData?>) {
                 if (player != null) {
                     RankingWinRow(
                         rank = index + 1,
-                        profileImage = player.characterImage, // 기본 이미지 사용
+                        profileImage = player.characterImage,
                         nickname = player.nickname,
                         distance = String.format("%.1fkm", player.totalDistance),
                         reward = "+${player.rewardExp}exp",
