@@ -198,8 +198,8 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             firstDataReceived = true
             viewModelScope.launch {
                 while (true) {
-                    delay(1000) // 1초마다 체크
-                    if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 2000) {
+                    delay(2000) // 1초마다 체크
+                    if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 3000) {
                         _networkErrorEventFlow.emit(true)
                         Log.d("MultiUserViewModel", "네트워크 연결 끊김 감지, 네트워크 에러 이벤트 발행")
                         break
@@ -262,7 +262,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 startDataReceived = true
                 viewModelScope.launch {
                     while (true) {
-                        delay(1000) // 1초마다 체크
+                        delay(1500)
                         if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 7000) {
                             _networkErrorEventFlow.emit(true)
                             Log.d("MultiUserViewModel", "네트워크 연결 끊김 감지, 네트워크 에러 이벤트 발행")

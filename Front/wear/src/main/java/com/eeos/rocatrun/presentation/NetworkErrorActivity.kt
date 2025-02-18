@@ -40,70 +40,72 @@ class NetworkErrorActivity : ComponentActivity() {
             ErrorScreen()
         }
     }
+    @Composable
+    fun ErrorScreen() {
+        val context = LocalContext.current
 
-}
-@Composable
-fun ErrorScreen() {
-    val context = LocalContext.current
-    val networkErrorActivity = context as NetworkErrorActivity
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "로캣냥",
-            style = TextStyle(
-                fontSize = 32.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily(Font(R.font.neodgm))
-            ),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "게임이 종료되었습니다.",
-            style = TextStyle(
-                fontSize = 20.sp,
-                color = Color.White,
-                fontFamily = FontFamily(Font(R.font.neodgm)),
-                textAlign = TextAlign.Center
-            )
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 확인 버튼
-        Button(
-            onClick = {
-                networkErrorActivity.finish()
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF00FFCC)
-            ),
-            shape = RoundedCornerShape(16.dp),
-            contentPadding = PaddingValues(0.dp),
+        Column(
             modifier = Modifier
-                .width(69.dp)
-                .height(34.dp)
-                .padding(horizontal = 2.dp)
+                .fillMaxSize()
+                .background(Color.Black),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "확인",
+                text = "로캣냥",
                 style = TextStyle(
-                    fontSize = 16.sp,
-                    color = Color.Black,
+                    fontSize = 32.sp,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily(Font(R.font.neodgm))
                 ),
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                softWrap = false  // 줄바꿈 방지
+                textAlign = TextAlign.Center
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "사용자가 게임을 종료하였습니다",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    color = Color.White,
+                    fontFamily = FontFamily(Font(R.font.neodgm)),
+                    textAlign = TextAlign.Center
+                )
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 확인 버튼
+            Button(
+                onClick = {
+                    finish()
+                    finishAndRemoveTask()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00FFCC)
+                ),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .width(69.dp)
+                    .height(34.dp)
+                    .padding(horizontal = 2.dp)
+            ) {
+                Text(
+                    text = "확인",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(R.font.neodgm))
+                    ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false  // 줄바꿈 방지
+                )
+            }
         }
     }
+
 }
+
+
 

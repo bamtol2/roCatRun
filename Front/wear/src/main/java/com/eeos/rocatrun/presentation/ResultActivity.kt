@@ -33,12 +33,17 @@ import com.eeos.rocatrun.R
 //import android.widget.Toast
 
 class ResultActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             SplashScreen2()
         }
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        finishAndRemoveTask()
     }
 
 }

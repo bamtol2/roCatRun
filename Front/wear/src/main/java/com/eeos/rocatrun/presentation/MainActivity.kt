@@ -51,6 +51,10 @@ class MainActivity : ComponentActivity() {
         requestPermissions()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        finishAndRemoveTask()
+    }
     // 모바일 앱 실행 요청 함수
     fun startMobileApp() {
         val messageClient: MessageClient = Wearable.getMessageClient(this)
@@ -83,7 +87,8 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.BODY_SENSORS,
             Manifest.permission.ACTIVITY_RECOGNITION,
             Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_SCAN
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.POST_NOTIFICATIONS,
         )
         if (permissions.any {
                 ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED

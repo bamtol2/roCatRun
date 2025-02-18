@@ -49,6 +49,11 @@ class ItemActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        finishAndRemoveTask()
+    }
 }
 
 
@@ -123,8 +128,8 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
             ) {
                 // 고양이 GIF
                 AnimatedGifView(
-                    resourceId = R.drawable.wear_gif_rainbowcat,
-                    modifier = Modifier.size(130.dp)
+                    resourceId = R.drawable.wear_gif_movewhitecat,
+                    modifier = Modifier.size(100.dp)
                 )
 
                 // 아이템 GIF (조건부 표시)

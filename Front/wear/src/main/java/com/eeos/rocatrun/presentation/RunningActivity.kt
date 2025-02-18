@@ -313,6 +313,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         super.onDestroy()
         sensorManagerHelper.unregisterSensors()
         armGestureDetector.stop()
+        finishAndRemoveTask()
     }
 
 
@@ -423,6 +424,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         showStats = true
         sendFinalResultToPhone(totalItemUsage)
         createAndSendGpxFile()
+        finishAndRemoveTask()
 
 
     }
@@ -437,7 +439,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             dataMap.putInt("totalItemUsage", totalItemUsage)
             dataMap.putDouble("averageCadence", averageCadence)
         }.asPutDataRequest().setUrgent()
-
+        Log.d("RunningActivity", "케이던스: $averageCadence, $stepCount")
         Log.d("Final Data 전송", "총 아이템 사용 횟수: $totalItemUsage")
         Wearable.getDataClient(this).putDataItem(dataMapRequest)
             .addOnSuccessListener { Log.d("RunningActivity", "Final result data sent successfully") }
@@ -687,16 +689,18 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     private fun stopTrackingAndShowStats() {
 //        showStats = true
+        gameViewModel.stopFeverTimeEffects()
         isRunning = false
         resetTrackingData()
         stopService(Intent(this, LocationForegroundService::class.java))
         finish()
+        finishAndRemoveTask()
         handler.removeCallbacks(updateRunnable)
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
         // 센서 해제
-        sensorManagerHelper.unregisterSensors()  // ✅ 센서 관리 헬퍼에서 해제
-        sensorManager.unregisterListener(this)  // ✅ 직접 등록한 센서도 해제
+        sensorManagerHelper.unregisterSensors()
+        sensorManager.unregisterListener(this)
 
         Log.d("RunningActivity", "Tracking stopped, sensors unregistered")
     }
