@@ -107,7 +107,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private val locationList = mutableListOf<Location>()
     // 기존의 단순 값 대신 (timestamp, value) 형태로 저장하여 동기화에 활용
     private val heartRateData = mutableListOf<Pair<Long, Int>>()
-    private val cadenceData = mutableListOf<Pair<Long, Int>>()
+    private val cadenceData = mutableListOf<Pair<Long, Double>>()
     // 기존 paceList는 그대로 사용하되, 필요하면 timestamp와 함께 저장하는 방식으로 개선 가능
     private val paceList = mutableListOf<Double>()
 
@@ -121,7 +121,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var averageHeartRate by mutableDoubleStateOf(0.0)
     private var heartRateSum = 0
     private var heartRateCount = 0
-    private var averageCadence = calculateAverageCadence()
+    private var averageCadence = 0.0
     // 걸음 센서 관련 변수
     private var initialStepCount: Int = 0
     private var lastStepCount: Int = 0
@@ -184,12 +184,30 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         sensorManagerHelper = SensorManagerHelper(
             context = this,
             onHeartRateUpdated = { newHeartRate ->
-                heartRate = newHeartRate.toString()
-                Log.d("RunningActivity", "Heart rate updated: $heartRate")
+                Log.d("심박수", "심박수: $newHeartRate")
+                if (newHeartRate > 0) {
+                    heartRate = newHeartRate.toString()
+                    heartRateSum += newHeartRate
+                    heartRateCount++
+                    // 센서 이벤트 발생 시의 현재 시간으로 저장
+                    heartRateData.add(Pair(System.currentTimeMillis(), newHeartRate))
+                Log.d("RunningActivity", "MHeart rate updated: $heartRate")
+                }
             },
             onStepDetected = {
-                stepCount++
-                Log.d("RunningActivity", "Total steps: $stepCount")
+                val currentTime = System.currentTimeMillis()
+                val stepsDelta = 1
+
+                if (lastStepTimestamp > 0) {
+                    val timeDelta = currentTime - lastStepTimestamp
+                    totalElapsedTime += timeDelta // 총 경과 시간 업데이트
+                    updateCadence(stepsDelta, timeDelta)
+                }
+
+                stepCount += stepsDelta // 누적 걸음 수 업데이트
+                lastStepTimestamp = currentTime // 마지막 걸음 시간 갱신
+
+                Log.d("StepCounter", "MTotal steps: $stepCount")
             }
         )
 
@@ -416,6 +434,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         if (heartRateCount > 0) {
             averageHeartRate = heartRateSum.toDouble() / heartRateCount
         }
+        averageCadence=calculateAverageCadence()
 
         Log.d("FinalStats", "Average Cadence: $averageCadence steps/min")
         sensorManager.unregisterListener(this)
@@ -478,6 +497,18 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         return result
     }
 
+    private fun getNearestSensorValueDouble(data: MutableList<Pair<Long, Double>>, targetTime: Long, default: Double): Double {
+        var result = default
+        for ((time, value) in data) {
+            if (time <= targetTime) {
+                result = value
+            } else {
+                break
+            }
+        }
+        return result
+    }
+
     // GPX 파일 생성 (위치 데이터를 기준으로, 각 포인트에 가장 가까운 센서 데이터를 매칭)
     private fun createGpxString(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
@@ -494,7 +525,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         for (location in locationList) {
             val locTime = location.time
             val hr = getNearestSensorValue(heartRateData, locTime, 0)
-            val cad = getNearestSensorValue(cadenceData, locTime, 0)
+            val cad = getNearestSensorValueDouble(cadenceData, locTime, 0.0)
             // pace는 paceList의 마지막 값(또는 0.0)으로 처리 (필요시 별도 센서 데이터 저장 방식 적용)
             val pace = if (paceList.isNotEmpty()) paceList.last() else 0.0
 
@@ -794,24 +825,49 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             }
 
             Sensor.TYPE_STEP_DETECTOR -> {
-                // STEP_DETECTOR는 한 걸음당 1 이벤트를 발생시키므로,
-                // 만약 STEP_COUNTER 센서가 없다면 대체로 사용 가능
-                stepCount += 1
-                Log.d("StepDetector", "Step detected, total steps: $stepCount")
+
+                val currentTime = System.currentTimeMillis()
+                val stepsDelta = event.values[0].toInt() // 항상 1로 반환됨
+
+                if (lastStepTimestamp > 0) {
+                    val timeDelta = currentTime - lastStepTimestamp
+                    totalElapsedTime += timeDelta // 총 경과 시간 업데이트
+                    updateCadence(stepsDelta, timeDelta)
+                }
+
+                stepCount += stepsDelta // 누적 걸음 수 업데이트
+                lastStepTimestamp = currentTime // 마지막 걸음 시간 갱신
+
+                Log.d("StepCounter", "Changed Total steps: $stepCount")
             }
         }
     }
 
+    // 케이던스 업데이트: 분당 걸음수 = (걸음 증가량) / (시간 간격(분))
+    private fun updateCadence(stepsDelta: Int, timeDelta: Long) {
+        if (timeDelta > 0) {
+            // 분 단위로 변환하여 케이던스 계산
+            val cadence = (stepsDelta.toFloat() / (timeDelta / 60000f)).let {
+                (it * 10).roundToInt() / 10.0 // 소수점 첫째 자리까지 반올림
+            }
+            cadenceData.add(Pair(System.currentTimeMillis(), cadence))
+            Log.d("StepCounter", "Current cadence: $cadence steps/min")
+        }
+    }
 
-
+    // 평균 케이던스 계산
     private fun calculateAverageCadence(): Double {
-        return if (elapsedTime > 0L) {
-            (stepCount.toFloat() / (elapsedTime / 60000f)).toDouble()
+        return if (stepCount > 0 && totalElapsedTime > 0) {
+            // 총 걸음 수와 총 경과 시간을 기반으로 평균 케이던스 계산
+            val averageCadence = stepCount / (totalElapsedTime / 60000f)
+            (averageCadence * 10).roundToInt() / 10.0 // 소수점 첫째 자리까지 반올림
         } else {
             0.0
         }
     }
 
+    // 총 경과 시간 추적 변수
+    private var totalElapsedTime: Long = 0L
 
     // 알람 설정 (센서 업데이트용)
     private fun scheduleSensorUpdates() {
