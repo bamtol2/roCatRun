@@ -370,7 +370,6 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                     }
                 }
 
-                sendGameResult(cleared)
             }
         }
 
@@ -380,20 +379,20 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
             Log.d("Socket", "On - gameOver")
             isGameOver = true
 
-//            // 워치에 게임 종료 메세지 보내기
-//            val putDataMapRequest = PutDataMapRequest.create("/game_end")
-//            putDataMapRequest.dataMap.apply {
-//                putBoolean("gameEnd", true)
-//                putLong("timestamp", System.currentTimeMillis())
-//            }
-//            val request = putDataMapRequest.asPutDataRequest().setUrgent()
-//            dataClient.putDataItem(request)
-//                .addOnSuccessListener { _ ->
-//                    Log.d("Wear", "게임 종료")
-//                }
-//                .addOnFailureListener { exception ->
-//                    Log.e("Wear", "게임 종료 실패", exception)
-//                }
+            // 워치에 게임 종료 메세지 보내기
+            val putDataMapRequest = PutDataMapRequest.create("/game_end")
+            putDataMapRequest.dataMap.apply {
+                putBoolean("gameEnd", true)
+                putLong("timestamp", System.currentTimeMillis())
+            }
+            val request = putDataMapRequest.asPutDataRequest().setUrgent()
+            dataClient.putDataItem(request)
+                .addOnSuccessListener { _ ->
+                    Log.d("Wear", "게임 종료")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Wear", "게임 종료 실패", exception)
+                }
         }
 
         // 웹소켓 - 레벨업 이벤트 수신 -> 레벨업 모달 띄우고 -> 결과 모달 띄우기
@@ -485,24 +484,6 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 }
             }
         }
-    }
-
-    private fun sendGameResult(cleared: Boolean) {
-        // 워치에 게임 종료 & 결과 메세지 보내기
-        val putDataMapRequest = PutDataMapRequest.create("/game_end")
-        putDataMapRequest.dataMap.apply {
-            putBoolean("gameEnd", true)
-            putBoolean("cleared", true)
-            putLong("timestamp", System.currentTimeMillis())
-        }
-        val request = putDataMapRequest.asPutDataRequest().setUrgent()
-        dataClient.putDataItem(request)
-            .addOnSuccessListener { _ ->
-                Log.d("Wear", "게임 종료")
-            }
-            .addOnFailureListener { exception ->
-                Log.e("Wear", "게임 종료 실패", exception)
-            }
     }
 
     // 워치에서 실시간 러닝데이터 받아오는 함수
