@@ -266,7 +266,10 @@ fun PpobgiDialog(
                                         .align(Alignment.TopStart)  // 왼쪽 중앙 정렬
                                         .padding(start = 16.dp, top = 16.dp)  // 패딩 조정
                                         .size(24.dp)
-                                        .clickable { onDismiss() }
+                                        .clickable {
+                                            val intent = Intent(context, HomeActivity::class.java)
+                                            context.startActivity(intent)
+                                        }
                                 )
                                 // 내용을 담을 Column
                                 Column(
@@ -324,6 +327,7 @@ fun PpobgiDialog(
                                 error?.let {
                                     // 코인 수 모자라면 모달 띄워주어야 함
                                     Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                    context.startActivity(Intent(context, HomeActivity::class.java))
                                 }
                             }
 

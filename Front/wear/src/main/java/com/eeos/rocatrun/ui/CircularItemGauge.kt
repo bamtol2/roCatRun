@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 fun CircularItemGauge(
     itemProgress: Float,
     bossProgress: Float,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFeverTime : Boolean
 ) {
     Box(
         modifier = modifier,
@@ -38,10 +39,12 @@ fun CircularItemGauge(
                 )
             )
 
+            val itemGaugeColor = if (isFeverTime) Color(0XFFF3F123) else Color.Cyan
+
             // 아이템 게이지
             val itemInset = (bossStrokeWidth / 2) + (gapBetweenGauges / 2)
             drawArc(
-                color = Color.Cyan,
+                color = itemGaugeColor,
                 startAngle = -90f,
                 sweepAngle = 360f * itemProgress,
                 useCenter = false,

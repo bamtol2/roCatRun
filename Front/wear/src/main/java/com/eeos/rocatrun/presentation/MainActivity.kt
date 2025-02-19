@@ -51,6 +51,10 @@ class MainActivity : ComponentActivity() {
         requestPermissions()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        finishAndRemoveTask()
+    }
     // 모바일 앱 실행 요청 함수
     fun startMobileApp() {
         val messageClient: MessageClient = Wearable.getMessageClient(this)
@@ -83,7 +87,8 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.BODY_SENSORS,
             Manifest.permission.ACTIVITY_RECOGNITION,
             Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_SCAN
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.POST_NOTIFICATIONS,
         )
         if (permissions.any {
                 ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
@@ -96,6 +101,7 @@ class MainActivity : ComponentActivity() {
 fun SplashScreen() {
     val context = LocalContext.current
     val mainActivity = context as MainActivity  // MainActivity의 메서드 호출을 위해 캐스팅
+    val versionText = context.getString(R.string.app_version)
 
     Column(
         modifier = Modifier
@@ -163,6 +169,7 @@ fun SplashScreen() {
                 )
             }
 
+
             // 게임 시작 버튼
 //            Button(
 //                onClick = {
@@ -195,6 +202,16 @@ fun SplashScreen() {
 //                )
 //            }
         }
+        Spacer(modifier = Modifier.height(10.dp))
 
+        // 버전 정보 표시
+        Text(
+            text = versionText,
+            style = TextStyle(
+                fontSize = 10.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        )
     }
 }

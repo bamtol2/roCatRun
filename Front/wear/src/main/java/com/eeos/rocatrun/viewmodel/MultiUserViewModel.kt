@@ -60,6 +60,12 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private val _playerLeftMessage = MutableStateFlow<String?>(null)
     val playerLeftMessage: StateFlow<String?> get() = _playerLeftMessage
 
+    private var lastPlayerDataReceivedTime = System.currentTimeMillis()
+    private var firstPlayerDataReceivedTime = System.currentTimeMillis()
+
+    // 네트워크 에러 이벤트 플로우
+    private val _networkErrorEventFlow = MutableSharedFlow<Boolean>()
+    val networkErrorEventFlow: SharedFlow<Boolean> get() = _networkErrorEventFlow
 
     private var playersData by mutableStateOf<PlayersData?>(null)
     private var bossHealthData by mutableStateOf<BossHealthData?>(null)
@@ -68,6 +74,9 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
     private var firstBossHealthData by mutableStateOf<FirstBossHealthData?>(null)
     private var gameEndData by mutableStateOf<GameEndData?>(null)
 
+    private var firstDataReceived = false
+
+    private var startDataReceived = false
 
 
     // 데이터 클래스 정의
@@ -144,6 +153,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.e("MultiUserViewModel", "캐시된 데이터 조회 실패", exception)
             }
         }
+
     }
 
     // ViewModel이 소멸될 때 호출되는 메서드
@@ -182,7 +192,21 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
         _playersDataMap.value = _playersDataMap.value.toMutableMap().apply {
             put(nickname, newData)
         }
+        lastPlayerDataReceivedTime = System.currentTimeMillis()
         Log.d("MultiUserViewModel", "실시간 플레이어 데이터 업데이트: $newData")
+        if (!firstDataReceived) {
+            firstDataReceived = true
+            viewModelScope.launch {
+                while (true) {
+                    delay(2000) // 1초마다 체크
+                    if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 3000) {
+                        _networkErrorEventFlow.emit(true)
+                        Log.d("MultiUserViewModel", "네트워크 연결 끊김 감지, 네트워크 에러 이벤트 발행")
+                        break
+                    }
+                }
+            }
+        }
     }
 
     // 실시간 보스 체력 데이터 (Repository에 업데이트)
@@ -231,6 +255,21 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.d("MultiUserViewModel", "플레이어 목록 업데이트: $players")
             } else {
                 Log.w("MultiUserViewModel", "playerNicknames 데이터가 null 입니다.")
+            }
+
+            lastPlayerDataReceivedTime = System.currentTimeMillis()
+            if (!startDataReceived) {
+                startDataReceived = true
+                viewModelScope.launch {
+                    while (true) {
+                        delay(1500)
+                        if (System.currentTimeMillis() - lastPlayerDataReceivedTime > 7000) {
+                            _networkErrorEventFlow.emit(true)
+                            Log.d("MultiUserViewModel", "네트워크 연결 끊김 감지, 네트워크 에러 이벤트 발행")
+                            break
+                        }
+                    }
+                }
             }
         }
         Log.d("MultiUserViewModel", "보스 초기 체력 데이터 : $firstBossHealthData")
@@ -344,7 +383,7 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
     // BossHealthRepository의 최대 체력 구독 (최초 값이 0이라면 기본값 10000 사용)
     val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
     val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
-
+    val isFeverTime by gameViewModel.feverTimeActive.collectAsState()
 
     val itemProgress by animateFloatAsState(
         targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
@@ -367,7 +406,9 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
             bossProgress = bossProgress,
             modifier = Modifier
                 .size(200.dp)
-                .align(Alignment.Center)
+                .align(Alignment.Center),
+            isFeverTime
+
         )
 
         // 한 화면에 4줄로 표시 (스크롤 없이)

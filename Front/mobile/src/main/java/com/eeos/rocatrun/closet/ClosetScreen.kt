@@ -48,7 +48,6 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.api.ClosetViewModel
 import com.eeos.rocatrun.closet.api.InventoryItem
 import com.eeos.rocatrun.login.data.TokenStorage
-import com.eeos.rocatrun.profile.ProfileDialog
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.components.StrokedText
 import dev.shreyaspatil.capturable.capturable
@@ -73,7 +72,6 @@ fun ClosetScreen(closetViewModel: ClosetViewModel) {
     val tabs = listOf("전체", "물감", "머리띠", "풍선", "오라")
 
     var showInfoGrade by remember { mutableStateOf(false) }
-
     var showInfoItem by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItem?>(null) }
 

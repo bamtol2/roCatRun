@@ -31,7 +31,7 @@ fun DetailDialog(date: String, details: GameDetails,recordIndex: Int, onDismiss:
     val dateWithoutTime = date.substringBefore("T").replace("-", "/")
     val context = LocalContext.current
     // 로컬 저장소에서 GPX 파일 목록을 가져옴
-    val gpxFiles = remember { GpxFileHandler.getGpxFileList(context) }
+    val gpxFiles = remember { GpxFileHandler.getGpxFileList(context).reversed() }
     // 기록 순서에 맞는 GPX 파일 선택
     val selectedGpxFile = if (recordIndex in gpxFiles.indices) gpxFiles[recordIndex] else null
     Dialog(onDismissRequest = onDismiss) {
@@ -80,7 +80,7 @@ fun DetailDialog(date: String, details: GameDetails,recordIndex: Int, onDismiss:
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatColumn(label = "거리", value = "${roundToFirstDecimal(details.distance)}spm")
+                    StatColumn(label = "거리", value = "${roundToFirstDecimal(details.distance)}km")
                     StatColumn(label = "시간", value = details.runningTime)
                 }
                 Spacer(modifier = Modifier.height(30.dp))
@@ -93,12 +93,16 @@ fun DetailDialog(date: String, details: GameDetails,recordIndex: Int, onDismiss:
                         MapboxGPXViewer(selectedFile = selectedGpxFile)
                     } else {
                         // GPX 파일이 없을 경우 기존 이미지로 대체하거나 에러 메시지 출력
-                        Image(
-                            painter = painterResource(id = R.drawable.stats_img_map),
-                            contentDescription = "Route Map",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "경로가 없습니다.",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(40.dp))

@@ -51,6 +51,7 @@ import com.eeos.rocatrun.service.GamePlayService
 import kotlinx.coroutines.delay
 import com.eeos.rocatrun.ui.components.formatTime
 import com.eeos.rocatrun.ui.components.formatPace
+import com.eeos.rocatrun.ui.components.formatTimeSec
 
 @Composable
 fun MultiWinScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults: List<GamePlay.PlayersResultData?>)
@@ -176,6 +177,7 @@ fun MultiWinScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults:
                             GamePlayService.resetModalState()
                             // 홈화면으로 이동.
                             val intent = Intent(context, HomeActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                             context.startActivity(intent)
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -216,7 +218,7 @@ private fun FirstResultPage(myResult: GamePlay.MyResultData?) {
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 ResultItem("거리", "${myResult?.totalDistance?.let { "%.1f".format(it)}}km")
-                ResultItem("시간", formatTime(myResult?.runningTime ?: 0))
+                ResultItem("시간", formatTimeSec(myResult?.runningTime ?: 0))
             }
             Spacer(modifier = Modifier.height(20.dp))
             Row(
@@ -285,7 +287,7 @@ private fun SecondResultPage(playerResults: List<GamePlay.PlayersResultData?>) {
                 if (player != null) {
                     RankingWinRow(
                         rank = index + 1,
-                        profileImage = player.characterImage, // 기본 이미지 사용
+                        profileImage = player.characterImage,
                         nickname = player.nickname,
                         distance = String.format("%.1fkm", player.totalDistance),
                         reward = "+${player.rewardExp}exp",

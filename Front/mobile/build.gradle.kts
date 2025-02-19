@@ -30,10 +30,14 @@ android {
         applicationId = "com.eeos.rocatrun"
         minSdk = 31
         targetSdk = 34
-        versionCode = 340070102
-        versionName = "0.0.7"
+        versionCode = 340110102
+        versionName = "0.0.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        buildConfig = true // BuildConfig 생성 활성화
     }
 
     buildTypes {

@@ -1,15 +1,21 @@
 package com.eeos.rocatrun.home
 
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.BlurMaskFilter
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -58,8 +64,10 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.closet.CharacterWithItems
 import com.eeos.rocatrun.closet.ClosetActivity
 import com.eeos.rocatrun.closet.api.ClosetViewModel
+import com.eeos.rocatrun.game.AlertScreen
 import com.eeos.rocatrun.game.GameRoom
 import com.eeos.rocatrun.home.api.HomeViewModel
+import com.eeos.rocatrun.intro.IntroActivity
 import com.eeos.rocatrun.login.data.TokenStorage
 import com.eeos.rocatrun.ppobgi.PpobgiDialog
 import com.eeos.rocatrun.profile.ProfileDialog
@@ -69,7 +77,13 @@ import com.eeos.rocatrun.ranking.api.RankingViewModel
 import com.eeos.rocatrun.shop.ShopActivity
 import com.eeos.rocatrun.stats.StatsActivity
 import com.eeos.rocatrun.ui.components.StrokedText
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
 
@@ -77,6 +91,49 @@ import kotlin.random.Random
 fun HomeScreen(homeViewModel: HomeViewModel) {
     val context = LocalContext.current
     val token = TokenStorage.getAccessToken(context)
+
+    // 알림창 상태 관리
+    var showAlert by remember { mutableStateOf(false) }
+    var alertMessage by remember { mutableStateOf("") }
+
+    // 블루투스/워치 연결 확인 함수
+    fun checkBluetoothAndWear() {
+        val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val bluetoothAdapter = bluetoothManager.adapter
+
+        when {
+            bluetoothAdapter == null -> {
+                alertMessage = "이 기기는 블루투스를 지원하지 않는다냥!"
+                showAlert = true
+            }
+            !bluetoothAdapter.isEnabled -> {
+                alertMessage = "블루투스를 켜달라냥!"
+                showAlert = true
+            }
+            else -> {
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                        if (nodes.isNotEmpty()) {
+                            if (nodes.first().isNearby) {
+                                Log.d("WearApp", "노드 : ${nodes.first().isNearby}")
+                                context.startActivity(Intent(context, GameRoom::class.java))
+                            }else{
+                                alertMessage = "워치를 연결 하라냥!"
+                                showAlert = true
+                            }
+                        } else {
+                            alertMessage = "워치를 연결 하라냥!"
+                            showAlert = true
+                        }
+                    } catch (e: Exception) {
+                        alertMessage = "워치를 확인할 수 없다냥!"
+                        showAlert = true
+                    }
+                }
+            }
+        }
+    }
 
     // ViewModel에서 가져온 데이터
     val homeInfoData = homeViewModel.homeData.observeAsState()
@@ -114,22 +171,61 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     val textList = listOf(
         "왜 건드리냥?",
         "간식 줄거냥?",
+        "달려서\n화성 갈끄니까~",
         "놀아주고 싶냥?",
         "쓰다듬지 마냥!",
         "피곤하다냥~",
         "잠온다냥...",
         "배고프다냥!",
         "언제 달리냥??",
+        "흥!",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "잠온다냥...",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "규리다냥",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "잠온다냥...",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "잠온다냥...",
+        "먀오~",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "왜 건드리냥?",
+        "간식 줄거냥?",
+        "놀아주고 싶냥?",
+        "쓰다듬지 마냥!",
+        "피곤하다냥~",
+        "이 편지는 싸피에서\n최초로 시작되어\n일년에 한 바퀴\n돌면서 받는\n사람에게 행운을\n주었고...",
+        "잠온다냥...",
+        "배고프다냥!",
+        "언제 달리냥??",
+        "흥!",
     )
 
     // 랜덤 텍스트 생성 및 위치 업데이트
-    LaunchedEffect(showText) {
+    LaunchedEffect(key1=showText) {
         if (showText) {
+            randomText = textList[Random.nextInt(textList.size)]
             randomX = Random.nextFloat() * 200f - 30f
             randomY = Random.nextFloat() * 200f - 30f
-            randomText = textList[Random.nextInt(textList.size)]
             delay(1000)
             showText = false
+            randomText=""
         }
     }
 
@@ -160,20 +256,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 modifier = Modifier
                     .align(Alignment.TopStart)
             ) {
-                // 왼쪽 상단 버튼들 (랭킹, 뽑기)
-                Button(
-                    onClick = { showRanking = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_ranking),
-                        contentDescription = "Ranking Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
+                // 왼쪽 상단 버튼들 (뽑기, 옷장, 상점)
                 Button(
                     onClick = { showPpobgi = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -183,52 +266,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     Image(
                         painter = painterResource(id = R.drawable.home_icon_ppobgi),
                         contentDescription = "Ppobgi Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { context.startActivity(Intent(context, ShopActivity::class.java)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_shop),
-                        contentDescription = "Shop Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-            }
-
-
-            // 오른쪽 상단 세로 버튼들 (프로필, 통계, 옷장)
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd),
-            ) {
-                Button(
-                    onClick = { showProfile = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_profile),
-                        contentDescription = "Profile Icon",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { context.startActivity(Intent(context, StatsActivity::class.java)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(0.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.home_icon_stats),
-                        contentDescription = "Statistics Icon",
                         modifier = Modifier.size(60.dp)
                     )
                 }
@@ -252,6 +289,65 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         modifier = Modifier.size(60.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { context.startActivity(Intent(context, ShopActivity::class.java)) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_shop),
+                        contentDescription = "Shop Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            }
+
+
+            // 오른쪽 상단 세로 버튼들 (프로필, 랭킹, 통계)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd),
+            ) {
+                Button(
+                    onClick = { showProfile = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_profile),
+                        contentDescription = "Profile Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { showRanking = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_ranking),
+                        contentDescription = "Ranking Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { context.startActivity(Intent(context, StatsActivity::class.java)) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.home_icon_stats),
+                        contentDescription = "Statistics Icon",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
             }
         }
 
@@ -267,7 +363,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     text = characterData.nickname,
                     fontSize = 35,
                     strokeColor = Color(0xFF701F3D),
-                    strokeWidth = 25f
+                    strokeWidth = 25f,
+                    modifier = Modifier.clickable {
+                        context.startActivity(Intent(context, IntroActivity::class.java))
+                    }
                 )
 
                 // 캐릭터 이미지
@@ -306,7 +405,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 // 정보
                 Box(
@@ -380,11 +479,13 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // START 버튼
                 Button(
-                    onClick = { context.startActivity(Intent(context, GameRoom::class.java)) },
+                    onClick = {
+                        checkBluetoothAndWear()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     shape = RoundedCornerShape(0.dp),
                     contentPadding = PaddingValues(0.dp),
@@ -412,8 +513,18 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         )
                     }
                 }
+
+                // 알림창 표시
+                if (showAlert) {
+                    AlertScreen(
+                        message = alertMessage,
+                        onDismissRequest = { showAlert = false }
+                    )
+                }
             }
         }
+
+        VersionInfo()
 
         // 랭킹 모달 표시
         if (showRanking) {
@@ -434,9 +545,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 }
             )
         }
-
     }
-
 }
 
 
@@ -538,5 +647,26 @@ fun ReusableInfoBox(
                 )
             }
         }
+    }
+}
+
+//버전 정보 표시
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+fun VersionInfo() {
+    val context = LocalContext.current
+    val versionText = context.getString(R.string.app_version)
+
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            text = versionText,
+            color = Color.White,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 15.dp)
+        )
     }
 }

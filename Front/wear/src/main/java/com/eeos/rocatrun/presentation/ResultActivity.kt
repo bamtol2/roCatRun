@@ -33,6 +33,7 @@ import com.eeos.rocatrun.R
 //import android.widget.Toast
 
 class ResultActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -40,32 +41,11 @@ class ResultActivity : ComponentActivity() {
             SplashScreen2()
         }
     }
+    override fun onDestroy() {
+        super.onDestroy()
+        finishAndRemoveTask()
+    }
 
-    // 모바일 앱 실행 요청 함수(모바일 게임 종료 화면으로 이동하게)
-//    fun goMobileApp() {
-//        val messageClient: MessageClient = Wearable.getMessageClient(this)
-//        val path = "/start_mobile_app"
-//        val messageData = "Start Game".toByteArray()
-//
-//        Wearable.getNodeClient(this).connectedNodes.addOnSuccessListener { nodes ->
-//            if (nodes.isNotEmpty()) {
-//                val nodeId = nodes.first().id
-//                Log.d("WearApp", "연결된 노드: ${nodes.first().displayName}")
-//
-//                messageClient.sendMessage(nodeId, path, messageData).apply {
-//                    addOnSuccessListener {
-//                        Toast.makeText(this@ResultActivity, "모바일 앱 시작 요청 전송 완료", Toast.LENGTH_SHORT).show()
-//                    }
-//                    addOnFailureListener {
-//                        Toast.makeText(this@ResultActivity, "모바일 앱 전송 실패: ${it.message}", Toast.LENGTH_SHORT).show()
-//                    }
-//                }
-//            } else {
-//                Log.d("WearApp", "연결된 노드가 없습니다.")
-//                Toast.makeText(this, "연결된 디바이스가 없습니다.", Toast.LENGTH_SHORT).show()
-//            }
-//        }
-//    }
 }
 @Composable
 fun SplashScreen2() {

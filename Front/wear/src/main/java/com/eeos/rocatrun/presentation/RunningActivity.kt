@@ -122,7 +122,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var heartRateSum = 0
     private var heartRateCount = 0
     private var averageCadence = calculateAverageCadence()
-
     // 걸음 센서 관련 변수
     private var initialStepCount: Int = 0
     private var lastStepCount: Int = 0
@@ -246,6 +245,26 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                 }
             }
         }
+
+        // 네트워크 에러 이벤트 구독
+        lifecycleScope.launch {
+            multiUserViewModel.networkErrorEventFlow.collect { networkError ->
+                if (networkError) {
+                    stopTrackingAndShowStats()
+                    navigateToNetworkErrorScreen(this@RunningActivity)
+                    Log.d("RunningActivity", "네트워크 에러 이벤트 수신, 네트워크 에러 화면으로 전환")
+                }
+            }
+        }
+
+    }
+
+    // 네트워크 에러 화면으로 전환하는 함수
+    private fun navigateToNetworkErrorScreen(context: Context) {
+        val intent = Intent(context, NetworkErrorActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        context.startActivity(intent)
     }
 
 
@@ -293,6 +312,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         super.onDestroy()
         sensorManagerHelper.unregisterSensors()
         armGestureDetector.stop()
+        finishAndRemoveTask()
     }
 
 
@@ -317,14 +337,17 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
 
                 segmentDistance += distanceMoved
-                // 현재 거리 진행률 계산 (200m)
-                if (segmentDistance >= 0.2) {
+
+                val multiplier = if (gameViewModel.feverTimeActive.value) 3 else 1
+                val threshold = 0.1 / multiplier
+                // 현재 거리 진행률 계산
+                if (segmentDistance >= threshold) {
                     // 100m 이상 이동
                     gameViewModel.handleGaugeFull(this)
-                    segmentDistance -= 0.2
+                    segmentDistance -= threshold
                 } else {
                     // 현재 거리 비율(0~100) 계산
-                    val gaugePercentage = ((segmentDistance / 0.1) * 100).toInt()
+                    val gaugePercentage = ((segmentDistance / threshold) * 100).toInt()
                     gameViewModel.setItemGauge(gaugePercentage)
                 }
             }
@@ -385,6 +408,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private fun stopTracking() {
         isRunning = false
         handler.removeCallbacks(updateRunnable)
+        stopService(Intent(this, LocationForegroundService::class.java))
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
         val totalItemUsage = gameViewModel.totalItemUsageCount.value
@@ -402,6 +426,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         showStats = true
         sendFinalResultToPhone(totalItemUsage)
         createAndSendGpxFile()
+        finishAndRemoveTask()
 
 
     }
@@ -416,7 +441,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             dataMap.putInt("totalItemUsage", totalItemUsage)
             dataMap.putDouble("averageCadence", averageCadence)
         }.asPutDataRequest().setUrgent()
-
+        Log.d("RunningActivity", "케이던스: $averageCadence, $stepCount")
         Log.d("Final Data 전송", "총 아이템 사용 횟수: $totalItemUsage")
         Wearable.getDataClient(this).putDataItem(dataMapRequest)
             .addOnSuccessListener { Log.d("RunningActivity", "Final result data sent successfully") }
@@ -539,6 +564,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
         val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
         val maxGaugeValue = 100
+        val isFeverTime by gameViewModel.feverTimeActive.collectAsState()
 
         val itemProgress by animateFloatAsState(
             targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
@@ -556,7 +582,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             contentAlignment = Alignment.Center
         ) {
             val spacing = maxWidth * 0.04f
-            CircularItemGauge(itemProgress = itemProgress, bossProgress = bossProgress, Modifier.size(200.dp))
+            CircularItemGauge(itemProgress = itemProgress, bossProgress = bossProgress, Modifier.size(200.dp), isFeverTime)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -666,15 +692,18 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     private fun stopTrackingAndShowStats() {
 //        showStats = true
+        gameViewModel.stopFeverTimeEffects()
         isRunning = false
         resetTrackingData()
+        stopService(Intent(this, LocationForegroundService::class.java))
         finish()
+        finishAndRemoveTask()
         handler.removeCallbacks(updateRunnable)
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
         // 센서 해제
-        sensorManagerHelper.unregisterSensors()  // ✅ 센서 관리 헬퍼에서 해제
-        sensorManager.unregisterListener(this)  // ✅ 직접 등록한 센서도 해제
+        sensorManagerHelper.unregisterSensors()
+        sensorManager.unregisterListener(this)
 
         Log.d("RunningActivity", "Tracking stopped, sensors unregistered")
     }

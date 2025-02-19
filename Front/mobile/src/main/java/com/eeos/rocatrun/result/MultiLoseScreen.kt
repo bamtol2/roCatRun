@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.home.HomeActivity
@@ -51,6 +53,7 @@ import kotlinx.coroutines.delay
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.components.formatTime
 import com.eeos.rocatrun.ui.components.formatPace
+import com.eeos.rocatrun.ui.components.formatTimeSec
 
 @Composable
 fun MultiLoseScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults: List<GamePlay.PlayersResultData?>)
@@ -174,7 +177,8 @@ fun MultiLoseScreen(myResult: GamePlay.MyResultData?, myRank: Int, playerResults
                             GamePlayService.resetModalState()
                             // 홈화면으로 이동.
                             val intent = Intent(context, HomeActivity::class.java)
-                                context.startActivity(intent)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            context.startActivity(intent)
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
@@ -216,7 +220,7 @@ private fun FirstResultPage(myResult: GamePlay.MyResultData?) {
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 ResultItem("거리", "${myResult?.totalDistance?.let { "%.1f".format(it) }}km")
-                ResultItem("시간", formatTime(myResult?.runningTime ?: 0))
+                ResultItem("시간", formatTimeSec(myResult?.runningTime ?: 0))
             }
             Spacer(modifier = Modifier.height(20.dp))
             Row(
@@ -331,7 +335,6 @@ private fun RankingLoseRow(
     totalParticipants: Int
 ) {
     val context = LocalContext.current
-    val imageResId = getDrawableResourceId(context, profileImage)
 
     // 닉네임을 5자 이상일 때만 4자로 제한
     val displayNickname = if (nickname.length >= 5) {
@@ -368,10 +371,15 @@ private fun RankingLoseRow(
 
 
                 Spacer(modifier = Modifier.width(5.dp))
-                Image(
-                    painter = painterResource(id = imageResId),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(profileImage)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "user profile image",
+                    modifier = Modifier.size(24.dp),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(id = R.drawable.game_img_losecat) // 에러시 기본 이미지
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -401,15 +409,4 @@ private fun RankingLoseRow(
             )
         }
     }
-}
-
-// 이미지 리소스 ID를 가져오는 함수
-private fun getDrawableResourceId(context: Context, filename: String): Int {
-    val resourceId = context.resources.getIdentifier(
-        filename.substringBeforeLast("."), // 확장자 제거
-        "drawable",
-        context.packageName
-    )
-    // 리소스를 찾지 못하면 기본 이미지 반환
-    return if (resourceId != 0) resourceId else R.drawable.game_img_wincat
 }

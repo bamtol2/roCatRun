@@ -22,6 +22,7 @@ import com.eeos.rocatrun.R
 import com.eeos.rocatrun.game.GamePlay
 import com.eeos.rocatrun.game.GamePlay.ResultData
 import com.eeos.rocatrun.game.GamePlay.RunningData
+import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.service.GamePlayService.Companion.gpxFileReceived
 import com.eeos.rocatrun.service.GamePlayService.Companion.runningData
 import com.eeos.rocatrun.service.MessageHandlerService.Companion.NOTIFICATION_ID
@@ -33,14 +34,20 @@ import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import com.mapbox.maps.extension.style.expressions.dsl.generated.distance
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.math.log
 
 
 class GamePlayService : Service(), DataClient.OnDataChangedListener {
@@ -71,6 +78,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         // 결과 모달 리셋 함수
         fun resetModalState() {
             _modalState.postValue(ModalState.None)
+            pendingGameResult = null
         }
 
         // 게임 결과 저장 변수
@@ -98,6 +106,12 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
     // 게임 오버 상태를 관리하는 변수 추가
     private var isGameOver by mutableStateOf(false)
 
+    // 마지막 데이터 수신 시간을 저장할 변수
+    private var lastDataReceivedTime = System.currentTimeMillis()
+
+    // 타임아웃 체크를 위한 코루틴 Job
+    private lateinit var timeoutCheckJob: Job
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -114,8 +128,49 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         dataClient = Wearable.getDataClient(this)
         dataClient.addListener(this)  // 리스너 등록
 
+        // 타임아웃 체크 코루틴 시작
+        startTimeoutCheck()
+
         // Socket 리스너 설정
         setupSocketListeners()
+    }
+
+    // 시간 계산 함수
+    private fun startTimeoutCheck() {
+        timeoutCheckJob = CoroutineScope(Dispatchers.Main).launch {
+            
+            // 5초 딜레이
+            delay(5000)
+            
+            // 초기 시간 설정
+            lastDataReceivedTime = System.currentTimeMillis()
+
+            while (isActive) {
+                val currentTime = System.currentTimeMillis()
+                val timeDifference = currentTime - lastDataReceivedTime
+
+                // 7초 이상(5초 카운트 포함) 데이터가 없으면 홈으로 이동
+                if (timeDifference > 7000) {
+                    Log.d("Wear", "데이터 수신 타임아웃: $timeDifference ms")
+                    navigateToHome()
+                    break
+                }
+
+                delay(1000) // 1초마다 체크
+            }
+        }
+    }
+
+    // 홈으로 이동하는 함수
+    private fun navigateToHome() {
+        // 홈으로 이동하는 Intent 생성
+        val intent = Intent(this, HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        startActivity(intent)
+
+        // 서비스 종료
+        stopSelf()
     }
 
     // 웹소켓 수신
@@ -139,6 +194,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                     putString("nickName", nickName)
                     putDouble("distance", returnedDistance)
                     putInt("itemUseCount", itemUseCount)
+                    putLong("timestamp", System.currentTimeMillis())
                 }
                 val request = putDataMapRequest.asPutDataRequest().setUrgent()
                 dataClient.putDataItem(request)
@@ -352,7 +408,10 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 Log.d("Socket", "On - levelUp: $oldLevel -> $newLevel")
 
                 // 현재 모달 상태가 None이 아니면 해당 상태를 pendingGameResult로 저장
-                if (_modalState.value != ModalState.None && _modalState.value !is ModalState.LevelUp) {
+//                if (_modalState.value != ModalState.None && _modalState.value !is ModalState.LevelUp) {
+//                    pendingGameResult = _modalState.value
+//                }
+                if (_modalState.value != ModalState.None) {
                     pendingGameResult = _modalState.value
                 }
 
@@ -387,7 +446,8 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
             }
         }
     }
-
+    
+    // 서비스 종료시
     override fun onDestroy() {
         super.onDestroy()
         if (wakeLock.isHeld) {
@@ -403,6 +463,12 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         SocketHandler.mSocket.off("feverTimeStarted")
         SocketHandler.mSocket.off("feverTimeEnded")
         SocketHandler.mSocket.off("levelUp")
+        SocketHandler.mSocket.off("playerDisconnected")
+
+        // 타임아웃 체크 코루틴 취소
+        if (::timeoutCheckJob.isInitialized) {
+            timeoutCheckJob.cancel()
+        }
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -427,6 +493,9 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
             return  // 여기서 바로 리턴
         }
 
+        // 데이터 수신 시간 업데이트
+        lastDataReceivedTime = System.currentTimeMillis()
+
         DataMapItem.fromDataItem(dataItem).dataMap.apply {
             _runningData.postValue(RunningData(  // LiveData 업데이트로 변경
                 distance = getDouble("distance"),
@@ -436,12 +505,19 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
 
         // 웹소켓으로 전송
         _runningData.value?.let { data ->  // value로 접근하도록 수정
+            Log.d("Wear", "processRunningData - distance: ${data.distance} time: ${data.time}")
             updateRunDataSocket(data.distance)
         }
     }
 
     // 워치에서 게임 결과 받아오는 함수
     private fun processResultData(dataItem: DataItem) {
+
+        // 타임아웃 체크 코루틴 취소
+        if (::timeoutCheckJob.isInitialized) {
+            timeoutCheckJob.cancel()
+        }
+
         val resultData = DataMapItem.fromDataItem(dataItem).dataMap.run {
             ResultData(
                 distance = getDouble("distance"),
@@ -544,7 +620,7 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
         cadenceAvg: Double
     ){
         val runningResultJson = JSONObject().apply {
-            put("runningTimeSec", runningTime)
+            put("runningTimeMillis", runningTime)
             put("totalDistance", totalDistance)
             put("paceAvg", paceAvg)
             put("heartRateAvg", heartRateAvg)
