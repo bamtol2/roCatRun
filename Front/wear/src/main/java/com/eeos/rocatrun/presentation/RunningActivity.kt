@@ -122,7 +122,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     private var heartRateSum = 0
     private var heartRateCount = 0
     private var averageCadence = calculateAverageCadence()
-
     // 걸음 센서 관련 변수
     private var initialStepCount: Int = 0
     private var lastStepCount: Int = 0
@@ -338,14 +337,17 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
 
                 segmentDistance += distanceMoved
+
+                val multiplier = if (gameViewModel.feverTimeActive.value) 3 else 1
+                val threshold = 0.1 / multiplier
                 // 현재 거리 진행률 계산
-                if (segmentDistance >= 0.1) {
+                if (segmentDistance >= threshold) {
                     // 100m 이상 이동
                     gameViewModel.handleGaugeFull(this)
-                    segmentDistance -= 0.1
+                    segmentDistance -= threshold
                 } else {
                     // 현재 거리 비율(0~100) 계산
-                    val gaugePercentage = ((segmentDistance / 0.1) * 100).toInt()
+                    val gaugePercentage = ((segmentDistance / threshold) * 100).toInt()
                     gameViewModel.setItemGauge(gaugePercentage)
                 }
             }
@@ -562,6 +564,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
         val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
         val maxGaugeValue = 100
+        val isFeverTime by gameViewModel.feverTimeActive.collectAsState()
 
         val itemProgress by animateFloatAsState(
             targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
@@ -579,7 +582,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             contentAlignment = Alignment.Center
         ) {
             val spacing = maxWidth * 0.04f
-            CircularItemGauge(itemProgress = itemProgress, bossProgress = bossProgress, Modifier.size(200.dp))
+            CircularItemGauge(itemProgress = itemProgress, bossProgress = bossProgress, Modifier.size(200.dp), isFeverTime)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(

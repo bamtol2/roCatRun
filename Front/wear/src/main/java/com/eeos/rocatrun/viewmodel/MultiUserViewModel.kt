@@ -383,7 +383,7 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
     // BossHealthRepository의 최대 체력 구독 (최초 값이 0이라면 기본값 10000 사용)
     val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
     val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
-
+    val isFeverTime by gameViewModel.feverTimeActive.collectAsState()
 
     val itemProgress by animateFloatAsState(
         targetValue = itemGaugeValue.toFloat() / maxGaugeValue,
@@ -406,7 +406,9 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
             bossProgress = bossProgress,
             modifier = Modifier
                 .size(200.dp)
-                .align(Alignment.Center)
+                .align(Alignment.Center),
+            isFeverTime
+
         )
 
         // 한 화면에 4줄로 표시 (스크롤 없이)
