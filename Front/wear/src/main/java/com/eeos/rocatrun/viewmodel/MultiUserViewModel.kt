@@ -43,6 +43,8 @@ import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import java.util.*
 import android.speech.tts.TextToSpeech
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.zIndex
 
 // ViewModel 정의
 class MultiUserViewModel(application: Application) : AndroidViewModel(application), DataClient.OnDataChangedListener {
@@ -309,35 +311,35 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
 
 }
 
-
-
 // 사용자 정보를 표시하는 카드 컴포저블
 @Composable
 fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserViewModel.PlayersData) {
     Column(
         modifier = Modifier
-            .width(110.dp)
-            .height(35.dp)
+            .width(140.dp)
+            .height(60.dp)
             .background(Color(0xFF1C1C1C), shape = RoundedCornerShape(16.dp))
-            .padding(4.dp)
+            .padding(8.dp)
 
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
                 text = player.nickname,
                 color = Color.White,
-                fontSize = 12.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
             )
             Text(
                 text = " ${"%.2f".format(realTimeData.distance)}km",
                 color = Color.White,
-                fontSize = 12.sp,
+                fontSize = 14.sp,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
             )
         }
@@ -352,13 +354,13 @@ fun UserInfoCard(player: MultiUserViewModel.PlayerData, realTimeData: MultiUserV
                 painter = painterResource(id = R.drawable.wear_icon_fish),
                 contentDescription = "Item Icon",
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(35.dp)
             )
             Text(
                 text = "x ${realTimeData.itemCount}",
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
-                fontSize = 14.sp
+                fontSize = 16.sp
             )
 
         }
@@ -372,8 +374,6 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
     // 플레이어들 데이터
     val playerList by viewModel.playerList.collectAsState()
     val playersDataMap by viewModel.playersDataMap.collectAsState()
-
-
 
     // GameViewModel에서 가져온 게이지 값
     val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
@@ -394,44 +394,49 @@ fun MultiUserScreen(viewModel: MultiUserViewModel, gameViewModel: GameViewModel)
         animationSpec = tween(durationMillis = 500)
     )
 
+    // 표시할 플레이어 리스트를 미리 준비
+    val displayPlayers = playerList.take(4)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // 중앙에 원형 게이지 표시
+        // 스크롤로 최대 4개 보이게 함
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .height(180.dp)  // 스크롤 영역 높이 제한
+                .align(Alignment.TopCenter)
+                .offset(y = 15.dp)
+                .zIndex(0f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)  // 카드 간격
+        )  {
+            items(displayPlayers.size) { index ->
+                val player = displayPlayers[index]  // index로 실제 player 객체 가져오기
+                val realTimeData = playersDataMap[player.nickname]
+                if (realTimeData != null) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        UserInfoCard(player, realTimeData)
+                    }
+                }
+            }
+        }
+        // 중앙에 원형 게이지 표시 - 제일 위로 보이게 설정
         CircularItemGauge(
             itemProgress = itemProgress,
             bossProgress = bossProgress,
             modifier = Modifier
                 .size(200.dp)
-                .align(Alignment.Center),
+                .align(Alignment.Center)
+                .zIndex(1f),
             isFeverTime
 
         )
-
-        // 한 화면에 4줄로 표시 (스크롤 없이)
-        // FlowRow로 유저 카드를 자동 줄바꿈 배치
-        FlowRow(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp) // 카드 주위 여백
-                .align(Alignment.TopCenter)
-                .offset(y = 20.dp),
-            mainAxisSpacing = 4.dp,  // 가로 방향 아이템 간격
-            crossAxisSpacing = 4.dp, // 세로 방향 아이템 간격
-             mainAxisAlignment = FlowMainAxisAlignment.Center,  // 가로 정렬(옵션)
-             crossAxisAlignment = FlowCrossAxisAlignment.Center // 세로 정렬(옵션)
-        ) {
-            // playerList(닉네임 목록)에서 최대 4명만 표시
-            playerList.take(4).forEach { player ->
-                val realTimeData = playersDataMap[player.nickname]
-                Log.d("UI", "player.nickname=${player.nickname}, realTimeData=$realTimeData")
-                if (realTimeData != null) {
-                    UserInfoCard(player, realTimeData)
-                }
-            }
-        }
     }
 }
