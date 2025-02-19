@@ -19,6 +19,15 @@ class PpobgiViewModel : ViewModel() {
     private val _remainingCoins = MutableStateFlow<Int?>(null)
     val remainingCoins: StateFlow<Int?> = _remainingCoins
 
+    private val _showCoinShortageDialog = MutableStateFlow(false)
+    val showCoinShortageDialog: StateFlow<Boolean> = _showCoinShortageDialog
+
+    private val _isDrawing = MutableStateFlow(false)
+    val isDrawing: StateFlow<Boolean> = _isDrawing
+
+    private val _showResult = MutableStateFlow(false)
+    val showResult: StateFlow<Boolean> = _showResult
+
     fun drawItem(token: String, drawCount: Int) {
         viewModelScope.launch {
             try {
@@ -26,18 +35,32 @@ class PpobgiViewModel : ViewModel() {
                     if (response.success) {
                         _drawResult.value = response.data.drawnItems.firstOrNull()
                         _remainingCoins.value = response.data.remainingCoins
-
+                        _isDrawing.value = true
                         Log.d("뽑기", "drawItem: ${_drawResult.value} remainingCoins: ${_remainingCoins.value}")
                     } else {
-                        _error.value = "뽑기 응답 에러: ${response.message}"
+                        _showCoinShortageDialog.value = true
+                        Log.d("뽑기", "코인 부족: ${response.message}")
                     }
-                }.onFailure {
-                    _error.value = it.message
+                }.onFailure {exception ->
+                    _error.value = exception.message
+                    Log.e("뽑기", "API 호출 실패: ${exception.message}")
                 }
             } catch (e: Exception) {
                 _error.value = "뽑기 실패: ${e.message}"
+                Log.e("뽑기", "예외 발생: ${e.message}")
             }
         }
+    }
+
+    fun setShowResult(show: Boolean) {
+        _showResult.value = show
+        if (show) {
+            _isDrawing.value = false
+        }
+    }
+
+    fun dismissCoinShortageDialog() {
+        _showCoinShortageDialog.value = false
     }
 
     private val ppobgiAPI = RetrofitInstance.getInstance().create(PpobgiAPI::class.java)
@@ -66,5 +89,8 @@ class PpobgiViewModel : ViewModel() {
         _drawResult.value = null
         _error.value = null
         _remainingCoins.value = null
+        _showCoinShortageDialog.value = false
+        _isDrawing.value = false
+        _showResult.value = false
     }
 }

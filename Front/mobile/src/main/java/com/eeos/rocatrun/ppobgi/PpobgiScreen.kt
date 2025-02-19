@@ -62,17 +62,23 @@ import com.eeos.rocatrun.ui.components.StrokedText
 fun PpobgiDialog(
     onDismiss: () -> Unit,
     refreshHomeData: () -> Unit
- ) {
+) {
     val viewModel: PpobgiViewModel = viewModel()
     val drawResult by viewModel.drawResult.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val remainingCoins by viewModel.remainingCoins.collectAsState()
+    val showCoinShortageDialog by viewModel.showCoinShortageDialog.collectAsState()
+    val isDrawing by viewModel.isDrawing.collectAsState()
+    val showResult by viewModel.showResult.collectAsState()
 
-    var isDrawing by remember { mutableStateOf(false) }
-    var showResult by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
     val token = TokenStorage.getAccessToken(context)
+
+    // 상태 전환을 위한 LaunchedEffect
+    LaunchedEffect(drawResult, isDrawing) {
+        if (drawResult != null && isDrawing) {
+            delay(6000) // 애니메이션 시간
+            viewModel.setShowResult(true)
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -84,19 +90,9 @@ fun PpobgiDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.7f)),
+                .background(Color.Black.copy(alpha = 0.9f)),
             contentAlignment = Alignment.Center
         ) {
-
-            // 상태 전환을 위한 LaunchedEffect
-            LaunchedEffect(drawResult) {
-                if (drawResult != null && isDrawing) {
-                    delay(6000) // 애니메이션 시간
-                    isDrawing = false
-                    showResult = true
-                }
-            }
-
             when {
                 isDrawing -> {
                     // 상자 애니메이션
@@ -105,8 +101,7 @@ fun PpobgiDialog(
                             .size(500.dp)
                             .padding(16.dp)
                             .clickable {
-                                isDrawing = false
-                                showResult = true
+                                viewModel.setShowResult(true)
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -122,7 +117,7 @@ fun PpobgiDialog(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.7f))
+                            .background(Color.Black.copy(alpha = 0.9f))
                             .padding(24.dp)
                             .clip(RoundedCornerShape(10.dp))
                     ) {
@@ -206,8 +201,6 @@ fun PpobgiDialog(
                                         text = "한번 더!",
                                         onClick = {
                                             viewModel.clearDrawResult()
-                                            isDrawing = false
-                                            showResult = false
                                         },
                                         buttonHeight = 80,
                                         modifier = Modifier.weight(1f)
@@ -217,8 +210,6 @@ fun PpobgiDialog(
                                         text = "확인",
                                         onClick = {
                                             viewModel.clearDrawResult()
-                                            isDrawing = false
-                                            showResult = false
                                             refreshHomeData()
                                             onDismiss()
                                         },
@@ -256,7 +247,7 @@ fun PpobgiDialog(
                                         color = Color(0xFF9A9FE4),
                                         shape = RoundedCornerShape(10.dp)
                                     )
-                                    .zIndex(1f)  // zIndex 설정
+                                    .zIndex(1f)
                             ) {
                                 // 닫기 아이콘
                                 Image(
@@ -308,7 +299,7 @@ fun PpobgiDialog(
                                                 if (token != null) {
                                                     Log.d("뽑기", "뽑기 시작 - 토큰: ${token.take(10)}...")
                                                     viewModel.drawItem(token, 1)
-                                                    isDrawing = true
+//                                                    isDrawing = true
                                                 } else {
                                                     Log.d("뽑기", "토큰 에러")
                                                 }
@@ -322,13 +313,16 @@ fun PpobgiDialog(
                                 }
                             }
 
-                            // 에러 처리
-                            LaunchedEffect(error) {
-                                error?.let {
-                                    // 코인 수 모자라면 모달 띄워주어야 함
-                                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                                    context.startActivity(Intent(context, HomeActivity::class.java))
-                                }
+                            // 코인 부족 모달
+                            if (showCoinShortageDialog) {
+                                CoinShortageDialog(
+                                    onDismiss = {
+                                        viewModel.dismissCoinShortageDialog()
+                                        val intent = Intent(context, HomeActivity::class.java)
+                                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                        context.startActivity(intent)
+                                    }
+                                )
                             }
 
                             // Rainbow gif
@@ -373,5 +367,53 @@ fun getRarityGifUrl(rarity: String?): Int {
         "EPIC" -> R.drawable.ppobgi_gif_box_p
         "LEGENDARY" -> R.drawable.ppobgi_gif_box_y
         else -> R.drawable.ppobgi_gif_box_r  // 기본값
+    }
+}
+
+@Composable
+fun CoinShortageDialog(
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+
+        Box(
+            modifier = Modifier
+                .width(280.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(color = Color(0xFFF6C0FA))
+                .border(
+                    width = 3.dp,
+                    color = Color(0xFF9A9FE4),
+                    shape = RoundedCornerShape(10.dp)
+                )
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                StrokedText(
+                    text = "코인이 부족하다냥!",
+                    fontSize = 23,
+                    color = Color(0xFF100810),
+                    strokeColor = Color(0xFFD599C5)
+                )
+
+                CustomButton(
+                    text = "확인",
+                    onClick = onDismiss,
+                    buttonHeight = 70,
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                )
+            }
+        }
     }
 }

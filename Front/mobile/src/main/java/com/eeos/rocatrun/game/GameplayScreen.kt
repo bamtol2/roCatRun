@@ -2,6 +2,12 @@ package com.eeos.rocatrun.game
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -21,9 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -42,14 +53,12 @@ import com.eeos.rocatrun.ui.components.GifImage
 
 
 @Composable
-fun GameplayScreen(onShareClick: () -> Unit) {
+fun GameplayScreen(firstBossHealth: Int) {
 
-    val gpxFileReceived by GamePlayService.gpxFileReceived.observeAsState(false)
     val myResult by GamePlayService.myResult.observeAsState()
     val playerResults by GamePlayService.playerResults.observeAsState(emptyList())
     val myRank by GamePlayService.myRank.observeAsState(0)
     val modalState by GamePlayService.modalState.observeAsState(GamePlayService.ModalState.None)
-
     val context = LocalContext.current
 
     LaunchedEffect(modalState) {
@@ -66,17 +75,28 @@ fun GameplayScreen(onShareClick: () -> Unit) {
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.matchParentSize()
         )
+
+        // 보스 이미지 (텍스트보다 위에 배치)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 100.dp),  // 상단 여백 조정
+            contentAlignment = Alignment.Center
+        ) {
+            FloatingBoss(firstBossHealth)
+        }
+
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 200.dp),    // 원하는 만큼 상단 패딩 조절
+                .padding(top = 300.dp),    // 원하는 만큼 상단 패딩 조절
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(30.dp)
         ) {
 
-            GifImage(modifier = Modifier.size(100.dp),
-                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.game_gif_greencan}"
-            )
+//            GifImage(modifier = Modifier.size(100.dp),
+//                gifUrl = "android.resource://com.eeos.rocatrun/${R.drawable.game_gif_greencan}"
+//            )
 
             Text(
                 text = "게임 중입니다..",
@@ -96,7 +116,7 @@ fun GameplayScreen(onShareClick: () -> Unit) {
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(150.dp))
+            Spacer(modifier = Modifier.height(80.dp))
 
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -114,27 +134,6 @@ fun GameplayScreen(onShareClick: () -> Unit) {
                 )
             }
         }
-
-//        if (gpxFileReceived) {
-//            Box(
-//                modifier = Modifier
-//                    .align(Alignment.TopEnd)
-//                    .padding(16.dp)
-//                    .background(Color.Green)
-//                    .padding(8.dp)
-//            ) {
-//                Text("GPX 파일 수신 완료", color = Color.White)
-//            }
-//
-//            Button(
-//                onClick = onShareClick,
-//                modifier = Modifier
-//                    .align(Alignment.BottomCenter)
-//                    .padding(bottom = 16.dp)
-//            ) {
-//                Text("GPX 파일 공유")
-//            }
-//        }
 
         // 모달 표시
         when (val currentModalState = modalState) {
@@ -164,5 +163,59 @@ fun GameplayScreen(onShareClick: () -> Unit) {
                 SingleLoseScreen(myResult = myResult)
             else -> {} // ModalState.None
         }
+    }
+}
+
+@Composable
+fun FloatingBoss(firstBossHealth: Int) {
+    var xOffset by remember { mutableStateOf(0f) }
+    var yOffset by remember { mutableStateOf(0f) }
+
+    // X축 애니메이션 (좌우 이동)
+    val animatedX by animateFloatAsState(
+        targetValue = xOffset,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Y축 애니메이션 (위아래 이동)
+    val animatedY by animateFloatAsState(
+        targetValue = yOffset,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // 애니메이션 시작
+    LaunchedEffect(key1 = true) {
+        xOffset = 40f  // 좌우 이동 범위 감소
+        yOffset = 20f  // 위아래 이동 범위 감소
+    }
+
+    // 보스 이미지 리소스 선택
+    val bossImageRes = when (firstBossHealth) {
+        1000 -> R.drawable.all_img_boss3
+        5000 -> R.drawable.all_img_boss2
+        6000 -> R.drawable.all_img_boss1
+        else -> R.drawable.all_img_boss3
+    }
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = bossImageRes),
+            contentDescription = "Boss Image",
+            modifier = Modifier
+                .size(100.dp)
+                .offset(
+                    x = (animatedX - 20f).dp,  // 중앙을 기준으로 좌우로 움직이도록 offset 조정
+                    y = (animatedY - 10f).dp   // 중앙을 기준으로 위아래로 움직이도록 offset 조정
+                )
+        )
     }
 }

@@ -178,7 +178,7 @@ class GamePlay : ComponentActivity(){
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    GameplayScreen(onShareClick = { shareLatestGpxFile() })
+                    GameplayScreen(firstBossHealth)
                 }
             }
         }
