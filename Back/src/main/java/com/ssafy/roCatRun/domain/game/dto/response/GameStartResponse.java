@@ -15,6 +15,7 @@ public class GameStartResponse {
     String roomId;
     String message;
     int bossHp;
+    int timeLimit;
     List<SimplePlayer> players;
 
     @Getter
@@ -24,11 +25,11 @@ public class GameStartResponse {
         private String nickname;
     }
 
-    public static GameStartResponse of(String roomId, String message, int bossHp, List<Player> players) {
+    public static GameStartResponse of(String roomId, String message, int bossHp, int timeLimit, List<Player> players) {
         List<SimplePlayer> simplePlayers = players.stream()
                 .map(player -> new SimplePlayer(player.getId(), player.getNickname()))
                 .collect(Collectors.toList());
 
-        return new GameStartResponse(roomId, message, bossHp, simplePlayers);
+        return new GameStartResponse(roomId, message, bossHp, timeLimit, simplePlayers);
     }
 }

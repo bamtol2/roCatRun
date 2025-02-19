@@ -227,6 +227,7 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
                         room.getId(),
                         "게임이 시작되었습니다!",
                         room.getBossHealth(),
+                        room.getBossLevel().getTimeLimit(),
                         room.getPlayers()
                 ));
     }
@@ -330,6 +331,12 @@ public class GameService implements GameTimerManager.GameTimeoutListener  {
     public void handleRunningResult(String userId, PlayerRunningResultRequest resultData) {
         GameRoom room = gameRoomManager.findRoomByUserId(userId)
                 .orElseThrow(() -> new IllegalStateException("Room not found"));
+
+        log.info("[Running Result Debug] User: {}, RunningTimeMillis: {}, RunningTimeSec: {}, Total Distance: {}",
+                userId,
+                resultData.getRunningTimeMillis(),
+                resultData.getRunningTimeSec(),
+                resultData.getTotalDistance());
 
         if (room.getStatus() != GameStatus.FINISHED) {
             log.warn("[Running Result] Invalid request - Game not finished. Room: {}, User: {}",

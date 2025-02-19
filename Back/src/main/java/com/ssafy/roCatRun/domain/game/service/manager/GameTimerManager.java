@@ -42,7 +42,7 @@ public class GameTimerManager {
 
     public void startGameTimer(GameRoom room) {
         String roomId = room.getId();
-        long timeLimit = room.getBossLevel().getTimeLimit(); // 초 단위
+        long timeLimit = room.getBossLevel().getTimeLimit()+5; // 초 단위
         room.setGameStartTime(System.currentTimeMillis());
 
         log.info("[Timer Start] Room: {}, Boss Level: {}, Time Limit: {}s",
