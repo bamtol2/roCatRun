@@ -116,10 +116,11 @@ class GamePlay : ComponentActivity(){
         // intent로 전달된 bossHealth 추출
         val firstBossHealth = intent.getIntExtra("firstBossHealth", 100000)
         val playerNicknames = intent.getStringArrayListExtra("playerNicknames")
+        val time = intent.getIntExtra("time", 1805)
 
         dataClient = Wearable.getDataClient(this)
 
-        Log.d("Socket", "페이지 이동 후 표출 $firstBossHealth $playerNicknames")
+        Log.d("Socket", "페이지 이동 후 표출 $firstBossHealth $playerNicknames $time")
 
         // 워치 앱을 시작하는 함수
         fun startWatchApp(context: Context) {
@@ -139,7 +140,7 @@ class GamePlay : ComponentActivity(){
 
                             // 게임 초기 데이터 전송
                             if (playerNicknames != null) {
-                                gameStartEvent(firstBossHealth, playerNicknames)
+                                gameStartEvent(firstBossHealth, playerNicknames, time)
                             }
                         }
                         addOnFailureListener { exception ->
@@ -196,14 +197,14 @@ class GamePlay : ComponentActivity(){
     }
 
     // 워치 - 초기 boss health, 플레이어 닉네임 보내기
-    private fun gameStartEvent(firstBossHealth: Int, playerNicknames: ArrayList<String>){
+    private fun gameStartEvent(firstBossHealth: Int, playerNicknames: ArrayList<String>, time:Int){
 
         // 워치에 초기 boss health 보내기
         val putDataMapRequest = PutDataMapRequest.create("/first_boss_health")
         putDataMapRequest.dataMap.apply {
-            putInt("firstBossHealth",firstBossHealth)
-            // 닉네임 ArrayList 추가
-            putStringArrayList("playerNicknames", playerNicknames)
+            putInt("firstBossHealth",firstBossHealth)     // 초기 보스체력
+            putStringArrayList("playerNicknames", playerNicknames)    // 플레이어 닉네임
+            putInt("time",time)
         }
         val request = putDataMapRequest.asPutDataRequest().setUrgent()
         dataClient.putDataItem(request)

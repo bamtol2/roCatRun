@@ -993,10 +993,11 @@ fun SingleContent(onBack: () -> Unit) {
                             else -> "EASY" // 기본값 설정
                         }
 
-                        singlePlaySocket(bossLevel, 1) { firstBossHealth, playerNicknames ->
+                        singlePlaySocket(bossLevel, 1) { firstBossHealth, playerNicknames, time->
                             val intent = Intent(context, GamePlay::class.java)
                             intent.putExtra("firstBossHealth", firstBossHealth)
                             intent.putStringArrayListExtra("playerNicknames", playerNicknames)
+                            intent.putExtra("time", time)
                             context.startActivity(intent)
                             Log.d("Socket", "firstBossHealth: $firstBossHealth")
                         }
@@ -1301,7 +1302,7 @@ fun RandomMatchSocket(
             val json = args[0] as JSONObject
 
             val firstBossHealth = json.optInt("bossHp", 10000)
-
+            val time = json.optInt("timeLimit", 1805)
             val playerNicknames = arrayListOf<String>()
             val playersArray = json.optJSONArray("players")
             if (playersArray != null) {
@@ -1316,11 +1317,12 @@ fun RandomMatchSocket(
                 }
             }
 
-            Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+            Log.d("Socket", "On - gameStart : $firstBossHealth, $time, $playerNicknames")
 
             // GameplayActivity로 이동
             val intent = Intent(context, GamePlay::class.java)
             intent.putExtra("firstBossHealth", firstBossHealth)
+            intent.putExtra("time", time)
             intent.putStringArrayListExtra("playerNicknames", playerNicknames)
             context.startActivity(intent)
         }
@@ -1331,10 +1333,8 @@ fun RandomMatchSocket(
 fun singlePlaySocket(
     bossLevel: String,
     roomPlayers: Int,
-    gameStart: (firstBossHealth: Int, playerNicknames: ArrayList<String>) -> Unit)
+    gameStart: (firstBossHealth: Int, playerNicknames: ArrayList<String>, time: Int) -> Unit)
 {
-    var firstBossHealth = 0
-
     // 전송할 JSON 생성
     val singleMatchJson = JSONObject().apply {
         put("bossLevel", bossLevel)    // "EASY" "NORMAL", "HARD"
@@ -1355,8 +1355,8 @@ fun singlePlaySocket(
         if (args.isNotEmpty() && args[0] is JSONObject) {
             val json = args[0] as JSONObject
 
-            firstBossHealth = json.optInt("bossHp", 10000)
-
+            val firstBossHealth = json.optInt("bossHp", 10000)
+            val time = json.optInt("timeLimit", 1805)
             val playerNicknames = arrayListOf<String>()
             val playersArray = json.optJSONArray("players")
             if (playersArray != null) {
@@ -1371,9 +1371,9 @@ fun singlePlaySocket(
                 }
             }
 
-            Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+            Log.d("Socket", "On - gameStart : $firstBossHealth, $time ,$playerNicknames")
 
-            gameStart(firstBossHealth, playerNicknames)
+            gameStart(firstBossHealth, playerNicknames, time)
         }
     }
 }

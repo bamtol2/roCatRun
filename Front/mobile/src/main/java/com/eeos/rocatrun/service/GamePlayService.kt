@@ -291,6 +291,22 @@ class GamePlayService : Service(), DataClient.OnDataChangedListener {
                 val cleared = responseJson.optBoolean("cleared", false)
                 Log.d("Socket", "gameResult 이벤트 수신: $responseJson")
 
+                // 워치에 게임 종료 & 결과 메세지 보내기
+                val putDataMapRequest = PutDataMapRequest.create("/game_end")
+                putDataMapRequest.dataMap.apply {
+                    putBoolean("gameEnd", true)
+                    putBoolean("cleared", true)
+                    putLong("timestamp", System.currentTimeMillis())
+                }
+                val request = putDataMapRequest.asPutDataRequest().setUrgent()
+                dataClient.putDataItem(request)
+                    .addOnSuccessListener { _ ->
+                        Log.d("Wear", "게임 종료")
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("Wear", "게임 종료 실패", exception)
+                    }
+
                 // myResult 파싱
                 responseJson.optJSONObject("myResult")?.let { myResultJson ->
                     val result = GamePlay.MyResultData(

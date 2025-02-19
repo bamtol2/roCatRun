@@ -91,7 +91,7 @@ fun MatchingScreen(
                 val json = args[0] as JSONObject
 
                 val firstBossHealth = json.optInt("bossHp", 10000)
-
+                val time = json.optInt("timeLimit", 1805)
                 val playerNicknames = arrayListOf<String>()
                 val playersArray = json.optJSONArray("players")
                 if (playersArray != null) {
@@ -106,11 +106,12 @@ fun MatchingScreen(
                     }
                 }
 
-                Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+                Log.d("Socket", "On - gameStart : $firstBossHealth, $time, $playerNicknames")
 
                 // GameplayActivity로 이동
                 val intent = Intent(context, GamePlay::class.java)
                 intent.putExtra("firstBossHealth", firstBossHealth)
+                intent.putExtra("time", time)
                 intent.putStringArrayListExtra("playerNicknames", playerNicknames)
                 context.startActivity(intent)
             }

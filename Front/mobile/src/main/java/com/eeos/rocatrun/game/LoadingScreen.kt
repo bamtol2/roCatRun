@@ -106,7 +106,7 @@ fun LoadingScreen(
                 val json = args[0] as JSONObject
 
                 val firstBossHealth = json.optInt("bossHp", 10000)
-
+                val time = json.optInt("timeLimit", 1805)
                 val playerNicknames = arrayListOf<String>()
                 val playersArray = json.optJSONArray("players")
                 if (playersArray != null) {
@@ -121,12 +121,13 @@ fun LoadingScreen(
                     }
                 }
 
-                Log.d("Socket", "On - gameStart : $firstBossHealth, players = $playerNicknames")
+                Log.d("Socket", "On - gameStart : $firstBossHealth, $time, $playerNicknames")
 
                 // GameplayActivity로 이동
                 val intent = Intent(context, GamePlay::class.java)
                 intent.putExtra("firstBossHealth", firstBossHealth)
                 intent.putStringArrayListExtra("playerNicknames", playerNicknames)
+                intent.putExtra("time", time)
                 context.startActivity(intent)
             }
         }
