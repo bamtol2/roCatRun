@@ -76,9 +76,19 @@ fun AnimatedGifView(resourceId: Int, modifier: Modifier) {
     )
 }
 
+fun formatTime(totalSeconds: Int): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return "%02d:%02d:%02d".format(hours, minutes, seconds)
+}
+
 @Composable
 fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
     val context = LocalContext.current
+    val remainingTime by BossHealthRepository.gameTime.collectAsState()
+
+    var fomattedTime = formatTime(remainingTime)
     val itemGaugeValue by gameViewModel.itemGaugeValue.collectAsState()
     val bossGaugeValue by gameViewModel.bossGaugeValue.collectAsState()
     val feverTimeActive by gameViewModel.feverTimeActive.collectAsState()
@@ -91,6 +101,12 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
     val maxBossHealth by BossHealthRepository.maxBossHealth.collectAsState()
     val effectiveMaxBossHealth = if (maxBossHealth == 0) 10000 else maxBossHealth
 
+    // 제한시간 색깔 지정
+    val timeColor = when {
+        remainingTime <= 10 -> Color.Red  // 10초 이하일 때 무조건 빨간색
+        feverTimeActive -> Color.Yellow
+        else -> Color(0xFF00E2B1)
+    }
 
     // 피버 이벤트 관찰 시작
     LaunchedEffect(Unit) {
@@ -120,6 +136,14 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 bossProgress = bossProgress,
                 modifier = Modifier.size(200.dp),
                 isFeverTime
+            )
+            Text(
+                text = "$fomattedTime",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.neodgm)),
+                color = timeColor,
+                modifier = Modifier.offset(y = -40.dp)
             )
 
 
@@ -151,6 +175,14 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 modifier = Modifier.size(200.dp),
                 isFeverTime
             )
+            Text(
+                text = "$fomattedTime",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.neodgm)),
+                color = timeColor,
+                modifier = Modifier.offset(y = -40.dp)
+            )
 
 
             Row(
@@ -161,7 +193,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 // 고양이 GIF
                 AnimatedGifView(
                     resourceId = R.drawable.wear_gif_movewhitecat,
-                    modifier = Modifier.size(80.dp).offset(y = -10.dp)
+                    modifier = Modifier.size(50.dp)
                     )
 
                 // 아이템 GIF (조건부 표시)
@@ -186,8 +218,8 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 shape = RoundedCornerShape(16.dp),
                 contentPadding = PaddingValues(0.dp),
                 modifier = Modifier
-                    .width(69.dp)
-                    .height(34.dp)
+                    .width(60.dp)
+                    .height(30.dp)
                     .padding(horizontal = 2.dp)
                     .offset(y = 60.dp)
             ) {
@@ -223,7 +255,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
             Image(
                 painter = painterResource(id = R.drawable.wear_icon_fish),
                 contentDescription = "아이템",
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(30.dp)
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(

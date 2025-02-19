@@ -258,7 +258,8 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
             } else {
                 Log.w("MultiUserViewModel", "playerNicknames 데이터가 null 입니다.")
             }
-
+            val time = getInt("time")
+            BossHealthRepository.setGameTime(time)
             lastPlayerDataReceivedTime = System.currentTimeMillis()
             if (!startDataReceived) {
                 startDataReceived = true

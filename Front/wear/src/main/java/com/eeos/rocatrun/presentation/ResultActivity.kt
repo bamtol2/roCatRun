@@ -59,39 +59,32 @@ fun SplashScreen2() {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black),
-        verticalArrangement = Arrangement.Top,
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(16.dp))  // 상단 여백
 
         Text(
-            text = "정복 완료!",
+            text = "로캣냥!",
             style = TextStyle(
-                fontSize = 20.sp,
+                fontSize = 32.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.neodgm))
             ),
             textAlign = TextAlign.Center
         )
-        // 고양이 이미지 추가
-        // 이겼을 때, wear_img_wincat (정복 완료!) 졌을 때, wear_img_losecat (정복 실패..) 으로 바꿔줘야함
-        Image(
-            painter = painterResource(id = R.drawable.wear_img_wincat),
-            contentDescription = "Victory Cat",
-            modifier = Modifier
-                .size(80.dp)  // 워치 화면에 맞는 크기
-        )
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = "폰으로 이동해서\n결과를 확인하세요",
             style = TextStyle(
-                fontSize = 16.sp,
+                fontSize = 20.sp,
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.neodgm)),
                 textAlign = TextAlign.Center
             )
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // 확인 버튼
         Button(
