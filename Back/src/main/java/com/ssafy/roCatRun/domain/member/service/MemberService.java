@@ -79,7 +79,7 @@ public class MemberService {
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
             restTemplate.postForEntity(
-                    "https://kapi.kakao.com/v1/user/logout",
+                    "https://kapi.kakao.com/v1/user/unlink",
                     entity,
                     String.class
             );
