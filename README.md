@@ -22,7 +22,9 @@
 
 > 🔗 [노션 링크](https://shiny-headlight-8fc.notion.site/SSAFY-12-2-roCatRun-173c09e299c6803b98cfda5e4b7eb304?pvs=4)
 
-> 📲 [배포 URL]()
+> 📲 [배포 URL - 모바일](https://mega.nz/file/R05FhKzS#Zp4Y0e0Iz9jj3SYlEPkaidoyUQZWHS7dAHrzalCTH0w)
+
+> 📲 [배포 URL - 워치](https://mega.nz/file/ksRhmQhB#26ZXs7olqZfRZdeSOCuSmBciY686pysShy7IN22BwDk)
 
 
 ### 🏃"친구와 함께 달리는 RPG, 로캣냥(roCatRun)!"
@@ -52,8 +54,8 @@
 ## 👥 팀 소개
 <table style="text-align: center;" width="100%">
   <tr>
-    <th style="text-align: center;" width="16.66%"><img src="https://github.com/user-attachments/assets/76820bca-f807-4af5-bf93-09c9335fcbee" width="150" height="150"/></th>
     <th style="text-align: center;" width="16.66%"><img src="https://github.com/user-attachments/assets/f3be0d04-1132-46c5-affb-929d97fb0b58" width="150" height="150"/></th>
+    <th style="text-align: center;" width="16.66%"><img src="https://github.com/user-attachments/assets/76820bca-f807-4af5-bf93-09c9335fcbee" width="150" height="150"/></th>
     <th style="text-align: center;" width="16.66%"><img src="https://github.com/user-attachments/assets/4b2e42fb-1005-4453-a418-02ae430bcd93" width="150" height="150"/></th>
     <th style="text-align: center;" width="16.66%"><img src="https://github.com/user-attachments/assets/ac0f4cac-d5d7-494e-ade7-0bd00dffc3fb" width="150" height="150"/></th>
     <th style="text-align: center;" width="16.66%"><img src="https://github.com/user-attachments/assets/725106e6-730b-4714-9ae1-63ed59008d89" width="150" height="150"/></th>
