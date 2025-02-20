@@ -372,7 +372,7 @@ fun DatePickerDialogMon(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "주차 선택",
+                    text = "월 선택",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
