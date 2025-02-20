@@ -71,7 +71,7 @@ public class MemberService {
     private void logoutFromKakao(Long memberId) {
         try {
             String accessToken = refreshTokenRedisRepository.findByKey("KAKAO_ACCESS_" + memberId)
-                    .orElseThrow(() -> new IllegalArgumentException("카카오 액세스 토큰이 없습니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("카카오 액세스 토큰이 없습니다. "));
 
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(accessToken);
