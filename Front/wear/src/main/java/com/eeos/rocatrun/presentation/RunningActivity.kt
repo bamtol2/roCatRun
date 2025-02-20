@@ -168,8 +168,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         }
     }
 
-    // 결과창 노출을 위한 변수
-    private var showStats by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -450,7 +448,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
         Log.d("Stats",
             "Elapsed Time: ${formatUtils.formatTime(elapsedTime)}, Distance: $totalDistance km, Avg Pace: $averagePace min/km, Avg Heart Rate: ${"%.1f".format(averageHeartRate)} bpm")
 
-        showStats = true
         sendFinalResultToPhone(totalItemUsage)
         createAndSendGpxFile()
         finishAndRemoveTask()
@@ -577,9 +574,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     @Composable
     fun WatchAppUI(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
         val pagerState = rememberPagerState(pageCount = { 4 })
-        if (showStats) {
-            ShowStatsScreen(gameViewModel)
-        } else {
             HorizontalPager(state = pagerState) { page ->
                 when (page) {
                     0 -> CircularLayout(gameViewModel)
@@ -592,7 +586,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
                     3 -> ControlButtons()
                 }
             }
-        }
     }
 
     @Composable
@@ -730,7 +723,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     }
 
     private fun stopTrackingAndShowStats() {
-//        showStats = true
         gameViewModel.stopFeverTimeEffects()
         isRunning = false
         resetTrackingData()
@@ -770,50 +762,6 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
             Wearable.getDataClient(this).putDataItem(dataMapRequest)
                 .addOnSuccessListener { Log.d("RunningActivity", "Data sent successfully") }
                 .addOnFailureListener { e -> Log.e("RunningActivity", "Failed to send data", e) }
-        }
-    }
-
-    @Composable
-    fun ShowStatsScreen(gameViewModel: GameViewModel) {
-        val totalItemUsageCount by gameViewModel.totalItemUsageCount.collectAsState()
-        val statsData = listOf(
-            "총 시간: ${formatUtils.formatTime(elapsedTime)}",
-            "총 거리: ${"%.2f".format(totalDistance)} km",
-            "평균 페이스: ${"%.2f".format(averagePace)} min/km",
-            "평균 심박수: ${"%.1f".format(averageHeartRate)} bpm",
-            "평균 케이던스: $averageCadence spm",
-            "총 발걸음수: $stepCount",
-            "총 아이템 사용 횟수 : $totalItemUsageCount"
-        )
-
-        ScalingLazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            items(statsData) { text ->
-                Text(
-                    text = text,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp)
-                )
-            }
-            item {
-                Button(
-                    onClick = {
-                        showStats = false
-                        resetTrackingData()
-                        finish()
-                    },
-                    modifier = Modifier.padding(top = 16.dp)
-                ) {
-                    Text("Confirm")
-                }
-            }
         }
     }
 
