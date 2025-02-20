@@ -70,7 +70,7 @@
     <td style="text-align: center;" width="16.66%">이혜령<br/><a href="https://github.com/hyerongii">@hyerongii</a></td>
   </tr>
   <tr>
-    <td style="text-align: center;" width="16.66%">백엔드 개발(팀장)</td>
+    <td style="text-align: center;" width="16.66%">백엔드 개발 </br> (팀장)</td>
     <td style="text-align: center;" width="16.66%">프론트 개발</td>
     <td style="text-align: center;" width="16.66%">인프라 개발</td>
     <td style="text-align: center;" width="16.66%">백엔드 개발</td>
