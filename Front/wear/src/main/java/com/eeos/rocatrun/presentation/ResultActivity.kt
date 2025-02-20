@@ -42,6 +42,7 @@ class ResultActivity : ComponentActivity() {
 
         setContent {
             SplashScreen2()
+
         }
     }
     override fun onDestroy() {

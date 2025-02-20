@@ -290,6 +290,7 @@ class MultiUserViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.d("게임 종료", "게임 종료 이벤트 플로우 : $gameEndEventFlow")
 
             }
+
         }
         Log.d("MultiUserViewModel", "게임 종료 데이터 받는중 : $gameEndData")
     }

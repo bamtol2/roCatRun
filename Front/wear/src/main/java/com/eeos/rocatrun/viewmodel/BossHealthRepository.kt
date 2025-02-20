@@ -39,7 +39,7 @@ object BossHealthRepository {
     }
 
     fun setGameTime(time : Int){
-        _gameTime.value = time
+        _gameTime.value = time + 4
         startCountdown()
         Log.d("BossHealthRepository", "제한 시간 : $time")
     }

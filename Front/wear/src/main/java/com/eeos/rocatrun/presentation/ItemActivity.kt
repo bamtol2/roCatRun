@@ -155,7 +155,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 // 고양이 GIF
                 AnimatedGifView(
                     resourceId = R.drawable.wear_gif_movewhitecat,
-                    modifier = Modifier.size(100.dp)
+                    modifier = Modifier.size(60.dp)
                 )
 
                 // 아이템 GIF (조건부 표시)
@@ -193,7 +193,7 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
                 // 고양이 GIF
                 AnimatedGifView(
                     resourceId = R.drawable.wear_gif_movewhitecat,
-                    modifier = Modifier.size(50.dp)
+                    modifier = Modifier.size(60.dp)
                     )
 
                 // 아이템 GIF (조건부 표시)
@@ -266,19 +266,19 @@ fun GameScreen(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewMo
             )
 
 
-        Button(
-            onClick = {
-                gameViewModel.setItemGauge(100)
-                if (gameViewModel.itemGaugeValue.value == 100) {
-                    gameViewModel.handleGaugeFull(context)
-                }
-            },
-            modifier = Modifier
-                .width(30.dp)
-                .height(30.dp)
-        ) {
-            Text("+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
-        }
+//        Button(
+//            onClick = {
+//                gameViewModel.setItemGauge(50)
+//                if (gameViewModel.itemGaugeValue.value == 100) {
+//                    gameViewModel.handleGaugeFull(context)
+//                }
+//            },
+//            modifier = Modifier
+//                .width(30.dp)
+//                .height(30.dp)
+//        ) {
+//            Text("+", fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.neodgm)))
+//        }
         }
     }
 }
