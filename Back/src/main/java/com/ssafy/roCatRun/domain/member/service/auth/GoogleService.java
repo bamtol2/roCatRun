@@ -172,6 +172,7 @@ public class GoogleService {
                 jwtTokens.getRefreshToken()
         );
 
+        // Redis에 JWT 리프레시 토큰 저장
         refreshTokenRedisRepository.save(
                 member.getId().toString(),
                 jwtTokens.getRefreshToken(),
@@ -179,9 +180,17 @@ public class GoogleService {
         );
 
         if (tokenInfo.getRefresh_token() != null) {
+            // Redis에 구글 리프레시 토큰 저장
             refreshTokenRedisRepository.save(
-                    "GOOGLE_" + member.getId().toString(),
+                    "GOOGLE_REFRESH_" + member.getId().toString(),
                     tokenInfo.getRefresh_token(),
+                    TOKEN_EXPIRATION_TIME_MS
+            );
+
+            // Redis에 구글 액세스 토큰 저장 (추가)
+            refreshTokenRedisRepository.save(
+                    "GOOGLE_ACCESS_" + member.getId().toString(),
+                    tokenInfo.getAccess_token(),
                     TOKEN_EXPIRATION_TIME_MS
             );
         }

@@ -21,6 +21,7 @@ public class Member {
     @Column(name = "member_id")  // 컬럼명을 'member_id'로 지정
     private Long id;
 
+
     @Column(nullable = false)  // NOT NULL 제약조건
     private String loginType;  // 소셜 로그인 타입 (KAKAO, NAVER, GOOGLE)
 

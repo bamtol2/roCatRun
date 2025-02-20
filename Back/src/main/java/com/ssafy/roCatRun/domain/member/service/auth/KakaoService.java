@@ -233,10 +233,16 @@ public class KakaoService {
                 jwtTokens.getRefreshToken(),
                 TOKEN_EXPIRATION_TIME_MS
         );
-        // 카카오 리프레시 토큰 저장
+        // Redis에 카카오 리프레시 토큰 저장
         refreshTokenRedisRepository.save(
-                "KAKAO_" + member.getId().toString(),
+                "KAKAO_REFRESH_" + member.getId().toString(),
                 kakaoTokenInfo.refreshToken,
+                TOKEN_EXPIRATION_TIME_MS
+        );
+        // Redis에 카카오 액세스 토큰 저장
+        refreshTokenRedisRepository.save(
+                "KAKAO_ACCESS_" + member.getId().toString(),
+                kakaoTokenInfo.accessToken,
                 TOKEN_EXPIRATION_TIME_MS
         );
 
