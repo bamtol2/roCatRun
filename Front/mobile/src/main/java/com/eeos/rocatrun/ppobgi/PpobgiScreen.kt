@@ -28,9 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,8 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontVariation.width
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,9 +42,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.eeos.rocatrun.R
 import com.eeos.rocatrun.home.HomeActivity
 import com.eeos.rocatrun.login.data.TokenStorage
@@ -57,6 +49,7 @@ import com.eeos.rocatrun.ppobgi.api.PpobgiViewModel
 import kotlinx.coroutines.delay
 import com.eeos.rocatrun.ui.components.GifImage
 import com.eeos.rocatrun.ui.components.StrokedText
+import com.eeos.rocatrun.home.api.HomeViewModel
 
 @Composable
 fun PpobgiDialog(
@@ -64,6 +57,7 @@ fun PpobgiDialog(
     refreshHomeData: () -> Unit
 ) {
     val viewModel: PpobgiViewModel = viewModel()
+    val homeViewModel : HomeViewModel = viewModel()
     val drawResult by viewModel.drawResult.collectAsState()
     val showCoinShortageDialog by viewModel.showCoinShortageDialog.collectAsState()
     val isDrawing by viewModel.isDrawing.collectAsState()
@@ -90,7 +84,7 @@ fun PpobgiDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.9f)),
+                .background(Color.Black.copy(alpha = 0.7f)),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -117,7 +111,7 @@ fun PpobgiDialog(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.9f))
+                            .background(Color.Black.copy(alpha = 0.7f))
                             .padding(24.dp)
                             .clip(RoundedCornerShape(10.dp))
                     ) {
@@ -299,6 +293,7 @@ fun PpobgiDialog(
                                                 if (token != null) {
                                                     Log.d("뽑기", "뽑기 시작 - 토큰: ${token.take(10)}...")
                                                     viewModel.drawItem(token, 1)
+                                                    homeViewModel.fetchHomeInfo(token)
 //                                                    isDrawing = true
                                                 } else {
                                                     Log.d("뽑기", "토큰 에러")
