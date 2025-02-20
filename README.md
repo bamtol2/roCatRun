@@ -50,14 +50,41 @@
 
 
 ## 👥 팀 소개
+<table style="text-align: center;" width="100%">
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/f3be0d04-1132-46c5-affb-929d97fb0b58" width="200" height="200"/></td>
+    <td><img src="https://github.com/user-attachments/assets/76820bca-f807-4af5-bf93-09c9335fcbee" width="200" height="200"/></td>
+    <td><img src="https://github.com/user-attachments/assets/4b2e42fb-1005-4453-a418-02ae430bcd93" width="200" height="200"/></td>
+    <td><img src="https://github.com/user-attachments/assets/ac0f4cac-d5d7-494e-ade7-0bd00dffc3fb" width="200" height="200"/></td>
+    <td><img src="https://github.com/user-attachments/assets/725106e6-730b-4714-9ae1-63ed59008d89" width="200" height="200"/></td>
+    <td><img src="https://github.com/user-attachments/assets/4ac5efaf-080e-4b20-8796-13416f9e6cd5" width="200" height="200"/></td>
+  </tr>
+  <tr>
+    <td>박혜원<br/><a href="https://github.com/hyeOOO">@hyeOOO</a></td>
+    <td>권규리<br/><a href="https://github.com/rnjs010">@rnjs010</a></td>
+    <td>김주찬<br/><a href="https://github.com/PoloCeleste">@PoloCeleste</a></td>
+    <td>서성우<br/><a href="https://github.com/bamtol2">@bamtol2</a></td>
+    <td>이가람<br/><a href="https://github.com/garam0107">@garam0107</a></td>
+    <td>이혜령<br/><a href="https://github.com/hyerongii">@hyerongii</a></td>
+  </tr>
+  <tr>
+    <td>백엔드 개발(팀장)</td>
+    <td>프론트 개발</td>
+    <td>인프라 개발</td>
+    <td>백엔드 개발</td>
+    <td>프론트 개발</td>
+    <td>프론트 개발</td>
+  </tr>
+  <tr>
+    <td>통계 개발, 레이드 게임 개발, 아이템 도트 디자인</td>
+    <td>메인/통계/옷장/아이템 판매/랭킹/마이페이지 개발 및 디자인</td>
+    <td>인프라 CI/CD 구축, 워치 센서 살짝, 픽셀아트 디자인, 모바일앱 배포</td>
+    <td>메인/로그인/옷장/판매/랭킹/마이페이지 API 개발</td>
+    <td>Wear OS, 모바일 소셜 로그인, 지라 관리</td>
+    <td>모바일 단 웹소켓, 워치 통신, 게임/뽑기 페이지 구현, UI/UX 디자인</td>
+  </tr>
+</table>
 
-|<img src="https://github.com/user-attachments/assets/f3be0d04-1132-46c5-affb-929d97fb0b58" width="200" height="200"/>|<img src="https://github.com/user-attachments/assets/76820bca-f807-4af5-bf93-09c9335fcbee" width="200" height="200"/>|<img src="https://github.com/user-attachments/assets/4b2e42fb-1005-4453-a418-02ae430bcd93" width="200" height="200"/>|<img src="https://github.com/user-attachments/assets/ac0f4cac-d5d7-494e-ade7-0bd00dffc3fb" width="200" height="200"/>|<img src="https://github.com/user-attachments/assets/725106e6-730b-4714-9ae1-63ed59008d89" width="200" height="200"/>|<img src="https://github.com/user-attachments/assets/4ac5efaf-080e-4b20-8796-13416f9e6cd5" width="200" height="200"/>|
-|:-:|:-:|:-:|:-:|:-:|:-:|
-|박혜원<br/>[@hyeOOO](https://github.com/hyeOOO)|권규리<br/>[@rnjs010](https://github.com/rnjs010)|김주찬<br/>[@PoloCeleste](https://github.com/PoloCeleste)|서성우<br/>[@bamtol2](https://github.com/bamtol2)|이가람<br/>[@garam0107](https://github.com/garam0107)|이혜령<br/>[@hyerongii](https://github.com/hyerongii)||
-|백엔드 개발(팀장)<br/>|프론트 개발<br/>|인프라 개발<br/>|백엔드 개발<br/>|프론트 개발<br/>|프론트 개발<br/>|
-|통계 개발, 레이드 게임 개발, 아이템 도트 디자인<br/>|메인/통계/옷장/아이템 판매/랭킹/마이페이지 개발 및 디자인<br/>|인프라 CI/CD 구축, 워치 센서 살짝, 픽셀아트 디자인, 모바일앱 배포<br/>|메인/로그인/옷장/판매/랭킹/마이페이지 api 개발<br/>|Wear os, 모바일 소셜 로그인, 지라 관리<br/>|모바일 단 웹소켓, 워치 통신, 게임/뽑기 페이지 구현, UI/UX 디자인<br/>|
-
-</br>
 
 ## 🚀 주요 기능
 <details>
