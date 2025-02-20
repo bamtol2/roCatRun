@@ -209,7 +209,7 @@ fun DayStatCard(
                     Button(
                         onClick = onClick,
                         modifier = Modifier
-                            .offset(x = 84.dp)
+                            .offset(x = 70.dp)
                             .border(2.dp, Color(0xFF2EB5DC), RoundedCornerShape(10.dp)),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent,
