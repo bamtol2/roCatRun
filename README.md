@@ -237,13 +237,10 @@
 <br />
 
 
-![메인페이지 영상](/uploads/45c73f0cfd85a452787a6b9adcb541f8/고화질_모바일앱_영상_메인페이지.gif)
-</br>
+<img src="/uploads/45c73f0cfd85a452787a6b9adcb541f8/고화질_모바일앱_영상_메인페이지.gif" height="400">
+<img src="/uploads/2fedb1e20cd0e01c39ab360e01eaf02c/게임.gif" height="400">
+<img src="/uploads/75ba7f6a9ad2894507b6bad29cc3a38c/통계.gif" height="400">
 
-![게임 영상](/uploads/2fedb1e20cd0e01c39ab360e01eaf02c/게임.gif)
-</br>
-
-![통계 영상](/uploads/75ba7f6a9ad2894507b6bad29cc3a38c/통계.gif)
 
 ## 🔧 주요 기술
 ![기술스택](https://github.com/user-attachments/assets/40ee034b-c395-4855-a24c-735f95837eb4)
