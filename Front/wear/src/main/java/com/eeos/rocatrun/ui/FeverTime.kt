@@ -65,7 +65,7 @@ fun FeverTime() {
                 Column {
                     FeverTimeText(
                         text = "피",
-                        modifier = Modifier.offset(x= (-8).dp)
+                        modifier = Modifier.offset(x= (-8).dp, y = 30.dp)
 
                     )
 
@@ -79,7 +79,7 @@ fun FeverTime() {
                 Column {
                     FeverTimeText(
                         text = "타",
-                        modifier = Modifier.offset(y=1.dp, x = 38.dp)
+                        modifier = Modifier.offset(y=31.dp, x = 38.dp)
                     )
 
                     FeverTimeText(
