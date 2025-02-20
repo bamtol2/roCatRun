@@ -574,7 +574,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     @Composable
     fun WatchAppUI(gameViewModel: GameViewModel, multiUserViewModel: MultiUserViewModel) {
         val pagerState = rememberPagerState(pageCount = { 4 })
-            HorizontalPager(state = pagerState) { page ->
+        HorizontalPager(state = pagerState) { page ->
                 when (page) {
                     0 -> CircularLayout(gameViewModel)
                     1 -> Box(modifier = Modifier.fillMaxSize()) {
