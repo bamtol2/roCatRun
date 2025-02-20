@@ -5,11 +5,11 @@
 1. [프로젝트 소개](#-프로젝트-소개)
 2. [팀 소개](#-팀-소개)
 3. [주요 기능](#-주요-기능)
-4. [주요 기술](#-주요-기술)
-5. [기술 아키텍처](#-기술-아키텍처처)
-6. [빌드 환경](#-빌드-환경)
+4. [시연 영상](#-시연-영상)
+5. [주요 기술](#-주요-기술)
+6. [기술 아키텍처](#-기술-아키텍처처)
 7. [프로젝트 구조](#-프로젝트-구조)
-6. [산출물](#-산출물)
+8. [산출물](#-산출물)
 <br />
 
 ## 🚀 프로젝트 소개
@@ -17,12 +17,12 @@
 ***SSAFY 12기 2학기 공통 프로젝트***
 
 > ⌛ 프로젝트 기간 : 2025.01.13 ~ 2025.02.20 (6주)
-<br />
+
 > 📆 상세 기간 : 기획 2주 + 공부 1주 + 개발 2주 + 버그 해결 1주
 
-> ### 🔗[노션 링크](https://shiny-headlight-8fc.notion.site/SSAFY-12-2-roCatRun-173c09e299c6803b98cfda5e4b7eb304?pvs=4)
+> 🔗[노션 링크](https://shiny-headlight-8fc.notion.site/SSAFY-12-2-roCatRun-173c09e299c6803b98cfda5e4b7eb304?pvs=4)
 
-> ### 📲[배포 URL]()
+> 📲[배포 URL]()
 
 
 ### 🏃"친구와 함께 달리는 RPG, 로캣냥(roCatRun)!"
@@ -237,9 +237,19 @@
 <br />
 
 
-<img src="/uploads/45c73f0cfd85a452787a6b9adcb541f8/고화질_모바일앱_영상_메인페이지.gif" height="400">
-<img src="/uploads/2fedb1e20cd0e01c39ab360e01eaf02c/게임.gif" height="400">
-<img src="/uploads/75ba7f6a9ad2894507b6bad29cc3a38c/통계.gif" height="400">
+## 🎥 시연 영상
+<table align="center" width="100%">
+  <tr>
+    <th align="center">메인페이지 기능 영상</th>
+    <th align="center">게임페이지 기능 영상</th>
+    <th align="center">통계페이지 영상</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="/uploads/45c73f0cfd85a452787a6b9adcb541f8/고화질_모바일앱_영상_메인페이지.gif" height="400"></td>
+    <td align="center"><img src="/uploads/2fedb1e20cd0e01c39ab360e01eaf02c/게임.gif" height="400"></td>
+    <td align="center"><img src="/uploads/75ba7f6a9ad2894507b6bad29cc3a38c/통계.gif" height="400"></td>
+  </tr>
+</table>
 
 
 ## 🔧 주요 기술
