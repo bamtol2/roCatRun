@@ -24,7 +24,7 @@
 
 > 📲 [배포 URL - 모바일](https://mega.nz/file/R05FhKzS#Zp4Y0e0Iz9jj3SYlEPkaidoyUQZWHS7dAHrzalCTH0w)
 
-> 📲 [배포 URL - 워치](https://mega.nz/file/ksRhmQhB#26ZXs7olqZfRZdeSOCuSmBciY686pysShy7IN22BwDk)
+> ⌚ [배포 URL - 워치](https://mega.nz/file/ksRhmQhB#26ZXs7olqZfRZdeSOCuSmBciY686pysShy7IN22BwDk)
 
 
 ### 🏃"친구와 함께 달리는 RPG, 로캣냥(roCatRun)!"
