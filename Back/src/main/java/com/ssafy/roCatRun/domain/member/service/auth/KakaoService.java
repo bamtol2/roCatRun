@@ -208,7 +208,7 @@ public class KakaoService {
     }
 
     private LoginResponse processKakaoLogin(HashMap<String, Object> userInfo, KakaoTokenInfo kakaoTokenInfo) {
-        String socialId = String.valueOf(userInfo.get("id"));  // Long -> String으로 변환
+        String socialId = String.valueOf(userInfo.get("id"));
         String nickname = userInfo.get("nickname").toString();
 
         Member member = memberRepository.findBySocialIdAndLoginType(socialId, "KAKAO")
@@ -229,7 +229,7 @@ public class KakaoService {
         // JWT 리프레시 토큰 저장
         log.info("Saving refresh token to Redis for user: {}", member.getId());
         refreshTokenRedisRepository.save(
-                member.getId().toString(),
+                "JWT_REFRESH_" + member.getId().toString(),
                 jwtTokens.getRefreshToken(),
                 TOKEN_EXPIRATION_TIME_MS
         );
