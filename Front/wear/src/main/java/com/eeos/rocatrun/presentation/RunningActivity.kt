@@ -281,6 +281,9 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
 
     // 네트워크 에러 화면으로 전환하는 함수
     private fun navigateToNetworkErrorScreen(context: Context) {
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(3000), intArrayOf(100), -1)
+        vibrator?.vibrate(vibrationEffect)
         val intent = Intent(context, NetworkErrorActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -291,7 +294,7 @@ class RunningActivity : ComponentActivity(), SensorEventListener {
     // 결과 화면으로 전환하는 함수
     private fun navigateToResultActivity(context: Context) {
         val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(1000), intArrayOf(100), -1)
+        val vibrationEffect = VibrationEffect.createWaveform(longArrayOf(3000), intArrayOf(100), -1)
         vibrator?.vibrate(vibrationEffect)
         val intent = Intent(context, ResultActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

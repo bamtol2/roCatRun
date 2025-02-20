@@ -209,7 +209,9 @@ fun LoginScreen(modifier: Modifier = Modifier , loginResponse: LoginResponse?) {
     // MessageBox 호출 부분
     if (showMessageBox) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.8f)),
             contentAlignment = Alignment.Center
         ) {
             MessageBox(
