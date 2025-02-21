@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">roCatRun</string>
+    <string name="app_version">Ver. 0.1.0</string>
+    <string name = "kakao_app_key">ee4a19a75c1dad14d8d226e4285b1cba</string>
+    <string name="scheme_kakao_app_key">kakaoee4a19a75c1dad14d8d226e4285b1cba</string>
+    <string name="google_app_id">1:38473355620:android:8b353a2dcf4b361951aa71</string>
+    <string name="google_client_id">38473355620-38hgd5mqor7ruv519urhtf9c59qedtcd.apps.googleusercontent.com</string>
+    <string name="api_address">:8080</string>
+<!--    <string name="api_address">:8081/test</string>-->
+    <string name="websocket_address">:9092</string>
+<!--    <string name="websocket_address">:9093/test</string>-->
+</resources>

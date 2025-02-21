@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "38473355620",
+    "project_id": "rocatrun",
+    "storage_bucket": "rocatrun.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:38473355620:android:8b353a2dcf4b361951aa71",
+        "android_client_info": {
+          "package_name": "com.eeos.rocatrun"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "38473355620-38hgd5mqor7ruv519urhtf9c59qedtcd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC41Iq6NcB1WJUSf51H9boGAlHGfyJRLkE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "38473355620-38hgd5mqor7ruv519urhtf9c59qedtcd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
