@@ -1,4 +1,4 @@
-![첫페이지__1_](/uploads/76feb40989defdf948a4ee19189d1908/첫페이지__1_.png)
+![첫페이지__1_](https://github.com/user-attachments/assets/43a76629-6bca-4d3d-9d7c-99b5e8c626b1)
 <br />
 
 ## 📌 목차
