@@ -274,9 +274,9 @@
     <th style="text-align: center;" width="33.33%">통계페이지 영상</th>
   </tr>
   <tr>
-    <td style="text-align: center;" width="33.33%"><img src="/uploads/45c73f0cfd85a452787a6b9adcb541f8/고화질_모바일앱_영상_메인페이지.gif" height="400"></td>
-    <td style="text-align: center;" width="33.33%"><img src="/uploads/2fedb1e20cd0e01c39ab360e01eaf02c/게임.gif" height="400"></td>
-    <td style="text-align: center;" width="33.33%"><img src="/uploads/75ba7f6a9ad2894507b6bad29cc3a38c/통계.gif" height="400"></td>
+    <td style="text-align: center;" width="33.33%"><img src="https://rocatrun.s3.ap-northeast-2.amazonaws.com/mainpage.gif"></td>
+    <td style="text-align: center;" width="33.33%"><img src="https://rocatrun.s3.ap-northeast-2.amazonaws.com/game.gif" height="400"></td>
+    <td style="text-align: center;" width="33.33%"><img src="https://rocatrun.s3.ap-northeast-2.amazonaws.com/status.gif" height="400"></td>
   </tr>
 </table>
 
